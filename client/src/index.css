@@ -1,0 +1,29 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #1E3A5F;
+  --color-accent: #FF6B6B;
+  --color-secondary: #4ECDC4;
+  --color-success: #2ECC71;
+  --color-warning: #F39C12;
+  --color-background: #F8FAFC;
+
+  --font-heading: "Fredoka One", cursive;
+  --font-body: "Nunito", sans-serif;
+}
+
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-background);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+}
