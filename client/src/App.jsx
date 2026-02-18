@@ -9,7 +9,7 @@ import Header from './components/Layout/Header';
 
 function App() {
   return (
-    <div className="h-screen bg-background text-primary font-body flex flex-col overflow-hidden">
+    <div className="h-[100dvh] bg-background text-primary font-body flex flex-col overflow-hidden">
       <Header />
       <div className="flex-1 overflow-hidden relative">
         <Routes>

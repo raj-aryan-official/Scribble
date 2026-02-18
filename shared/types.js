@@ -11,6 +11,13 @@ export const EVENTS = {
     HEARTBEAT: 'heartbeat',
     END_GAME_EARLY: 'endGameEarly',
 
+    // Voice Chat
+    VOICE_JOIN: 'voiceJoin',
+    VOICE_LEAVE: 'voiceLeave',
+    VOICE_OFFER: 'voiceOffer',
+    VOICE_ANSWER: 'voiceAnswer',
+    ICE_CANDIDATE: 'iceCandidate',
+
     // Server -> Client
     ROOM_JOINED: 'roomJoined',
     PLAYER_JOINED: 'playerJoined',

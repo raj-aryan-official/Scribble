@@ -39,7 +39,7 @@ export const ChatBox = ({ roomCode }) => {
 
     return (
         <div className="flex flex-col h-full">
-            <div className="flex-grow overflow-y-auto p-4 space-y-2 bg-gray-50 rounded-lg mb-4 h-64">
+            <div className="flex-grow overflow-y-auto p-4 space-y-2 bg-gray-50 rounded-lg mb-2 min-h-0">
                 {state.messages.map((msg, idx) => (
                     <div key={idx} className={`p-2 rounded ${msg.type === 'correct' ? 'bg-green-100 text-green-800' : 'bg-white shadow-sm'}`}>
                         <span className="font-bold mr-2">{msg.username}:</span>

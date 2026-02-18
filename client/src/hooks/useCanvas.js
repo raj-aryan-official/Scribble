@@ -27,7 +27,7 @@ export const useCanvas = (roomCode, isDrawer) => {
         canvas.height = rect.height * dpr;
 
         const ctx = canvas.getContext('2d');
-        ctx.scale(dpr, dpr);
+        // ctx.scale(dpr, dpr); // Removed to avoid double scaling with normalized coordinates
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
 
@@ -35,17 +35,27 @@ export const useCanvas = (roomCode, isDrawer) => {
     }, []);
 
     const drawLine = ({ points, color, size, tool }) => {
+        const canvas = canvasRef.current;
         const ctx = ctxRef.current;
-        if (!ctx || points.length < 2) return;
+        if (!ctx || !canvas || points.length < 2) return;
 
         ctx.strokeStyle = tool === 'eraser' ? '#FFFFFF' : color;
-        ctx.lineWidth = size;
+        ctx.strokeStyle = tool === 'eraser' ? '#FFFFFF' : color;
+        // Scale line width by DPR to maintain consistent CSS pixel size
+        const dpr = window.devicePixelRatio || 1;
+        ctx.lineWidth = size * dpr;
 
         ctx.beginPath();
-        ctx.moveTo(points[0].x, points[0].y);
+
+        // Denormalize points
+        const startX = points[0].x * canvas.width;
+        const startY = points[0].y * canvas.height;
+        ctx.moveTo(startX, startY);
 
         for (let i = 1; i < points.length; i++) {
-            ctx.lineTo(points[i].x, points[i].y);
+            const x = points[i].x * canvas.width;
+            const y = points[i].y * canvas.height;
+            ctx.lineTo(x, y);
         }
 
         ctx.stroke();
@@ -57,7 +67,7 @@ export const useCanvas = (roomCode, isDrawer) => {
         const ctx = ctxRef.current;
         if (!canvas || !ctx) return;
 
-        ctx.clearRect(0, 0, canvas.width / window.devicePixelRatio, canvas.height / window.devicePixelRatio); // Clear with correct scale
+        ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear entire canvas (unscaled)
 
         strokes.current.forEach(stroke => drawLine(stroke));
     };
@@ -96,24 +106,26 @@ export const useCanvas = (roomCode, isDrawer) => {
         const canvas = canvasRef.current;
         if (!canvas) return { x: 0, y: 0 };
 
+        const rect = canvas.getBoundingClientRect();
+        let clientX, clientY;
+
         // Check if touch event
         if (e.touches && e.touches.length > 0) {
-            const rect = canvas.getBoundingClientRect();
-            return {
-                x: e.touches[0].clientX - rect.left,
-                y: e.touches[0].clientY - rect.top
-            };
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
         } else if (e.changedTouches && e.changedTouches.length > 0) {
-            // For touchend
-            const rect = canvas.getBoundingClientRect();
-            return {
-                x: e.changedTouches[0].clientX - rect.left,
-                y: e.changedTouches[0].clientY - rect.top
-            };
+            clientX = e.changedTouches[0].clientX;
+            clientY = e.changedTouches[0].clientY;
+        } else {
+            clientX = e.clientX;
+            clientY = e.clientY;
         }
 
-        // Mouse event
-        return { x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY };
+        // Normalize coordinates (0 to 1)
+        const x = (clientX - rect.left) / rect.width;
+        const y = (clientY - rect.top) / rect.height;
+
+        return { x, y };
     };
 
     const startDrawing = (e) => {
@@ -198,6 +210,7 @@ export const useCanvas = (roomCode, isDrawer) => {
         setTool,
         clearCanvas,
         undo,
+        redraw,
         color,
         lineWidth,
         tool

@@ -95,6 +95,37 @@ module.exports = (io, socket) => {
         }
     });
 
+    // Voice Chat Signaling
+    socket.on(EVENTS.VOICE_JOIN, ({ roomCode }) => {
+        socket.join(`${roomCode}_voice`);
+        // Notify others in voice channel
+        socket.to(`${roomCode}_voice`).emit(EVENTS.VOICE_JOIN, { socketId: socket.id });
+        // Send list of existing voice users to the new joiner
+        const voiceRoom = io.sockets.adapter.rooms.get(`${roomCode}_voice`);
+        if (voiceRoom) {
+            const users = Array.from(voiceRoom).filter(id => id !== socket.id);
+            socket.emit('EXISTING_VOICE_USERS', users);
+        }
+    });
+
+    socket.on(EVENTS.VOICE_OFFER, ({ target, offer }) => {
+        io.to(target).emit(EVENTS.VOICE_OFFER, { sender: socket.id, offer });
+    });
+
+    socket.on(EVENTS.VOICE_ANSWER, ({ target, answer }) => {
+        io.to(target).emit(EVENTS.VOICE_ANSWER, { sender: socket.id, answer });
+    });
+
+    socket.on(EVENTS.ICE_CANDIDATE, ({ target, candidate }) => {
+        io.to(target).emit(EVENTS.ICE_CANDIDATE, { sender: socket.id, candidate });
+    });
+
+    // Handle voice leave specifically if needed, or rely on disconnect
+    socket.on(EVENTS.VOICE_LEAVE, ({ roomCode }) => {
+        socket.leave(`${roomCode}_voice`);
+        socket.to(`${roomCode}_voice`).emit(EVENTS.VOICE_LEAVE, { socketId: socket.id });
+    });
+
     // Chat & Guessing
     socket.on(EVENTS.SEND_MESSAGE, ({ roomCode, text }) => {
         const room = roomManager.getRoom(roomCode);
