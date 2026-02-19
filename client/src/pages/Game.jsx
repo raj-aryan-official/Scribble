@@ -11,6 +11,7 @@ import MobileNavBar from '../components/Game/MobileNavBar';
 
 import { WordChoice } from '../components/Game/WordChoice';
 import { VoiceControls } from '../components/Chat/VoiceControls';
+import { ConfirmationModal } from '../components/UI/ConfirmationModal';
 
 const Game = () => {
     const { code } = useParams();
@@ -18,6 +19,18 @@ const Game = () => {
     const navigate = useNavigate();
     const socket = useSocket();
     const { isMicOn, toggleMic, isDeafened, toggleDeafen, peers } = useVoiceChat(code, state.currentUser?.username);
+
+    // Modal State
+    const [confirmModal, setConfirmModal] = React.useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: () => { },
+        isDanger: false,
+        confirmText: 'Confirm'
+    });
+
+    const closeConfirmModal = () => setConfirmModal(prev => ({ ...prev, isOpen: false }));
 
     // Navigate to End Screen logic
     useEffect(() => {
@@ -60,15 +73,29 @@ const Game = () => {
     const isHost = me?.isHost;
 
     const handleExit = () => {
-        if (confirm('Are you sure you want to exit?')) {
-            window.location.href = '/'; // Hard reload to clear socket state
-        }
+        setConfirmModal({
+            isOpen: true,
+            title: 'Leave Game?',
+            message: 'Are you sure you want to exit? You will lose your current score.',
+            confirmText: 'Leave',
+            isDanger: true,
+            onConfirm: () => {
+                window.location.href = '/';
+            }
+        });
     };
 
     const handleEndGame = () => {
-        if (confirm('End game for everyone?')) {
-            socket.emit(EVENTS.END_GAME_EARLY, { roomCode: code });
-        }
+        setConfirmModal({
+            isOpen: true,
+            title: 'End Game?',
+            message: 'Are you sure you want to end the game for everyone?',
+            confirmText: 'End Game',
+            isDanger: true,
+            onConfirm: () => {
+                socket.emit(EVENTS.END_GAME_EARLY, { roomCode: code });
+            }
+        });
     };
 
     return (
@@ -199,15 +226,19 @@ const Game = () => {
                 {/* Sidebar / Chat */}
                 <div className={`w-full md:w-1/4 bg-white border-t md:border-t-0 md:border-l flex flex-col shadow-inner md:shadow-none z-20 transition-all duration-200 ${isKeyboardOpen ? 'h-[40%] flex-grow border-t-2' : 'h-[30%] md:h-full p-2 md:p-4'}`}>
                     {/* Player List - Hidden when keyboard open */}
-                    <div className={`hidden md:block mb-4 h-1/4 overflow-y-auto bg-gray-50 p-2 rounded ${isKeyboardOpen ? '!hidden' : ''}`}>
-                        <h3 className="font-bold mb-2 text-primary">Players</h3>
-                        {state.players.map(p => (
-                            <div key={p.id} className={`flex items-center text-sm mb-1 p-1 rounded ${state.guessedPlayers.includes(p.id) ? 'bg-green-100 border border-green-300' : ''}`}>
-                                <span>{p.avatar}</span>
-                                <span className="ml-2 font-bold truncate max-w-[100px]">{p.username}</span>
-                                <span className="ml-auto text-gray-500">{state.scores[p.id] || 0} pts</span>
-                            </div>
-                        ))}
+                    <div className={`hidden md:flex flex-col mb-4 max-h-[35%] shrink-0 overflow-hidden bg-gray-50 rounded-lg border border-gray-100 ${isKeyboardOpen ? '!hidden' : ''}`}>
+                        <div className="p-2 border-b border-gray-100 bg-gray-100/50">
+                            <h3 className="font-bold text-primary text-sm uppercase tracking-wide">Players</h3>
+                        </div>
+                        <div className="overflow-y-auto p-2">
+                            {state.players.map(p => (
+                                <div key={p.id} className={`flex items-center text-sm mb-1 last:mb-0 p-1.5 rounded-md transition-colors ${state.guessedPlayers.includes(p.id) ? 'bg-green-100 text-green-800 border-green-200' : 'hover:bg-gray-100'}`}>
+                                    <span className="text-lg">{p.avatar}</span>
+                                    <span className="ml-2 font-bold truncate max-w-[100px]">{p.username}</span>
+                                    <span className="ml-auto font-mono text-gray-500 text-xs">{state.scores[p.id] || 0}</span>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                     {/* Mobile Player Summary - Hidden when keyboard open */}
                     <div className={`md:hidden flex gap-2 overflow-x-auto pb-2 mb-2 scrollbar-hide min-h-[50px] shrink-0 ${isKeyboardOpen ? '!hidden' : ''}`}>
@@ -222,12 +253,22 @@ const Game = () => {
                         ))}
                     </div>
 
-                    <div className="flex-grow min-h-0 flex flex-col justify-end">
+                    <div className="flex-grow min-h-0 flex flex-col relative">
                         {/* ChatBox stays mounted! */}
                         <ChatBox roomCode={code} isCompact={isKeyboardOpen} />
                     </div>
                 </div>
             </div>
+
+            <ConfirmationModal
+                isOpen={confirmModal.isOpen}
+                onClose={closeConfirmModal}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                onConfirm={confirmModal.onConfirm}
+                isDanger={confirmModal.isDanger}
+                confirmText={confirmModal.confirmText}
+            />
         </div>
     );
 };
