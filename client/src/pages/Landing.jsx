@@ -5,6 +5,7 @@ import { EVENTS } from '../../../shared/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSocket } from '../hooks/useSocket';
 import { Activity, Users, Play, Crown, Hash, Clock } from 'lucide-react';
+import { v4 as uuidv4 } from 'uuid';
 
 const Landing = () => {
     const [username, setUsername] = useState('');
@@ -40,14 +41,27 @@ const Landing = () => {
         }
     }, [state.roomCode, navigate]);
 
-    const handleCreateRoom = () => {
-        if (!username) return dispatch({ type: 'SET_ERROR', payload: 'Username is required!' });
-        socket.emit(EVENTS.CREATE_ROOM, { username, avatar: '👤', settings: { drawTime, rounds } });
+    const getSessionId = () => {
+        let sessionId = localStorage.getItem('scribble_session_id');
+        if (!sessionId) {
+            sessionId = uuidv4();
+            localStorage.setItem('scribble_session_id', sessionId);
+        }
+        return sessionId;
     };
 
-    const handleJoinRoom = () => {
+    const handleCreateRoom = (e) => {
+        e?.preventDefault();
+        if (!username) return dispatch({ type: 'SET_ERROR', payload: 'Username is required!' });
+        const sessionId = getSessionId();
+        socket.emit(EVENTS.CREATE_ROOM, { username, avatar: '👤', settings: { drawTime, rounds }, sessionId });
+    };
+
+    const handleJoinRoom = (e) => {
+        e?.preventDefault();
         if (!username || !roomCode) return dispatch({ type: 'SET_ERROR', payload: 'Username and Code required!' });
-        socket.emit(EVENTS.JOIN_ROOM, { roomCode, username, avatar: '👤' });
+        const sessionId = getSessionId();
+        socket.emit(EVENTS.JOIN_ROOM, { roomCode, username, avatar: '👤', sessionId });
     };
 
     return (

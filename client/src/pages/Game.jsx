@@ -224,7 +224,7 @@ const Game = () => {
                 </div>
 
                 {/* Sidebar / Chat */}
-                <div className={`w-full md:w-1/4 bg-white border-t md:border-t-0 md:border-l flex flex-col shadow-inner md:shadow-none z-20 transition-all duration-200 ${isKeyboardOpen ? 'h-[40%] flex-grow border-t-2' : 'h-[30%] md:h-full p-2 md:p-4'}`}>
+                <div className={`w-full md:w-1/4 bg-white border-t md:border-t-0 md:border-l flex flex-col shadow-inner md:shadow-none z-20 transition-all duration-200 ${isKeyboardOpen ? 'h-auto shrink-0 border-t-2' : 'h-[30%] md:h-full p-2 md:p-4'}`}>
                     {/* Player List - Hidden when keyboard open */}
                     <div className={`hidden md:flex flex-col mb-4 max-h-[35%] shrink-0 overflow-hidden bg-gray-50 rounded-lg border border-gray-100 ${isKeyboardOpen ? '!hidden' : ''}`}>
                         <div className="p-2 border-b border-gray-100 bg-gray-100/50">

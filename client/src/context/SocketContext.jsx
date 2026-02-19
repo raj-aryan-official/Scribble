@@ -22,6 +22,21 @@ export const SocketProvider = ({ children }) => {
 
         socket.on('connect', () => {
             console.log('Connected to server', socket.id);
+
+            // Auto-Rejoin Logic
+            const sessionData = localStorage.getItem('scribble_session');
+            if (sessionData) {
+                try {
+                    const { roomCode, sessionId } = JSON.parse(sessionData);
+                    if (roomCode && sessionId) {
+                        console.log('Attempting to rejoin session:', roomCode);
+                        socket.emit('REJOIN_ROOM', { roomCode, sessionId });
+                    }
+                } catch (e) {
+                    console.error('Failed to parse session data', e);
+                    localStorage.removeItem('scribble_session');
+                }
+            }
         });
 
         socket.on(EVENTS.ROOM_JOINED, (room) => {
@@ -78,6 +93,10 @@ export const SocketProvider = ({ children }) => {
         });
 
         socket.on(EVENTS.ERROR, (err) => {
+            if (err.code === 'SESSION_EXPIRED') {
+                localStorage.removeItem('scribble_session');
+                window.location.href = '/';
+            }
             dispatch({ type: 'SET_ERROR', payload: err.message });
         });
 
