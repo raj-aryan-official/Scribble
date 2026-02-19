@@ -28,21 +28,28 @@ const Game = () => {
 
     // Keyboard detection
     const [isKeyboardOpen, setIsKeyboardOpen] = React.useState(false);
+    const [viewportHeight, setViewportHeight] = React.useState(window.visualViewport?.height || window.innerHeight);
 
     useEffect(() => {
         const handleResize = () => {
             if (window.visualViewport) {
+                const currentHeight = window.visualViewport.height;
+                setViewportHeight(currentHeight);
                 // If visual viewport is significantly smaller than window innerHeight, keyboard is likely open
-                // Or just if height is very small (< 450px) which is typical for phones with keyboard
-                const isSmall = window.visualViewport.height < 450;
+                // Or just if height is very small (< 500px) which is typical for phones with keyboard
+                const isSmall = currentHeight < 500;
                 setIsKeyboardOpen(isSmall);
             }
         };
 
         window.visualViewport?.addEventListener('resize', handleResize);
+        window.visualViewport?.addEventListener('scroll', handleResize); // Listen to scroll too just in case
         handleResize(); // Check initial
 
-        return () => window.visualViewport?.removeEventListener('resize', handleResize);
+        return () => {
+            window.visualViewport?.removeEventListener('resize', handleResize);
+            window.visualViewport?.removeEventListener('scroll', handleResize);
+        };
     }, []);
 
     // Determine if current user is drawer
