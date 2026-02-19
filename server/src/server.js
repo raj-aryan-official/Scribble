@@ -32,3 +32,12 @@ io.on('connection', (socket) => {
 server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
+
+// Serve static files from the React client
+const path = require('path');
+app.use(express.static(path.join(__dirname, '../../client/dist')));
+
+// Handle React routing, return all requests to React app
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../../client/dist', 'index.html'));
+});

@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useCanvas } from '../../hooks/useCanvas';
 import { Eraser, Pencil, Trash2, Undo } from 'lucide-react';
 
-export const DrawingCanvas = ({ roomCode, isDrawer }) => {
+export const DrawingCanvas = ({ roomCode, isDrawer, isKeyboardOpen }) => {
     const {
         canvasRef, initCanvas, onMouseDown, onMouseMove, onMouseUp, onMouseLeave,
         onTouchStart, onTouchMove, onTouchEnd,
@@ -38,7 +38,7 @@ export const DrawingCanvas = ({ roomCode, isDrawer }) => {
                 />
             </div>
 
-            {isDrawer && (
+            {isDrawer && !isKeyboardOpen && (
                 <div className="mt-2 md:mt-4 flex flex-col md:flex-row items-center justify-between gap-2 md:gap-4 p-2 md:p-4 bg-white rounded-xl shadow-lg shrink-0">
                     <div className="flex items-center gap-2 md:gap-4 overflow-x-auto pb-2 md:pb-0 scrollbar-hide shrink-0">
                         <div className="flex gap-2 shrink-0">

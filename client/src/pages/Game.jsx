@@ -185,7 +185,7 @@ const Game = () => {
                         </div>
                     )}
                     <WordChoice roomCode={code} />
-                    <DrawingCanvas roomCode={code} isDrawer={isDrawer} />
+                    <DrawingCanvas roomCode={code} isDrawer={isDrawer} isKeyboardOpen={isKeyboardOpen} />
                 </div>
             </div>
 
