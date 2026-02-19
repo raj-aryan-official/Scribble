@@ -5,12 +5,12 @@ import Lobby from './pages/Lobby';
 import Game from './pages/Game';
 import GameEnd from './pages/GameEnd';
 
-import Header from './components/Layout/Header';
+
 
 function App() {
   return (
     <div className="h-[100dvh] bg-background text-primary font-body flex flex-col overflow-hidden">
-      <Header />
+
       <div className="flex-1 overflow-hidden relative">
         <Routes>
           <Route path="/" element={<Landing />} />

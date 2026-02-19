@@ -2,9 +2,7 @@ import React, { useEffect } from 'react';
 import { useVoiceChat } from '../../hooks/useVoiceChat';
 import { Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
 
-export const VoiceControls = ({ roomCode, username }) => {
-    const { isMicOn, toggleMic, isDeafened, toggleDeafen, peers } = useVoiceChat(roomCode, username);
-
+export const VoiceControls = ({ isMicOn, toggleMic, isDeafened, toggleDeafen, peersCount }) => {
     return (
         <div className="flex items-center gap-1 md:gap-2 bg-gray-100 p-1 md:p-2 rounded-lg shrink-0">
             <button
@@ -25,20 +23,7 @@ export const VoiceControls = ({ roomCode, username }) => {
                 {isDeafened ? <VolumeX size={16} className="md:w-5 md:h-5" /> : <Volume2 size={16} className="md:w-5 md:h-5" />}
             </button>
 
-            {/* Hidden Audio Elements for Peers */}
-            <div className="hidden">
-                {peers.map(peerId => (
-                    <audio
-                        key={peerId}
-                        id={`audio-${peerId}`}
-                        autoPlay
-                        playsInline
-                        muted={isDeafened} // Controlled by local state
-                    />
-                ))}
-            </div>
-
-            {peers.length > 0 && <span className="text-xs text-gray-500 font-medium ml-1">{peers.length} active</span>}
+            {peersCount > 0 && <span className="text-xs text-gray-500 font-medium ml-1">{peersCount} active</span>}
         </div>
     );
 };

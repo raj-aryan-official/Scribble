@@ -1,10 +1,13 @@
 import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DrawingCanvas } from '../components/Canvas/DrawingCanvas';
+import { LogOut } from 'lucide-react';
 import { ChatBox } from '../components/Chat/ChatBox';
 import { useGame } from '../context/GameContext';
 import { useSocket } from '../hooks/useSocket';
+import { useVoiceChat } from '../hooks/useVoiceChat';
 import { EVENTS } from '../../../shared/types';
+import MobileNavBar from '../components/Game/MobileNavBar';
 
 import { WordChoice } from '../components/Game/WordChoice';
 import { VoiceControls } from '../components/Chat/VoiceControls';
@@ -14,6 +17,7 @@ const Game = () => {
     const { state } = useGame();
     const navigate = useNavigate();
     const socket = useSocket();
+    const { isMicOn, toggleMic, isDeafened, toggleDeafen, peers } = useVoiceChat(code, state.currentUser?.username);
 
     // Navigate to End Screen logic
     useEffect(() => {
@@ -25,8 +29,20 @@ const Game = () => {
     // Determine if current user is drawer
     const isDrawer = state.currentUser?.id === state.drawerId;
 
+    const handleExit = () => {
+        if (confirm('Are you sure you want to exit?')) {
+            window.location.href = '/'; // Hard reload to clear socket state
+        }
+    };
+
+    const handleEndGame = () => {
+        if (confirm('End game for everyone?')) {
+            socket.emit(EVENTS.END_GAME_EARLY, { roomCode: code });
+        }
+    };
+
     return (
-        <div className="flex flex-col md:flex-row h-full bg-gray-100 overflow-hidden">
+        <div className="flex flex-col md:flex-row h-full bg-gray-100 overflow-hidden pt-[72px] md:pt-0">
             <WordChoice roomCode={code} />
 
             {/* Round End Overlay */}
@@ -38,14 +54,38 @@ const Game = () => {
                 </div>
             )}
 
+            {/* Hidden Audio Elements for Peers - Rendered once at top level */}
+            <div className="hidden">
+                {peers.map(peerId => (
+                    <audio
+                        key={peerId}
+                        id={`audio-${peerId}`}
+                        autoPlay
+                        playsInline
+                        muted={isDeafened}
+                    />
+                ))}
+            </div>
+
+            <MobileNavBar
+                roomCode={code}
+                isMicOn={isMicOn}
+                toggleMic={toggleMic}
+                isDeafened={isDeafened}
+                toggleDeafen={toggleDeafen}
+                onExit={handleExit}
+                onEndGame={handleEndGame}
+                isHost={state.currentUser?.isHost}
+            />
+
             <div className="w-full md:w-3/4 flex flex-col h-[60%] md:h-full p-2 md:p-4">
                 <div className="bg-white p-2 rounded-t-xl border-b flex justify-between items-center shadow-sm z-10 gap-2">
-                    <div className="flex flex-col shrink-0">
-                        <span className="text-[10px] md:text-xs text-gray-500 uppercase font-bold hidden md:block">Room</span>
+                    <div className="hidden md:flex flex-col shrink-0">
+                        <span className="text-[10px] md:text-xs text-gray-500 uppercase font-bold">Room</span>
                         <h2 className="font-heading text-sm md:text-xl text-primary font-bold">{code}</h2>
                     </div>
 
-                    <div className="flex-grow text-center px-1 overflow-hidden min-w-0 flex flex-col justify-center">
+                    <div className="flex-grow text-left md:text-center px-1 overflow-hidden min-w-0 flex flex-col justify-center">
                         {state.wordToGuess && isDrawer ? (
                             <div className="text-sm md:text-2xl font-mono tracking-wide md:tracking-widest font-bold text-accent break-words leading-tight">
                                 {state.wordToGuess}
@@ -60,20 +100,33 @@ const Game = () => {
                     </div>
 
                     <div className="flex items-center gap-2 md:gap-4 shrink-0">
-                        <VoiceControls roomCode={code} username={state.currentUser?.username} />
+                        <div className="hidden md:flex items-center gap-2">
+                            <button
+                                onClick={handleExit}
+                                className="flex items-center justify-center p-2 rounded-full hover:bg-gray-100 text-red-500 transition-colors"
+                                title="Exit Game"
+                            >
+                                <LogOut size={20} />
+                            </button>
+                            <VoiceControls
+                                isMicOn={isMicOn}
+                                toggleMic={toggleMic}
+                                isDeafened={isDeafened}
+                                toggleDeafen={toggleDeafen}
+                                peersCount={peers.length}
+                            />
+                        </div>
 
                         {state.currentUser?.isHost && (
-                            <button
-                                onClick={() => {
-                                    if (confirm('End game for everyone?')) {
-                                        socket.emit(EVENTS.END_GAME_EARLY, { roomCode: code });
-                                    }
-                                }}
-                                className="bg-[#D9443E] text-white px-4 py-1.5 rounded-3xl text-sm font-bold hover:bg-red-600 shadow-sm flex flex-col items-center justify-center leading-none min-h-[42px]"
-                            >
-                                <span>End</span>
-                                <span>Game</span>
-                            </button>
+                            <div className="hidden md:block">
+                                <button
+                                    onClick={handleEndGame}
+                                    className="bg-[#D9443E] text-white px-4 py-1.5 rounded-3xl text-sm font-bold hover:bg-red-600 shadow-sm flex flex-col items-center justify-center leading-none min-h-[42px]"
+                                >
+                                    <span>End</span>
+                                    <span>Game</span>
+                                </button>
+                            </div>
                         )}
                     </div>
 
