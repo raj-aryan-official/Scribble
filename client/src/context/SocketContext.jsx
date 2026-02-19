@@ -58,6 +58,10 @@ export const SocketProvider = ({ children }) => {
             dispatch({ type: 'DRAWER_WORD', payload: data });
         });
 
+        socket.on('HINT_UPDATE', (data) => {
+            dispatch({ type: 'HINT_UPDATE', payload: data });
+        });
+
         socket.on(EVENTS.CORRECT_GUESS, (data) => {
             dispatch({ type: 'CORRECT_GUESS', payload: data });
             play('correct');
@@ -85,6 +89,7 @@ export const SocketProvider = ({ children }) => {
             socket.off(EVENTS.TIMER_UPDATE);
             socket.off(EVENTS.WORD_CHOICES);
             socket.off(EVENTS.WORD_CHOSEN);
+            socket.off('HINT_UPDATE');
             socket.off(EVENTS.CORRECT_GUESS);
             socket.off(EVENTS.ROUND_ENDED);
             socket.off(EVENTS.GAME_ENDED);

@@ -44,7 +44,7 @@ const Lobby = () => {
                 <div className="flex flex-row justify-between items-center mb-6 gap-1 md:gap-4 overflow-x-hidden">
                     <div className="flex items-center gap-1 md:gap-3 shrink-0">
                         <button
-                            onClick={() => navigate('/')}
+                            onClick={() => window.location.href = '/'}
                             className="p-1.5 md:p-2 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-600 transition active:scale-95 shrink-0"
                             title="Back to Home"
                         >

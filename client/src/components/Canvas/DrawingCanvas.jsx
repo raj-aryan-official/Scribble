@@ -91,7 +91,7 @@ export const DrawingCanvas = ({ roomCode, isDrawer, isKeyboardOpen }) => {
                             <button
                                 key={c}
                                 onClick={() => setColor(c)}
-                                className={`w-7 h-7 md:w-8 md:h-8 rounded-full shadow-sm shrink-0 transition-transform ${color === c ? 'ring-2 ring-offset-2 ring-primary scale-110' : 'hover:scale-105 ring-1 ring-black/10'} ${idx >= 2 ? 'hidden md:block' : ''}`}
+                                className={`w-7 h-7 md:w-8 md:h-8 rounded-full shadow-sm shrink-0 transition-transform ${color === c ? 'ring-2 ring-offset-2 ring-primary scale-110' : 'hover:scale-105 ring-1 ring-black/10'} ${idx >= 2 ? 'hidden lg:block' : ''}`}
                                 style={{ backgroundColor: c }}
                                 title={c}
                             />
