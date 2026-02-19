@@ -97,102 +97,116 @@ const Game = () => {
                 totalRounds={state.totalRounds}
             />
 
-            <div className={`w-full md:w-3/4 flex flex-col ${isKeyboardOpen ? 'h-full' : 'h-[60%]'} md:h-full p-2 md:p-4 transition-all duration-200`}>
-                <div className="bg-white p-2 rounded-t-xl border-b flex justify-between items-center shadow-sm z-10 gap-2 shrink-0">
-                    <div className="hidden md:flex flex-col shrink-0">
-                        <span className="text-[10px] md:text-xs text-gray-500 uppercase font-bold">Room</span>
-                        <h2 className="font-heading text-sm md:text-xl text-primary font-bold leading-none">{code}</h2>
-                        <div className="mt-1 flex items-center gap-1">
-                            <span className="text-[10px] md:text-xs text-secondary font-bold uppercase">Round</span>
-                            <span className="font-bold text-sm text-gray-700">{state.currentRound} / {state.totalRounds}</span>
+            {/* Main Game Area */}
+            {/* If keyboard is OPEN on mobile, we use a specific layout: Canvas takes top, Input takes bottom. NO scrolling. */}
+            {isKeyboardOpen ? (
+                // KEYBOARD OPEN LAYOUT (Mobile Only)
+                <div className="flex flex-col h-full w-full overflow-hidden absolute inset-0 z-20 bg-white">
+                    {/* Canvas Section - Maximized */}
+                    <div className="flex-grow relative min-h-0 bg-gray-100">
+                        <div className="absolute inset-0 flex items-center justify-center p-2">
+                            {/* Force 16:9 ratio within available space, or just fit containment */}
+                            <div className="w-full h-full max-h-full aspect-video bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
+                                <DrawingCanvas roomCode={code} isDrawer={isDrawer} isKeyboardOpen={true} />
+                            </div>
+                            {/* Overlay Word Choice if needed */}
+                            <div className="absolute inset-0 pointer-events-none">
+                                <div className="pointer-events-auto w-full h-full">
+                                    <WordChoice roomCode={code} />
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div className="flex-grow text-left md:text-center px-1 overflow-hidden min-w-0 flex flex-col justify-center">
-                        <div className="text-[10px] md:text-sm text-gray-500 font-bold mb-0.5 md:mb-1 truncate">
-                            {isDrawer ? "You are drawing!" : `${state.players.find(p => p.id === state.drawerId)?.username || 'Someone'} is drawing...`}
-                        </div>
-                        {state.wordToGuess ? (
-                            <div className="text-sm md:text-2xl font-mono tracking-wide md:tracking-widest font-bold text-accent break-words leading-tight">
-                                {state.wordToGuess}
-                            </div>
-                        ) : state.wordHint ? (
-                            <div className="text-sm md:text-2xl font-mono tracking-widest font-bold text-gray-800 break-words leading-tight">
-                                {state.wordHint}
-                            </div>
-                        ) : (
-                            <div className="text-gray-400 italic text-xs md:text-base">Waiting...</div>
-                        )}
-                    </div>
-
-                    <div className="flex items-center gap-2 md:gap-4 shrink-0">
-                        <div className="hidden md:flex items-center gap-2">
-                            <button
-                                onClick={handleExit}
-                                className="flex items-center justify-center p-2 rounded-full hover:bg-gray-100 text-red-500 transition-colors"
-                                title="Exit Game"
-                            >
-                                <LogOut size={20} />
-                            </button>
-                            <VoiceControls
-                                isMicOn={isMicOn}
-                                toggleMic={toggleMic}
-                                isDeafened={isDeafened}
-                                toggleDeafen={toggleDeafen}
-                                peersCount={peers.length}
-                            />
-                        </div>
-
-                        {isHost && (
-                            <div className="hidden md:block">
-                                <button
-                                    onClick={handleEndGame}
-                                    className="bg-[#D9443E] text-white px-4 py-1.5 rounded-3xl text-sm font-bold hover:bg-red-600 shadow-sm flex flex-col items-center justify-center leading-none min-h-[42px]"
-                                >
-                                    <span>End</span>
-                                    <span>Game</span>
-                                </button>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className={`font-bold text-lg md:text-xl px-3 py-1 rounded-full whitespace-nowrap ${state.timer <= 10 ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-gray-100 text-primary'}`}>
-                        ⏱ {state.timer}s
+                    {/* Chat Input Section - Pinned to bottom */}
+                    <div className="shrink-0 p-2 bg-white border-t border-gray-200">
+                        <ChatBox roomCode={code} isCompact={true} />
                     </div>
                 </div>
-                <div className="flex-grow bg-white rounded-b-xl shadow-md overflow-hidden relative min-h-0">
-                    {state.gameState === 'ROUND_END' && (
-                        <div className="absolute inset-0 bg-black/90 flex items-center justify-center z-50 text-white flex-col p-4 animate-fade-in">
-                            <h2 className="text-3xl md:text-4xl mb-2 font-heading text-primary bg-white px-6 py-2 rounded-full shadow-lg">Round Over!</h2>
-                            <p className="text-xl md:text-2xl mb-4">The word was: <span className="text-accent font-bold bg-white px-3 py-1 rounded ml-2">{state.wordToGuess}</span></p>
+            ) : (
+                // STANDARD LAYOUT (Desktop & Mobile Keyboard Closed)
+                <div className="flex flex-col md:flex-row h-full w-full overflow-hidden">
+                    <div className="w-full md:w-3/4 flex flex-col h-[60%] md:h-full p-2 md:p-4 transition-all duration-200">
+                        <div className="bg-white p-2 rounded-t-xl border-b flex justify-between items-center shadow-sm z-10 gap-2 shrink-0">
+                            {/* Header Content (Room, Round, Word/Hint, Timer) - Same as before */}
+                            <div className="hidden md:flex flex-col shrink-0">
+                                <span className="text-[10px] md:text-xs text-gray-500 uppercase font-bold">Room</span>
+                                <h2 className="font-heading text-sm md:text-xl text-primary font-bold leading-none">{code}</h2>
+                                <div className="mt-1 flex items-center gap-1">
+                                    <span className="text-[10px] md:text-xs text-secondary font-bold uppercase">Round</span>
+                                    <span className="font-bold text-sm text-gray-700">{state.currentRound} / {state.totalRounds}</span>
+                                </div>
+                            </div>
 
-                            <div className="bg-white/10 rounded-xl p-4 w-full max-w-sm overflow-y-auto max-h-[50%] mb-4 scrollbar-thin scrollbar-thumb-white scrollbar-track-transparent">
-                                <h3 className="text-lg font-bold mb-3 border-b border-white/20 pb-2">Scores</h3>
-                                {state.players
-                                    .sort((a, b) => (state.scores[b.id] || 0) - (state.scores[a.id] || 0))
-                                    .map((p, idx) => (
-                                        <div key={p.id} className="flex items-center justify-between mb-2 last:mb-0">
-                                            <div className="flex items-center">
-                                                <span className="w-6 text-center text-gray-400 font-mono text-sm">{idx + 1}.</span>
-                                                <span className="ml-2 font-bold truncate max-w-[150px]">{p.username}</span>
+                            <div className="flex-grow text-left md:text-center px-1 overflow-hidden min-w-0 flex flex-col justify-center">
+                                <div className="text-[10px] md:text-sm text-gray-500 font-bold mb-0.5 md:mb-1 truncate">
+                                    {isDrawer ? "You are drawing!" : `${state.players.find(p => p.id === state.drawerId)?.username || 'Someone'} is drawing...`}
+                                </div>
+                                {state.wordToGuess ? (
+                                    <div className="text-sm md:text-2xl font-mono tracking-wide md:tracking-widest font-bold text-accent break-words leading-tight">
+                                        {state.wordToGuess}
+                                    </div>
+                                ) : state.wordHint ? (
+                                    <div className="text-sm md:text-2xl font-mono tracking-widest font-bold text-gray-800 break-words leading-tight">
+                                        {state.wordHint}
+                                    </div>
+                                ) : (
+                                    <div className="text-gray-400 italic text-xs md:text-base">Waiting...</div>
+                                )}
+                            </div>
+
+                            <div className="flex items-center gap-2 md:gap-4 shrink-0">
+                                <div className="hidden md:flex items-center gap-2">
+                                    <button onClick={handleExit} className="flex items-center justify-center p-2 rounded-full hover:bg-gray-100 text-red-500 transition-colors" title="Exit Game">
+                                        <LogOut size={20} />
+                                    </button>
+                                    <VoiceControls isMicOn={isMicOn} toggleMic={toggleMic} isDeafened={isDeafened} toggleDeafen={toggleDeafen} peersCount={peers.length} />
+                                </div>
+                                {isHost && (
+                                    <div className="hidden md:block">
+                                        <button onClick={handleEndGame} className="bg-[#D9443E] text-white px-4 py-1.5 rounded-3xl text-sm font-bold hover:bg-red-600 shadow-sm flex flex-col items-center justify-center leading-none min-h-[42px]">
+                                            <span>End</span><span>Game</span>
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className={`font-bold text-lg md:text-xl px-3 py-1 rounded-full whitespace-nowrap ${state.timer <= 10 ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-gray-100 text-primary'}`}>
+                                ⏱ {state.timer}s
+                            </div>
+                        </div>
+
+                        {/* Standard Canvas Area */}
+                        <div className="flex-grow bg-white rounded-b-xl shadow-md overflow-hidden relative min-h-0">
+                            {/* Round End Overlay */}
+                            {state.gameState === 'ROUND_END' && (
+                                <div className="absolute inset-0 bg-black/90 flex items-center justify-center z-50 text-white flex-col p-4 animate-fade-in">
+                                    <h2 className="text-3xl md:text-4xl mb-2 font-heading text-primary bg-white px-6 py-2 rounded-full shadow-lg">Round Over!</h2>
+                                    <p className="text-xl md:text-2xl mb-4">The word was: <span className="text-accent font-bold bg-white px-3 py-1 rounded ml-2">{state.wordToGuess}</span></p>
+                                    <div className="bg-white/10 rounded-xl p-4 w-full max-w-sm overflow-y-auto max-h-[50%] mb-4 scrollbar-thin scrollbar-thumb-white scrollbar-track-transparent">
+                                        <h3 className="text-lg font-bold mb-3 border-b border-white/20 pb-2">Scores</h3>
+                                        {state.players.sort((a, b) => (state.scores[b.id] || 0) - (state.scores[a.id] || 0)).map((p, idx) => (
+                                            <div key={p.id} className="flex items-center justify-between mb-2 last:mb-0">
+                                                <div className="flex items-center">
+                                                    <span className="w-6 text-center text-gray-400 font-mono text-sm">{idx + 1}.</span>
+                                                    <span className="ml-2 font-bold truncate max-w-[150px]">{p.username}</span>
+                                                </div>
+                                                <span className="font-bold text-accent bg-white px-2 py-0.5 rounded text-sm">{state.scores[p.id] || 0} pts</span>
                                             </div>
-                                            <span className="font-bold text-accent bg-white px-2 py-0.5 rounded text-sm">{state.scores[p.id] || 0} pts</span>
-                                        </div>
-                                    ))}
-                            </div>
+                                        ))}
+                                    </div>
+                                    <p className="animate-pulse font-bold text-gray-300 text-sm">Next round starting soon...</p>
+                                </div>
+                            )}
 
-                            <p className="animate-pulse font-bold text-gray-300 text-sm">Next round starting soon...</p>
+                            <WordChoice roomCode={code} />
+                            <DrawingCanvas roomCode={code} isDrawer={isDrawer} isKeyboardOpen={false} />
                         </div>
-                    )}
-                    <WordChoice roomCode={code} />
-                    <DrawingCanvas roomCode={code} isDrawer={isDrawer} isKeyboardOpen={isKeyboardOpen} />
-                </div>
-            </div>
+                    </div>
 
-            <div className={`w-full md:w-1/4 ${isKeyboardOpen ? 'h-auto shrink-0' : 'h-[40%]'} md:h-full p-2 md:p-4 bg-white border-t md:border-t-0 md:border-l flex flex-col shadow-inner md:shadow-none z-20 transition-all duration-200`}>
-                {/* Hide Player List when keyboard is open to save space */}
-                {!isKeyboardOpen && (
-                    <>
+                    {/* Sidebar / Chat */}
+                    <div className="w-full md:w-1/4 h-[40%] md:h-full p-2 md:p-4 bg-white border-t md:border-t-0 md:border-l flex flex-col shadow-inner md:shadow-none z-20 transition-all duration-200">
+                        {/* Player List */}
                         <div className="hidden md:block mb-4 h-1/4 overflow-y-auto bg-gray-50 p-2 rounded">
                             <h3 className="font-bold mb-2 text-primary">Players</h3>
                             {state.players.map(p => (
@@ -215,14 +229,13 @@ const Game = () => {
                                 </div>
                             ))}
                         </div>
-                    </>
-                )}
 
-                <div className="flex-grow min-h-0 flex flex-col justify-end">
-                    {/* Pass isKeyboardOpen to ChatBox to conditionally hide messages */}
-                    <ChatBox roomCode={code} isCompact={isKeyboardOpen} />
+                        <div className="flex-grow min-h-0 flex flex-col justify-end">
+                            <ChatBox roomCode={code} isCompact={false} />
+                        </div>
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 };
