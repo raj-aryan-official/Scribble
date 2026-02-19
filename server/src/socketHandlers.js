@@ -20,6 +20,18 @@ module.exports = (io, socket) => {
     });
 
     socket.on(EVENTS.JOIN_ROOM, ({ roomCode, username, avatar, sessionId }) => {
+        // Check if player is already in a room (and switching rooms)
+        const currentRoom = roomManager.getRoomByPlayerId(socket.id);
+        if (currentRoom && currentRoom.code !== roomCode) {
+            // Remove from old room first
+            const oldRoom = roomManager.removePlayer(currentRoom.code, socket.id);
+            if (oldRoom) {
+                socket.leave(currentRoom.code);
+                io.to(currentRoom.code).emit(EVENTS.ROOM_JOINED, getSanitizedRoom(oldRoom));
+                console.log(`User ${username} left ${currentRoom.code} to join ${roomCode}`);
+            }
+        }
+
         const player = { id: socket.id, username, avatar, isHost: false, sessionId };
         const result = roomManager.joinRoom(roomCode, player);
 

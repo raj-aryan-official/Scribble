@@ -109,6 +109,15 @@ class RoomManager {
 
         return { room, player, oldSocketId };
     }
+
+    getRoomByPlayerId(playerId) {
+        for (const [code, room] of this.rooms) {
+            if (room.players.find(p => p.id === playerId)) {
+                return room;
+            }
+        }
+        return null;
+    }
 }
 
 module.exports = new RoomManager();

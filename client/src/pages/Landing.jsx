@@ -37,9 +37,16 @@ const Landing = () => {
 
     useEffect(() => {
         if (state.roomCode) {
+            // Valid room in state. Is user trying to join a DIFFERENT room?
+            if (code && code.toUpperCase() !== state.roomCode) {
+                // Don't redirect yet. Let them click "Join".
+                // Ideally, we might want to warn them "You are currently in room X".
+                // But for now, just blocking the auto-redirect allows them to fill the form and "Join", which triggers the server-side room switch we just implemented.
+                return;
+            }
             navigate(`/lobby/${state.roomCode}`);
         }
-    }, [state.roomCode, navigate]);
+    }, [state.roomCode, navigate, code]);
 
     const getSessionId = () => {
         let sessionId = localStorage.getItem('scribble_session_id');
