@@ -3,7 +3,7 @@ import { useGame } from '../../context/GameContext';
 import { useSocket } from '../../hooks/useSocket';
 import { EVENTS } from '../../../../shared/types';
 
-export const ChatBox = ({ roomCode }) => {
+export const ChatBox = ({ roomCode, isCompact = false }) => {
     const { state, dispatch } = useGame();
     const socket = useSocket();
     const [message, setMessage] = useState('');
@@ -26,8 +26,10 @@ export const ChatBox = ({ roomCode }) => {
     }, [socket, dispatch]);
 
     useEffect(() => {
-        scrollToBottom();
-    }, [state.messages]);
+        if (!isCompact) {
+            scrollToBottom();
+        }
+    }, [state.messages, isCompact]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -35,23 +37,13 @@ export const ChatBox = ({ roomCode }) => {
 
         let finalMessage = message;
 
-        console.log('Current User ID:', state.currentUser?.id);
-        console.log('Drawer ID:', state.drawerId);
-        console.log('Word to Guess:', state.wordToGuess);
-        console.log('Original Message:', message);
-
         // Prevent Drawer from spoiling the word
         if (state.currentUser?.id === state.drawerId && state.wordToGuess) {
             const regex = new RegExp(state.wordToGuess, 'gi');
             if (regex.test(finalMessage)) {
                 // Replace matching word with '#' of same length
                 finalMessage = finalMessage.replace(regex, (match) => '#'.repeat(match.length));
-                console.log('Found match! Masking word:', finalMessage);
-            } else {
-                console.log('No match found for word:', state.wordToGuess);
             }
-        } else {
-            console.log('User is not drawer or word not defined.');
         }
 
         socket.emit(EVENTS.SEND_MESSAGE, { roomCode, text: finalMessage });
@@ -60,15 +52,17 @@ export const ChatBox = ({ roomCode }) => {
 
     return (
         <div className="flex flex-col h-full">
-            <div className="flex-grow overflow-y-auto p-4 space-y-2 bg-gray-50 rounded-lg mb-2 min-h-0">
-                {state.messages.map((msg, idx) => (
-                    <div key={idx} className={`p-2 rounded ${msg.type === 'correct' ? 'bg-green-100 text-green-800' : 'bg-white shadow-sm'}`}>
-                        <span className="font-bold mr-2">{msg.username}:</span>
-                        <span>{msg.text}</span>
-                    </div>
-                ))}
-                <div ref={messagesEndRef} />
-            </div>
+            {!isCompact && (
+                <div className="flex-grow overflow-y-auto p-4 space-y-2 bg-gray-50 rounded-lg mb-2 min-h-0">
+                    {state.messages.map((msg, idx) => (
+                        <div key={idx} className={`p-2 rounded ${msg.type === 'correct' ? 'bg-green-100 text-green-800' : 'bg-white shadow-sm'}`}>
+                            <span className="font-bold mr-2">{msg.username}:</span>
+                            <span>{msg.text}</span>
+                        </div>
+                    ))}
+                    <div ref={messagesEndRef} />
+                </div>
+            )}
             <form onSubmit={handleSubmit} className="flex gap-2">
                 <input
                     type="text"

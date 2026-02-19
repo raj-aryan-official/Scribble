@@ -26,6 +26,25 @@ const Game = () => {
         }
     }, [state.gameState, code, navigate]);
 
+    // Keyboard detection
+    const [isKeyboardOpen, setIsKeyboardOpen] = React.useState(false);
+
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.visualViewport) {
+                // If visual viewport is significantly smaller than window innerHeight, keyboard is likely open
+                // Or just if height is very small (< 450px) which is typical for phones with keyboard
+                const isSmall = window.visualViewport.height < 450;
+                setIsKeyboardOpen(isSmall);
+            }
+        };
+
+        window.visualViewport?.addEventListener('resize', handleResize);
+        handleResize(); // Check initial
+
+        return () => window.visualViewport?.removeEventListener('resize', handleResize);
+    }, []);
+
     // Determine if current user is drawer
     const isDrawer = state.currentUser?.id === state.drawerId;
 
@@ -78,8 +97,8 @@ const Game = () => {
                 totalRounds={state.totalRounds}
             />
 
-            <div className="w-full md:w-3/4 flex flex-col h-[60%] md:h-full p-2 md:p-4">
-                <div className="bg-white p-2 rounded-t-xl border-b flex justify-between items-center shadow-sm z-10 gap-2">
+            <div className={`w-full md:w-3/4 flex flex-col ${isKeyboardOpen ? 'h-full' : 'h-[60%]'} md:h-full p-2 md:p-4 transition-all duration-200`}>
+                <div className="bg-white p-2 rounded-t-xl border-b flex justify-between items-center shadow-sm z-10 gap-2 shrink-0">
                     <div className="hidden md:flex flex-col shrink-0">
                         <span className="text-[10px] md:text-xs text-gray-500 uppercase font-bold">Room</span>
                         <h2 className="font-heading text-sm md:text-xl text-primary font-bold leading-none">{code}</h2>
@@ -141,7 +160,7 @@ const Game = () => {
                         ⏱ {state.timer}s
                     </div>
                 </div>
-                <div className="flex-grow bg-white rounded-b-xl shadow-md overflow-hidden relative">
+                <div className="flex-grow bg-white rounded-b-xl shadow-md overflow-hidden relative min-h-0">
                     {state.gameState === 'ROUND_END' && (
                         <div className="absolute inset-0 bg-black/90 flex items-center justify-center z-50 text-white flex-col p-4 animate-fade-in">
                             <h2 className="text-3xl md:text-4xl mb-2 font-heading text-primary bg-white px-6 py-2 rounded-full shadow-lg">Round Over!</h2>
@@ -170,32 +189,38 @@ const Game = () => {
                 </div>
             </div>
 
-            <div className="w-full md:w-1/4 h-[40%] md:h-full p-2 md:p-4 bg-white border-t md:border-t-0 md:border-l flex flex-col shadow-inner md:shadow-none z-20">
-                <div className="hidden md:block mb-4 h-1/4 overflow-y-auto bg-gray-50 p-2 rounded">
-                    <h3 className="font-bold mb-2 text-primary">Players</h3>
-                    {state.players.map(p => (
-                        <div key={p.id} className={`flex items-center text-sm mb-1 p-1 rounded ${state.guessedPlayers.includes(p.id) ? 'bg-green-100 border border-green-300' : ''}`}>
-                            <span>{p.avatar}</span>
-                            <span className="ml-2 font-bold truncate max-w-[100px]">{p.username}</span>
-                            <span className="ml-auto text-gray-500">{state.scores[p.id] || 0} pts</span>
+            <div className={`w-full md:w-1/4 ${isKeyboardOpen ? 'h-auto shrink-0' : 'h-[40%]'} md:h-full p-2 md:p-4 bg-white border-t md:border-t-0 md:border-l flex flex-col shadow-inner md:shadow-none z-20 transition-all duration-200`}>
+                {/* Hide Player List when keyboard is open to save space */}
+                {!isKeyboardOpen && (
+                    <>
+                        <div className="hidden md:block mb-4 h-1/4 overflow-y-auto bg-gray-50 p-2 rounded">
+                            <h3 className="font-bold mb-2 text-primary">Players</h3>
+                            {state.players.map(p => (
+                                <div key={p.id} className={`flex items-center text-sm mb-1 p-1 rounded ${state.guessedPlayers.includes(p.id) ? 'bg-green-100 border border-green-300' : ''}`}>
+                                    <span>{p.avatar}</span>
+                                    <span className="ml-2 font-bold truncate max-w-[100px]">{p.username}</span>
+                                    <span className="ml-auto text-gray-500">{state.scores[p.id] || 0} pts</span>
+                                </div>
+                            ))}
                         </div>
-                    ))}
-                </div>
-                {/* Mobile Player Summary */}
-                <div className="md:hidden flex gap-2 overflow-x-auto pb-2 mb-2 scrollbar-hide min-h-[50px] shrink-0">
-                    {state.players.map(p => (
-                        <div key={p.id} className={`flex items-center rounded-full px-3 py-1 border shrink-0 ${state.guessedPlayers.includes(p.id) ? 'bg-green-100 border-green-300' : 'bg-gray-50'}`}>
-                            <span className="text-xl">{p.avatar}</span>
-                            <div className="flex flex-col ml-2 leading-none">
-                                <span className="text-xs font-bold truncate max-w-[80px]">{p.username}</span>
-                                <span className="text-[10px] text-gray-500">{state.scores[p.id] || 0} pts</span>
-                            </div>
+                        {/* Mobile Player Summary */}
+                        <div className="md:hidden flex gap-2 overflow-x-auto pb-2 mb-2 scrollbar-hide min-h-[50px] shrink-0">
+                            {state.players.map(p => (
+                                <div key={p.id} className={`flex items-center rounded-full px-3 py-1 border shrink-0 ${state.guessedPlayers.includes(p.id) ? 'bg-green-100 border-green-300' : 'bg-gray-50'}`}>
+                                    <span className="text-xl">{p.avatar}</span>
+                                    <div className="flex flex-col ml-2 leading-none">
+                                        <span className="text-xs font-bold truncate max-w-[80px]">{p.username}</span>
+                                        <span className="text-[10px] text-gray-500">{state.scores[p.id] || 0} pts</span>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
-                    ))}
-                </div>
+                    </>
+                )}
 
-                <div className="flex-grow min-h-0 flex flex-col">
-                    <ChatBox roomCode={code} />
+                <div className="flex-grow min-h-0 flex flex-col justify-end">
+                    {/* Pass isKeyboardOpen to ChatBox to conditionally hide messages */}
+                    <ChatBox roomCode={code} isCompact={isKeyboardOpen} />
                 </div>
             </div>
         </div>

@@ -39,8 +39,8 @@ export const DrawingCanvas = ({ roomCode, isDrawer }) => {
             </div>
 
             {isDrawer && (
-                <div className="mt-2 md:mt-4 flex flex-col gap-2 md:gap-4 p-2 md:p-4 bg-white rounded-xl shadow-lg">
-                    <div className="flex items-center gap-2 md:gap-4 overflow-x-auto pb-2 scrollbar-hide">
+                <div className="mt-2 md:mt-4 flex flex-col md:flex-row items-center justify-between gap-2 md:gap-4 p-2 md:p-4 bg-white rounded-xl shadow-lg shrink-0">
+                    <div className="flex items-center gap-2 md:gap-4 overflow-x-auto pb-2 md:pb-0 scrollbar-hide shrink-0">
                         <div className="flex gap-2 shrink-0">
                             <button onClick={() => setTool('pencil')} className={`p-2 rounded ${tool === 'pencil' ? 'bg-primary text-white' : 'bg-gray-100'}`}>
                                 <Pencil size={20} />
@@ -70,7 +70,10 @@ export const DrawingCanvas = ({ roomCode, isDrawer }) => {
                         </div>
                     </div>
 
-                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                    {/* Desktop Divider */}
+                    <div className="hidden md:block h-8 w-px bg-gray-300 shrink-0"></div>
+
+                    <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide items-center">
                         {['#000000', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#00FFFF', '#FF00FF', '#FFFFFF', '#FFA500', '#800080', '#A52A2A', '#008080', '#800000'].map(c => (
                             <button
                                 key={c}
