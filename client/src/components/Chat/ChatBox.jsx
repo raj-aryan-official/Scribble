@@ -66,7 +66,7 @@ export const ChatBox = ({ roomCode, isCompact = false }) => {
             <form onSubmit={handleSubmit} className="flex gap-2">
                 <input
                     type="text"
-                    className="flex-grow p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="flex-grow p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary text-base"
                     placeholder="Type your guess..."
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}

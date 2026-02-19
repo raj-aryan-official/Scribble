@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
 import { useSocket } from '../hooks/useSocket';
-import { Copy, Check, Share2 } from 'lucide-react';
+import { Copy, Check, Share2, Home } from 'lucide-react';
 
 const Lobby = () => {
     const { code } = useParams();
@@ -42,10 +42,20 @@ const Lobby = () => {
         <div className="flex flex-col items-center h-full p-4 md:p-8 bg-background overflow-y-auto">
             <div className="bg-white p-6 md:p-8 rounded-xl shadow-lg w-full max-w-2xl">
                 <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                    <h1 className="text-4xl md:text-3xl font-heading text-primary">Lobby</h1>
-                    <div className="flex gap-2">
+                    <div className="flex items-center gap-3 self-start md:self-auto">
+                        <button
+                            onClick={() => navigate('/')}
+                            className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-600 transition active:scale-95"
+                            title="Back to Home"
+                        >
+                            <Home size={24} />
+                        </button>
+                        <h1 className="text-4xl md:text-3xl font-heading text-primary">Lobby</h1>
+                    </div>
+
+                    <div className="flex gap-2 w-full md:w-auto justify-center md:justify-end">
                         <div
-                            className="bg-secondary text-white px-4 py-2 rounded-lg font-bold text-lg md:text-base flex items-center gap-2 cursor-pointer active:scale-95 transition-transform hover:bg-purple-600"
+                            className="bg-secondary text-white px-4 py-2 rounded-lg font-bold text-lg md:text-base flex items-center gap-2 cursor-pointer active:scale-95 transition-transform hover:bg-purple-600 shadow-sm"
                             onClick={handleCopyCode}
                             title="Copy Room Code"
                         >
@@ -53,7 +63,7 @@ const Lobby = () => {
                             {copiedCode ? <Check size={18} /> : <Copy size={18} />}
                         </div>
                         <div
-                            className="bg-accent text-white px-4 py-2 rounded-lg font-bold text-lg md:text-base flex items-center gap-2 cursor-pointer active:scale-95 transition-transform hover:bg-pink-600"
+                            className="bg-accent text-white px-4 py-2 rounded-lg font-bold text-lg md:text-base flex items-center gap-2 cursor-pointer active:scale-95 transition-transform hover:bg-pink-600 shadow-sm"
                             onClick={handleCopyLink}
                             title="Copy Invite Link"
                         >

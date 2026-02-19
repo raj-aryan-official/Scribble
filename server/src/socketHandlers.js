@@ -90,7 +90,7 @@ module.exports = (io, socket) => {
                 // io.to(roomCode).emit(EVENTS.PLAYER_JOINED, player);
 
                 // I will emit 'ROOM_UPDATE' with room object.
-                io.to(targetRoomCode).emit(EVENTS.ROOM_JOINED, room);
+                io.to(targetRoomCode).emit(EVENTS.ROOM_JOINED, getSanitizedRoom(room));
                 console.log(`User ${socket.id} disconnected from ${targetRoomCode}`);
             }
         }
