@@ -10,6 +10,7 @@ class RoomManager {
         const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
         const roomId = uuidv4();
 
+        // Ensure hostPlayer has sessionId if passed
         const room = {
             id: roomId,
             code: roomCode,
@@ -71,6 +72,42 @@ class RoomManager {
         }
 
         return room;
+    }
+
+    reconnectPlayer(roomCode, sessionId, newSocketId) {
+        const room = this.rooms.get(roomCode);
+        if (!room) return { error: 'Room not found' };
+
+        const player = room.players.find(p => p.sessionId === sessionId);
+        if (!player) return { error: 'Session not found in room' };
+
+        const oldSocketId = player.id;
+
+        // Update Player ID
+        player.id = newSocketId;
+        player.isDisconnected = false; // logic if we track disconnects
+
+        // Migrate Scores
+        if (room.scores[oldSocketId] !== undefined) {
+            room.scores[newSocketId] = room.scores[oldSocketId];
+            delete room.scores[oldSocketId];
+        }
+
+        // Migrate Guessed Status (if using global set in RoomManager, but it's usually per-round in socketHandlers)
+        // We will handle room.guessedPlayers in socketHandlers or if it's attached to room here:
+        // In socketHandlers it is: room.guessedPlayers = new Set();
+        // So we need to update it here if it exists.
+        if (room.guessedPlayers && room.guessedPlayers.has(oldSocketId)) {
+            room.guessedPlayers.delete(oldSocketId);
+            room.guessedPlayers.add(newSocketId);
+        }
+
+        // Migrate Host
+        if (room.hostId === oldSocketId) {
+            room.hostId = newSocketId;
+        }
+
+        return { room, player, oldSocketId };
     }
 }
 

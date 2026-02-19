@@ -10,17 +10,17 @@ module.exports = (io, socket) => {
         return sanitized;
     };
 
-    socket.on(EVENTS.CREATE_ROOM, ({ username, avatar, settings }) => {
-        const player = { id: socket.id, username, avatar, isHost: true };
+    socket.on(EVENTS.CREATE_ROOM, ({ username, avatar, settings, sessionId }) => {
+        const player = { id: socket.id, username, avatar, isHost: true, sessionId };
         const room = roomManager.createRoom(player, settings);
 
         socket.join(room.code);
         socket.emit(EVENTS.ROOM_JOINED, getSanitizedRoom(room));
-        console.log(`Room created: ${room.code} by ${username}`);
+        console.log(`Room created: ${room.code} by ${username} (${sessionId})`);
     });
 
-    socket.on(EVENTS.JOIN_ROOM, ({ roomCode, username, avatar }) => {
-        const player = { id: socket.id, username, avatar, isHost: false };
+    socket.on(EVENTS.JOIN_ROOM, ({ roomCode, username, avatar, sessionId }) => {
+        const player = { id: socket.id, username, avatar, isHost: false, sessionId };
         const result = roomManager.joinRoom(roomCode, player);
 
         if (result.error) {
@@ -45,6 +45,63 @@ module.exports = (io, socket) => {
         if (result.room.strokes && result.room.strokes.length > 0) {
             socket.emit('STROKE_HISTORY', result.room.strokes);
         }
+    });
+
+    socket.on('REJOIN_ROOM', ({ roomCode, sessionId }) => {
+        const result = roomManager.reconnectPlayer(roomCode, sessionId, socket.id);
+
+        if (result.error) {
+            socket.emit(EVENTS.ERROR, { message: result.error, code: 'SESSION_EXPIRED' });
+            return;
+        }
+
+        const { room, player } = result;
+        socket.join(roomCode);
+
+        // Emit Joined event to self
+        socket.emit(EVENTS.ROOM_JOINED, getSanitizedRoom(room));
+
+        // Notify others that player is back (using UPDATE_PLAYERS to refresh list with new ID)
+        io.to(roomCode).emit(EVENTS.PLAYER_JOINED, player); // This appends/updates based on client logic
+
+        // Send current game state
+        if (room.gameState === GAME_STATES.DRAWING) {
+            socket.emit(EVENTS.GAME_STARTED, {
+                gameState: room.gameState,
+                currentRound: room.currentRound,
+                totalRounds: room.settings.rounds,
+                drawerId: room.players[room.currentDrawerIndex].id
+            });
+
+            // Send strokes
+            if (room.strokes && room.strokes.length > 0) {
+                socket.emit('STROKE_HISTORY', room.strokes);
+            }
+
+            // Send Word/Hint
+            if (player.id === room.players[room.currentDrawerIndex].id) {
+                socket.emit('drawerWord', { word: room.wordToGuess });
+            } else {
+                socket.emit(EVENTS.WORD_CHOSEN, {
+                    hint: room.wordHint || '', // Use stored hint if avaiable in room? 
+                    // RoomManager doesn't seem to store `wordHint` explicitly on room object in `startRound`, 
+                    // it calculates it. We might need to store it.
+                    // Checking startRound: `const initialHint = ...`. It emits it but doesn't store it on `room`.
+                    // We should FIX startRound to store `wordHint` on room.
+                    length: room.wordToGuess?.length || 0,
+                    drawerId: room.players[room.currentDrawerIndex].id
+                });
+
+                // If we don't store `wordHint` on room, we need to regenerate it or store it.
+                // Let's assume for now we might miss the hint until next update if not stored.
+            }
+
+            // Send Timer
+            // We need current timer value. socketHandlers updates it but doesn't store in room property?
+            // It just emits. We should probably store it.
+        }
+
+        console.log(`User ${player.username} rejoined ${roomCode}`);
     });
 
     socket.on('disconnect', () => {

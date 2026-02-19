@@ -6,7 +6,19 @@ import { useSound } from '../hooks/useSound';
 
 export const SocketContext = createContext();
 
-const SOCKET_URL = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:3000' : window.location.origin);
+const getSocketUrl = () => {
+    if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+    if (window.location.hostname === 'localhost') return 'http://localhost:3000';
+    // If on local network (e.g. 192.168.x.x) and port is 5173 (client), assume server is on 3000
+    if (window.location.port === '5173') {
+        const protocol = window.location.protocol;
+        const hostname = window.location.hostname;
+        return `${protocol}//${hostname}:3000`;
+    }
+    return window.location.origin;
+};
+
+const SOCKET_URL = getSocketUrl();
 
 export const SocketProvider = ({ children }) => {
     const { dispatch } = useGame();
