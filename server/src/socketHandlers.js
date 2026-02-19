@@ -3,12 +3,19 @@ const { EVENTS, GAME_STATES } = require('../../shared/types');
 const { getRandomWords } = require('./wordBank');
 
 module.exports = (io, socket) => {
+    // Helper to sanitize room object (remove circular refs/timers)
+    // Helper to sanitize room object (remove circular refs/timers/internal sets)
+    const getSanitizedRoom = (room) => {
+        const { timerInterval, wordSelectionTimer, revealedIndices, ...sanitized } = room;
+        return sanitized;
+    };
+
     socket.on(EVENTS.CREATE_ROOM, ({ username, avatar, settings }) => {
         const player = { id: socket.id, username, avatar, isHost: true };
         const room = roomManager.createRoom(player, settings);
 
         socket.join(room.code);
-        socket.emit(EVENTS.ROOM_JOINED, room);
+        socket.emit(EVENTS.ROOM_JOINED, getSanitizedRoom(room));
         console.log(`Room created: ${room.code} by ${username}`);
     });
 
@@ -22,8 +29,16 @@ module.exports = (io, socket) => {
         }
 
         socket.join(roomCode);
-        socket.emit(EVENTS.ROOM_JOINED, result.room);
+        socket.emit(EVENTS.ROOM_JOINED, getSanitizedRoom(result.room));
         io.to(roomCode).emit(EVENTS.PLAYER_JOINED, player);
+
+        // System Message: Join
+        io.to(roomCode).emit(EVENTS.MESSAGE_RECEIVED, {
+            username: 'System',
+            text: `${username} joined!`,
+            type: 'system'
+        });
+
         console.log(`${username} joined room ${roomCode}`);
 
         // Late Join: Send current strokes if drawing
@@ -33,9 +48,52 @@ module.exports = (io, socket) => {
     });
 
     socket.on('disconnect', () => {
-        // Handle disconnection logic (find room, remove player, emit update)
-        // This requires tracking which room a socket is in efficiently
-        // For MVP, we can iterate or store a mapping in RoomManager
+        // Find room where socket matches a player
+        // For MVP iteration is acceptable given low room count
+        let targetRoomCode = null;
+        for (const [code, room] of roomManager.rooms) {
+            if (room.players.find(p => p.id === socket.id)) {
+                targetRoomCode = code;
+                break;
+            }
+        }
+
+        if (targetRoomCode) {
+            const room = roomManager.removePlayer(targetRoomCode, socket.id);
+            if (room) {
+                // Notify remaining players
+                io.to(targetRoomCode).emit(EVENTS.ROOM_JOINED, getSanitizedRoom(room));
+                // Actually PLAYER_JOINED usually sends single player in my code above?
+                // Let's check: Line 36 dispatch UPDATE_PLAYERS. 
+                // Protocol check: client expects 'UPDATE_PLAYERS' with payload: player or list? 
+                // Context GameContext: UPDATE_PLAYERS appends. 
+                // We need a way to REPLACE the list or remove.
+                // Current client implementation appends. That's bad for removal.
+                // We might need a new event 'UPDATE_PLAYER_LIST' or similar, OR we just let the client handle it if we change GameContext.
+                // Let's emit a specific event for disconnect or full refresh.
+                // For MVP, if we restart/refresh it works, but for live update we need a 'SET_PLAYERS' or similar.
+                // Let's assume for now we use 'PLAYER_LEFT' or similar if we added it, but let's stick to emitting the updated list and fixing client if needed?
+                // Wait, client `UPDATE_PLAYERS` appends. `JOIN_ROOM` sets.
+                // We should probably emit `ROOM_JOINED` again? Or better, just emit the new list on a new event `PLAYER_LEFT`?
+                // Let's emit `PLAYER_UPDATE` with full list and existing `UPDATE_PLAYERS` logic might need helper.
+
+                // Correction: Use a new event or existing?
+                // Client `GameContext` has `UPDATE_PLAYERS` which checks duplicates but doesn't remove.
+                // We should add `SET_PLAYERS` or `PLAYER_LEFT` to client.
+                // Ideally I should update Client GameContext first.
+                // But user asked to "do", so I will Emit 'PLAYER_DISCONNECTED' and handle it on client? 
+                // Or just emit `JOIN_ROOM` style update? 
+                // Let's emit 'PLAYER_UPDATE_FULL' with list. 
+
+                // RE-READING socketHandlers JOIN_ROOM:
+                // socket.emit(EVENTS.ROOM_JOINED, result.room);
+                // io.to(roomCode).emit(EVENTS.PLAYER_JOINED, player);
+
+                // I will emit 'ROOM_UPDATE' with room object.
+                io.to(targetRoomCode).emit(EVENTS.ROOM_JOINED, room);
+                console.log(`User ${socket.id} disconnected from ${targetRoomCode}`);
+            }
+        }
     });
 
     // Game Flow
@@ -59,6 +117,10 @@ module.exports = (io, socket) => {
     socket.on(EVENTS.CHOOSE_WORD, ({ roomCode, word }) => {
         const room = roomManager.getRoom(roomCode);
         if (room && room.gameState === GAME_STATES.WORD_SELECTION) {
+            if (room.wordSelectionTimer) {
+                clearTimeout(room.wordSelectionTimer);
+                room.wordSelectionTimer = null;
+            }
             startRound(io, room, word);
         }
     });
@@ -242,17 +304,32 @@ module.exports = (io, socket) => {
 
         io.to(drawer.id).emit(EVENTS.WORD_CHOICES, choices);
 
-        // Auto-select if no choice in 15s (Optional MVP)
+        // Auto-select if no choice in 10s (MVP)
+        room.wordSelectionTimer = setTimeout(() => {
+            const randomWord = choices[Math.floor(Math.random() * choices.length)];
+            // Verify we are still in selection (race condition check)
+            if (room.gameState === GAME_STATES.WORD_SELECTION) {
+                startRound(io, room, randomWord);
+                // Need to tell drawer? startRound sends events.
+            }
+        }, 10000);
     };
 
     const startRound = (io, room, word) => {
         room.wordToGuess = word;
         room.gameState = GAME_STATES.DRAWING;
         room.strokes = [];
+        room.strokes = [];
         room.roundStartTime = Date.now();
+        room.revealedIndices = new Set(); // Track revealed indices for hints
+
+        // Initial Hint: All underscores (except spaces if any)
+        // Adjust regex to preserve spaces if needed or just space out
+        // Current logic: word.replace(/[a-zA-Z]/g, '_ ') -> replaces every letter with "_ "
+        const initialHint = word.split('').map(char => char === ' ' ? '  ' : '_ ').join('').trim();
 
         io.to(room.code).emit(EVENTS.WORD_CHOSEN, {
-            hint: word.replace(/[a-zA-Z]/g, '_ '),
+            hint: initialHint,
             length: word.length,
             drawerId: room.players[room.currentDrawerIndex].id
         });
@@ -269,6 +346,46 @@ module.exports = (io, socket) => {
         room.timerInterval = setInterval(() => {
             timeLeft--;
             io.to(room.code).emit(EVENTS.TIMER_UPDATE, timeLeft);
+
+            // Hint Logic: Reveal at 50% and 25% time
+            // Total time is usually 60s (default in RoomManager if not set, let's assume room.settings.drawTime)
+            const totalTime = room.settings.drawTime || 60;
+            const revealTimes = [Math.floor(totalTime * 0.5), Math.floor(totalTime * 0.25)];
+
+            if (revealTimes.includes(timeLeft)) {
+                console.log(`[DEBUG] Triggering Hint for Room ${room.code} at ${timeLeft}s. Total: ${totalTime}`);
+                // Reveal a letter
+                const word = room.wordToGuess;
+                // Indices that are not spaces and not yet revealed
+                const unrevealedIndices = [];
+                for (let i = 0; i < word.length; i++) {
+                    if (word[i] !== ' ' && !room.revealedIndices.has(i)) {
+                        unrevealedIndices.push(i);
+                    }
+                }
+
+                if (unrevealedIndices.length > 0) {
+                    // Reveal one random index
+                    const randomIndex = unrevealedIndices[Math.floor(Math.random() * unrevealedIndices.length)];
+                    room.revealedIndices.add(randomIndex);
+
+                    // Construct new hint string
+                    let newHint = '';
+                    for (let i = 0; i < word.length; i++) {
+                        if (word[i] === ' ') {
+                            newHint += '  '; // Double space for visual separation
+                        } else if (room.revealedIndices.has(i)) {
+                            newHint += word[i] + ' ';
+                        } else {
+                            newHint += '_ ';
+                        }
+                    }
+
+                    // Emit HINT_UPDATE
+                    console.log(`[DEBUG] Emitting HINT_UPDATE: "${newHint}"`);
+                    io.to(room.code).emit('HINT_UPDATE', { hint: newHint.trim() });
+                }
+            }
 
             if (timeLeft <= 0) {
                 endRound(io, room);

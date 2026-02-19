@@ -29,6 +29,10 @@ const Game = () => {
     // Determine if current user is drawer
     const isDrawer = state.currentUser?.id === state.drawerId;
 
+    // Derive isHost from the players list to handle host migration dynamically
+    const me = state.players.find(p => p.id === state.currentUser?.id);
+    const isHost = me?.isHost;
+
     const handleExit = () => {
         if (confirm('Are you sure you want to exit?')) {
             window.location.href = '/'; // Hard reload to clear socket state
@@ -43,16 +47,10 @@ const Game = () => {
 
     return (
         <div className="flex flex-col md:flex-row h-full bg-gray-100 overflow-hidden pt-[72px] md:pt-0">
-            <WordChoice roomCode={code} />
+
 
             {/* Round End Overlay */}
-            {state.gameState === 'ROUND_END' && (
-                <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50 text-white flex-col">
-                    <h2 className="text-4xl mb-4">Round Over!</h2>
-                    <p className="text-2xl mb-2">The word was: <span className="text-accent font-bold">{state.wordToGuess}</span></p>
-                    <p className="animate-pulse">Next round starting soon...</p>
-                </div>
-            )}
+
 
             {/* Hidden Audio Elements for Peers - Rendered once at top level */}
             <div className="hidden">
@@ -75,18 +73,27 @@ const Game = () => {
                 toggleDeafen={toggleDeafen}
                 onExit={handleExit}
                 onEndGame={handleEndGame}
-                isHost={state.currentUser?.isHost}
+                isHost={isHost}
+                currentRound={state.currentRound}
+                totalRounds={state.totalRounds}
             />
 
             <div className="w-full md:w-3/4 flex flex-col h-[60%] md:h-full p-2 md:p-4">
                 <div className="bg-white p-2 rounded-t-xl border-b flex justify-between items-center shadow-sm z-10 gap-2">
                     <div className="hidden md:flex flex-col shrink-0">
                         <span className="text-[10px] md:text-xs text-gray-500 uppercase font-bold">Room</span>
-                        <h2 className="font-heading text-sm md:text-xl text-primary font-bold">{code}</h2>
+                        <h2 className="font-heading text-sm md:text-xl text-primary font-bold leading-none">{code}</h2>
+                        <div className="mt-1 flex items-center gap-1">
+                            <span className="text-[10px] md:text-xs text-secondary font-bold uppercase">Round</span>
+                            <span className="font-bold text-sm text-gray-700">{state.currentRound} / {state.totalRounds}</span>
+                        </div>
                     </div>
 
                     <div className="flex-grow text-left md:text-center px-1 overflow-hidden min-w-0 flex flex-col justify-center">
-                        {state.wordToGuess && isDrawer ? (
+                        <div className="text-[10px] md:text-sm text-gray-500 font-bold mb-0.5 md:mb-1 truncate">
+                            {isDrawer ? "You are drawing!" : `${state.players.find(p => p.id === state.drawerId)?.username || 'Someone'} is drawing...`}
+                        </div>
+                        {state.wordToGuess ? (
                             <div className="text-sm md:text-2xl font-mono tracking-wide md:tracking-widest font-bold text-accent break-words leading-tight">
                                 {state.wordToGuess}
                             </div>
@@ -117,7 +124,7 @@ const Game = () => {
                             />
                         </div>
 
-                        {state.currentUser?.isHost && (
+                        {isHost && (
                             <div className="hidden md:block">
                                 <button
                                     onClick={handleEndGame}
@@ -135,6 +142,30 @@ const Game = () => {
                     </div>
                 </div>
                 <div className="flex-grow bg-white rounded-b-xl shadow-md overflow-hidden relative">
+                    {state.gameState === 'ROUND_END' && (
+                        <div className="absolute inset-0 bg-black/90 flex items-center justify-center z-50 text-white flex-col p-4 animate-fade-in">
+                            <h2 className="text-3xl md:text-4xl mb-2 font-heading text-primary bg-white px-6 py-2 rounded-full shadow-lg">Round Over!</h2>
+                            <p className="text-xl md:text-2xl mb-4">The word was: <span className="text-accent font-bold bg-white px-3 py-1 rounded ml-2">{state.wordToGuess}</span></p>
+
+                            <div className="bg-white/10 rounded-xl p-4 w-full max-w-sm overflow-y-auto max-h-[50%] mb-4 scrollbar-thin scrollbar-thumb-white scrollbar-track-transparent">
+                                <h3 className="text-lg font-bold mb-3 border-b border-white/20 pb-2">Scores</h3>
+                                {state.players
+                                    .sort((a, b) => (state.scores[b.id] || 0) - (state.scores[a.id] || 0))
+                                    .map((p, idx) => (
+                                        <div key={p.id} className="flex items-center justify-between mb-2 last:mb-0">
+                                            <div className="flex items-center">
+                                                <span className="w-6 text-center text-gray-400 font-mono text-sm">{idx + 1}.</span>
+                                                <span className="ml-2 font-bold truncate max-w-[150px]">{p.username}</span>
+                                            </div>
+                                            <span className="font-bold text-accent bg-white px-2 py-0.5 rounded text-sm">{state.scores[p.id] || 0} pts</span>
+                                        </div>
+                                    ))}
+                            </div>
+
+                            <p className="animate-pulse font-bold text-gray-300 text-sm">Next round starting soon...</p>
+                        </div>
+                    )}
+                    <WordChoice roomCode={code} />
                     <DrawingCanvas roomCode={code} isDrawer={isDrawer} />
                 </div>
             </div>
@@ -143,7 +174,7 @@ const Game = () => {
                 <div className="hidden md:block mb-4 h-1/4 overflow-y-auto bg-gray-50 p-2 rounded">
                     <h3 className="font-bold mb-2 text-primary">Players</h3>
                     {state.players.map(p => (
-                        <div key={p.id} className="flex items-center text-sm mb-1">
+                        <div key={p.id} className={`flex items-center text-sm mb-1 p-1 rounded ${state.guessedPlayers.includes(p.id) ? 'bg-green-100 border border-green-300' : ''}`}>
                             <span>{p.avatar}</span>
                             <span className="ml-2 font-bold truncate max-w-[100px]">{p.username}</span>
                             <span className="ml-auto text-gray-500">{state.scores[p.id] || 0} pts</span>
@@ -153,7 +184,7 @@ const Game = () => {
                 {/* Mobile Player Summary */}
                 <div className="md:hidden flex gap-2 overflow-x-auto pb-2 mb-2 scrollbar-hide min-h-[50px] shrink-0">
                     {state.players.map(p => (
-                        <div key={p.id} className="flex items-center bg-gray-50 rounded-full px-3 py-1 border shrink-0">
+                        <div key={p.id} className={`flex items-center rounded-full px-3 py-1 border shrink-0 ${state.guessedPlayers.includes(p.id) ? 'bg-green-100 border-green-300' : 'bg-gray-50'}`}>
                             <span className="text-xl">{p.avatar}</span>
                             <div className="flex flex-col ml-2 leading-none">
                                 <span className="text-xs font-bold truncate max-w-[80px]">{p.username}</span>

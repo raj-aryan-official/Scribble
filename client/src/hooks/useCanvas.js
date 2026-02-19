@@ -70,6 +70,18 @@ export const useCanvas = (roomCode, isDrawer) => {
         ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear entire canvas (unscaled)
 
         strokes.current.forEach(stroke => drawLine(stroke));
+
+        // Also redraw the current stroke being drawn (vital for resize events during drawing)
+        if (currentStroke.current.length > 0) {
+            // Create temporary stroke object for the current path
+            const tempStroke = {
+                points: currentStroke.current,
+                color,
+                size: lineWidth,
+                tool
+            };
+            drawLine(tempStroke);
+        }
     };
 
     useEffect(() => {
@@ -81,8 +93,12 @@ export const useCanvas = (roomCode, isDrawer) => {
         });
 
         socket.on(EVENTS.STROKE_RECEIVED, (stroke) => {
-            strokes.current.push(stroke);
-            drawLine(stroke);
+            // Deduplicate: Don't add if we already have this stroke ID (e.g. from local drawing)
+            const exists = strokes.current.some(s => s.id === stroke.id);
+            if (!exists) {
+                strokes.current.push(stroke);
+                drawLine(stroke);
+            }
         });
 
         socket.on(EVENTS.CANVAS_CLEARED, () => {
@@ -130,6 +146,8 @@ export const useCanvas = (roomCode, isDrawer) => {
 
     const startDrawing = (e) => {
         if (!isDrawer) return;
+        // if (e.cancelable) e.preventDefault(); // Prevent default to stop scrolling/ghost clicks
+
         setIsDrawing(true);
         const { x, y } = getPoint(e);
         currentStroke.current = [{ x, y }];
@@ -137,10 +155,7 @@ export const useCanvas = (roomCode, isDrawer) => {
 
     const draw = (e) => {
         if (!isDrawing || !isDrawer) return;
-        // Prevent scrolling on touch
-        if (e.type.startsWith('touch')) {
-            // e.preventDefault(); // Passive listener issue might prevent this, stick to CSS touch-action: none
-        }
+        if (e.cancelable) e.preventDefault(); // Vital for touch to prevent scrolling
 
         const { x, y } = getPoint(e);
         const newPoint = { x, y };
@@ -160,6 +175,8 @@ export const useCanvas = (roomCode, isDrawer) => {
 
     const endDrawing = (e) => {
         if (!isDrawing || !isDrawer) return;
+        if (e.cancelable) e.preventDefault();
+
         setIsDrawing(false);
 
         if (currentStroke.current.length > 0) {
@@ -192,6 +209,9 @@ export const useCanvas = (roomCode, isDrawer) => {
     };
 
     const undo = () => {
+        const myStrokes = strokes.current; // Simple undo, server handles logic usually?
+        // Actually undo checks server side or just removes last? 
+        // Sending UNDO_STROKE implies server handles it.
         socket.emit(EVENTS.UNDO_STROKE, { roomCode });
     };
 

@@ -1,13 +1,17 @@
 import React from 'react';
 import { Mic, MicOff, Volume2, VolumeX, LogOut } from 'lucide-react';
 
-const MobileNavBar = ({ roomCode, isMicOn, toggleMic, isDeafened, toggleDeafen, onExit, onEndGame, isHost }) => {
+const MobileNavBar = ({ roomCode, isMicOn, toggleMic, isDeafened, toggleDeafen, onExit, onEndGame, isHost, currentRound, totalRounds }) => {
     return (
         <div className="md:hidden fixed top-0 left-0 right-0 bg-white border-b border-gray-200 px-3 py-2 flex justify-between items-center z-50 shadow-md">
-            {/* Left: Room Code */}
+            {/* Left: Room Code & Round */}
             <div className="flex flex-col shrink-0 mr-2">
-                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Team Code</span>
-                <span className="text-xl font-heading font-bold text-primary select-all">{roomCode}</span>
+                <div className="flex items-center gap-2">
+                    <span className="text-xl font-heading font-bold text-primary select-all leading-none">{roomCode}</span>
+                </div>
+                <div className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mt-0.5">
+                    Round {currentRound}/{totalRounds}
+                </div>
             </div>
 
             {/* Right: Controls (Mic -> Speaker -> Exit -> End Game) */}

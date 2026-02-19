@@ -62,7 +62,10 @@ class RoomManager {
         if (room.players.length === 0) {
             this.rooms.delete(roomCode);
         } else if (room.hostId === playerId) {
-            room.hostId = room.players[0].id; // Assign next player as host
+            // Assign next player as host
+            const newHost = room.players[0];
+            room.hostId = newHost.id;
+            newHost.isHost = true; // Update the player object
         }
 
         return room;

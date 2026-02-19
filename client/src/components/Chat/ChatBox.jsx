@@ -33,7 +33,28 @@ export const ChatBox = ({ roomCode }) => {
         e.preventDefault();
         if (!message.trim()) return;
 
-        socket.emit(EVENTS.SEND_MESSAGE, { roomCode, text: message });
+        let finalMessage = message;
+
+        console.log('Current User ID:', state.currentUser?.id);
+        console.log('Drawer ID:', state.drawerId);
+        console.log('Word to Guess:', state.wordToGuess);
+        console.log('Original Message:', message);
+
+        // Prevent Drawer from spoiling the word
+        if (state.currentUser?.id === state.drawerId && state.wordToGuess) {
+            const regex = new RegExp(state.wordToGuess, 'gi');
+            if (regex.test(finalMessage)) {
+                // Replace matching word with '#' of same length
+                finalMessage = finalMessage.replace(regex, (match) => '#'.repeat(match.length));
+                console.log('Found match! Masking word:', finalMessage);
+            } else {
+                console.log('No match found for word:', state.wordToGuess);
+            }
+        } else {
+            console.log('User is not drawer or word not defined.');
+        }
+
+        socket.emit(EVENTS.SEND_MESSAGE, { roomCode, text: finalMessage });
         setMessage('');
     };
 

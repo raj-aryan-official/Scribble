@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
 import { EVENTS } from '../../../shared/types';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -13,8 +13,17 @@ const Landing = () => {
     const [rounds, setRounds] = useState(3);
     const [activeTab, setActiveTab] = useState('create');
     const navigate = useNavigate();
+    const { code } = useParams();
     const { state, dispatch } = useGame();
     const socket = useSocket();
+
+    // Handle Direct Join via URL
+    useEffect(() => {
+        if (code) {
+            setActiveTab('join');
+            setRoomCode(code.toUpperCase());
+        }
+    }, [code]);
 
     useEffect(() => {
         if (state.error) {

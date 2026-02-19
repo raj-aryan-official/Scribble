@@ -15,6 +15,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/lobby/:code" element={<Lobby />} />
+          <Route path="/join/:code" element={<Landing />} />
           <Route path="/game/:code" element={<Game />} />
           <Route path="/end/:code" element={<GameEnd />} />
           <Route path="*" element={<Navigate to="/" replace />} />
