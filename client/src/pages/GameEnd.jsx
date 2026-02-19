@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
 import confetti from 'canvas-confetti';
 
 const GameEnd = () => {
+    const { code } = useParams();
     const navigate = useNavigate();
     const { state } = useGame();
 
@@ -60,13 +61,13 @@ const GameEnd = () => {
 
                     <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
                         <button
-                            onClick={() => window.location.href = '/'}
+                            onClick={() => navigate('/')}
                             className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-8 py-3 rounded-xl font-bold transition-all shadow-sm hover:shadow active:scale-95 flex items-center justify-center gap-2"
                         >
                             <span>Exit to Home</span>
                         </button>
                         <button
-                            onClick={() => window.location.href = '/'}
+                            onClick={() => navigate(`/lobby/${code}`)}
                             className="bg-accent hover:bg-red-500 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-md hover:shadow-lg active:scale-95 flex items-center justify-center gap-2"
                         >
                             <span>Play Again</span>

@@ -72,7 +72,7 @@ const Game = () => {
     };
 
     return (
-        <div className="flex flex-col md:flex-row h-full bg-gray-100 overflow-hidden pt-[72px] md:pt-0">
+        <div className={`flex flex-col md:flex-row h-full bg-gray-100 overflow-hidden ${isKeyboardOpen ? 'pt-0' : 'pt-[72px] md:pt-0'}`}>
 
 
             {/* Round End Overlay */}
@@ -91,18 +91,20 @@ const Game = () => {
                 ))}
             </div>
 
-            <MobileNavBar
-                roomCode={code}
-                isMicOn={isMicOn}
-                toggleMic={toggleMic}
-                isDeafened={isDeafened}
-                toggleDeafen={toggleDeafen}
-                onExit={handleExit}
-                onEndGame={handleEndGame}
-                isHost={isHost}
-                currentRound={state.currentRound}
-                totalRounds={state.totalRounds}
-            />
+            {!isKeyboardOpen && (
+                <MobileNavBar
+                    roomCode={code}
+                    isMicOn={isMicOn}
+                    toggleMic={toggleMic}
+                    isDeafened={isDeafened}
+                    toggleDeafen={toggleDeafen}
+                    onExit={handleExit}
+                    onEndGame={handleEndGame}
+                    isHost={isHost}
+                    currentRound={state.currentRound}
+                    totalRounds={state.totalRounds}
+                />
+            )}
 
             {/* Main Game Area */}
             {/* Unified Layout to prevent Unmounting/Focus Loss */}

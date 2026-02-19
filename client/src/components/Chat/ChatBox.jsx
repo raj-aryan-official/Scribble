@@ -63,15 +63,15 @@ export const ChatBox = ({ roomCode, isCompact = false }) => {
                     <div ref={messagesEndRef} />
                 </div>
             )}
-            <form onSubmit={handleSubmit} className="flex gap-2">
+            <form onSubmit={handleSubmit} className={`flex gap-2 ${isCompact ? 'p-1 bg-white border-t' : ''}`}>
                 <input
                     type="text"
-                    className="flex-grow p-2 border rounded focus:outline-none focus:ring-2 focus:ring-primary text-base"
+                    className={`flex-grow border rounded focus:outline-none focus:ring-2 focus:ring-primary text-base ${isCompact ? 'p-1.5' : 'p-2'}`}
                     placeholder="Type your guess..."
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                 />
-                <button type="submit" className="bg-primary text-white px-4 py-2 rounded">Send</button>
+                <button type="submit" className={`bg-primary text-white rounded font-bold ${isCompact ? 'px-3 py-1.5 text-sm' : 'px-4 py-2'}`}>Send</button>
             </form>
         </div>
     );

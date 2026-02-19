@@ -43,10 +43,10 @@ export const DrawingCanvas = ({ roomCode, isDrawer, isKeyboardOpen }) => {
             {/* Tools Section - Visible even with keyboard, but compact */}
             {/* Tools Section - Improved Layout */}
             {isDrawer && (
-                <div className={`flex flex-wrap items-center justify-between gap-2 bg-white rounded-xl shadow-lg shrink-0 transition-all ${isKeyboardOpen ? 'p-1 mt-1' : 'p-2 mt-2 md:p-3 md:mt-3'}`}>
+                <div className={`flex items-center justify-between gap-1 bg-white rounded-xl shadow-lg shrink-0 transition-all ${isKeyboardOpen ? 'p-1 mt-1' : 'p-2 mt-2 md:p-3 md:mt-3'}`}>
 
                     {/* Left Group: Tools + Size + Actions */}
-                    <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide shrink-0 max-w-full">
+                    <div className="flex items-center gap-1 md:gap-2 overflow-x-auto scrollbar-hide shrink-0 max-w-[calc(100%-100px)] md:max-w-full">
                         {/* Tools */}
                         <div className="flex gap-1 shrink-0 bg-gray-50 p-1 rounded-lg border border-gray-100">
                             <button onClick={() => setTool('pencil')} className={`p-1.5 md:p-2 rounded-md transition-colors ${tool === 'pencil' ? 'bg-white text-primary shadow-sm ring-1 ring-black/5' : 'text-gray-500 hover:bg-gray-200'}`} title="Pencil">
@@ -66,7 +66,7 @@ export const DrawingCanvas = ({ roomCode, isDrawer, isKeyboardOpen }) => {
                                 min="1" max="20"
                                 value={lineWidth}
                                 onChange={(e) => setLineWidth(parseInt(e.target.value))}
-                                className="w-20 md:w-32 accent-primary h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                className="w-16 md:w-32 accent-primary h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                                 title="Brush Size"
                             />
                         </div>
@@ -85,13 +85,13 @@ export const DrawingCanvas = ({ roomCode, isDrawer, isKeyboardOpen }) => {
                     </div>
 
                     {/* Right Group: Colors - Compact with Popover */}
-                    <div className="flex items-center gap-1.5 relative px-1 ml-auto">
-                        {/* First 5 Primary Colors */}
-                        {['#000000', '#EF4444', '#22C55E', '#3B82F6', '#EAB308'].map(c => (
+                    <div className="flex items-center gap-1 relative px-0 md:px-1 ml-auto shrink-0">
+                        {/* First 2 Colors on Mobile, 5 on Desktop */}
+                        {['#000000', '#EF4444', '#22C55E', '#3B82F6', '#EAB308'].map((c, idx) => (
                             <button
                                 key={c}
                                 onClick={() => setColor(c)}
-                                className={`w-7 h-7 md:w-8 md:h-8 rounded-full shadow-sm shrink-0 transition-transform ${color === c ? 'ring-2 ring-offset-2 ring-primary scale-110' : 'hover:scale-105 ring-1 ring-black/10'}`}
+                                className={`w-7 h-7 md:w-8 md:h-8 rounded-full shadow-sm shrink-0 transition-transform ${color === c ? 'ring-2 ring-offset-2 ring-primary scale-110' : 'hover:scale-105 ring-1 ring-black/10'} ${idx >= 2 ? 'hidden md:block' : ''}`}
                                 style={{ backgroundColor: c }}
                                 title={c}
                             />
@@ -107,7 +107,7 @@ export const DrawingCanvas = ({ roomCode, isDrawer, isKeyboardOpen }) => {
                                 <Palette size={18} />
                             </button>
 
-                            {/* Color Popover */}
+                            {/* Color Popover - Adjusted Position for Mobile */}
                             {showPalette && (
                                 <div className="absolute bottom-full right-0 mb-3 p-3 bg-white rounded-xl shadow-2xl border border-gray-200 grid grid-cols-5 gap-2 z-[60] w-64 animate-in fade-in zoom-in-95 duration-200">
                                     <div className="col-span-5 text-xs font-bold text-gray-400 uppercase tracking-wider mb-1 text-center">Color Palette</div>
