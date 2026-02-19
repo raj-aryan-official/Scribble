@@ -32,26 +32,46 @@ const GameEnd = () => {
     const sortedPlayers = [...state.players].sort((a, b) => (state.scores[b.id] || 0) - (state.scores[a.id] || 0));
 
     return (
-        <div className="h-full bg-primary flex flex-col items-center justify-center p-4 md:p-8 text-white overflow-y-auto">
-            <h1 className="text-4xl md:text-6xl font-heading mb-6 md:mb-8 animate-bounce text-center">Game Over! <span className="block md:inline">🏆</span></h1>
+        <div className="h-full bg-gradient-to-b from-primary to-blue-900 flex flex-col items-center justify-center p-4 md:p-8 text-white overflow-y-auto">
+            <div className="animate-in zoom-in duration-500 w-full max-w-2xl flex flex-col items-center">
+                <div className="text-6xl md:text-8xl mb-4 animate-bounce">🏆</div>
+                <h1 className="text-4xl md:text-6xl font-heading mb-8 text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-500 drop-shadow-sm text-center">
+                    Game Over!
+                </h1>
 
-            <div className="bg-white text-gray-800 rounded-xl shadow-2xl p-4 md:p-8 w-full max-w-2xl">
-                <h2 className="text-2xl md:text-3xl font-bold mb-4 md:mb-6 text-center border-b pb-4">Leaderboard</h2>
-                <div className="space-y-3 md:space-y-4">
-                    {sortedPlayers.map((p, idx) => (
-                        <div key={p.id} className={`flex items-center p-3 md:p-4 rounded-lg transform transition ${idx === 0 ? 'bg-yellow-50 md:bg-yellow-100 scale-100 md:scale-105 border-2 border-yellow-400' : 'bg-gray-50'}`}>
-                            <div className="text-xl md:text-3xl font-bold w-8 md:w-12 text-gray-400 shrink-0">#{idx + 1}</div>
-                            <div className="text-2xl md:text-4xl mr-3 md:mr-4 shrink-0">{p.avatar}</div>
-                            <div className="flex-grow font-bold text-base md:text-xl truncate min-w-0 pr-2">{p.username}</div>
-                            <div className="text-lg md:text-2xl font-mono font-bold text-accent shrink-0 whitespace-nowrap">{state.scores[p.id] || 0} pts</div>
-                            {idx === 0 && <span className="text-2xl md:text-4xl ml-1 md:ml-2 shrink-0">👑</span>}
-                        </div>
-                    ))}
-                </div>
+                <div className="bg-white/95 backdrop-blur-sm text-gray-800 rounded-2xl shadow-2xl p-6 md:p-8 w-full border-4 border-yellow-400/30">
+                    <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center border-b pb-4 text-primary uppercase tracking-wider">Leaderboard</h2>
+                    <div className="space-y-3 max-h-[40vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300">
+                        {sortedPlayers.map((p, idx) => (
+                            <div key={p.id} className={`flex items-center p-3 md:p-4 rounded-xl transform transition-all ${idx === 0 ? 'bg-yellow-50 scale-[1.02] border-2 border-yellow-400 shadow-lg' : 'bg-gray-50 border border-gray-100 hover:bg-gray-100'}`}>
+                                <div className={`text-xl md:text-2xl font-black w-10 md:w-12 shrink-0 ${idx === 0 ? 'text-yellow-500' : idx === 1 ? 'text-gray-400' : idx === 2 ? 'text-orange-400' : 'text-gray-300'}`}>
+                                    #{idx + 1}
+                                </div>
+                                <div className="text-3xl md:text-4xl mr-3 md:mr-4 shrink-0">{p.avatar}</div>
+                                <div className="flex-grow flex flex-col min-w-0">
+                                    <span className={`font-bold text-base md:text-xl truncate ${idx === 0 ? 'text-primary' : 'text-gray-700'}`}>{p.username}</span>
+                                    {idx === 0 && <span className="text-xs text-yellow-600 font-bold uppercase tracking-wide">Winner</span>}
+                                </div>
+                                <div className="text-xl md:text-2xl font-mono font-bold text-accent shrink-0 whitespace-nowrap">{state.scores[p.id] || 0} pts</div>
+                                {idx === 0 && <span className="text-2xl md:text-3xl ml-2 shrink-0 animate-pulse">👑</span>}
+                            </div>
+                        ))}
+                    </div>
 
-                <div className="mt-6 md:mt-8 flex flex-col md:flex-row justify-center gap-3 md:gap-4">
-                    <button onClick={() => navigate('/')} className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 md:px-8 md:py-3 rounded-full font-bold transition text-sm md:text-base">Exit</button>
-                    <button onClick={() => navigate('/')} className="bg-accent hover:bg-red-500 text-white px-6 py-2 md:px-8 md:py-3 rounded-full font-bold transition text-sm md:text-base">Play Again</button>
+                    <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
+                        <button
+                            onClick={() => window.location.href = '/'}
+                            className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-8 py-3 rounded-xl font-bold transition-all shadow-sm hover:shadow active:scale-95 flex items-center justify-center gap-2"
+                        >
+                            <span>Exit to Home</span>
+                        </button>
+                        <button
+                            onClick={() => window.location.href = '/'}
+                            className="bg-accent hover:bg-red-500 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-md hover:shadow-lg active:scale-95 flex items-center justify-center gap-2"
+                        >
+                            <span>Play Again</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

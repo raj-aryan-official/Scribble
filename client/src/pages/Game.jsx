@@ -110,7 +110,7 @@ const Game = () => {
                 className="flex flex-col md:flex-row w-full overflow-hidden"
                 style={{ height: isKeyboardOpen ? viewportHeight : '100%', position: isKeyboardOpen ? 'fixed' : 'relative' }}
             >
-                <div className={`w-full md:w-3/4 flex flex-col transition-all duration-200 ${isKeyboardOpen ? 'h-[60%] shrink-0' : 'h-[60%] md:h-full p-2 md:p-4'}`}>
+                <div className={`w-full md:w-3/4 flex flex-col transition-all duration-200 ${isKeyboardOpen ? 'h-[60%] shrink-0' : 'h-[70%] md:h-full p-2 md:p-4'}`}>
                     {/* Header - Adaptive */}
                     <div className={`bg-white rounded-t-xl border-b flex justify-between items-center shadow-sm z-10 gap-2 shrink-0 ${isKeyboardOpen ? 'p-1 rounded-none border-t-0' : 'p-2'}`}>
                         {/* Header Content (Room, Round, Word/Hint, Timer) - Same as before */}
@@ -186,8 +186,8 @@ const Game = () => {
 
                         <WordChoice roomCode={code} />
                         {/* Canvas Container that enforces Aspect Ratio */}
-                        <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                            <div className="w-full max-h-full aspect-video bg-white shadow-sm border border-gray-200 overflow-hidden">
+                        <div className="w-full h-full flex items-center justify-center bg-white">
+                            <div className="w-full h-full md:h-auto md:max-h-full md:aspect-video max-h-[65vh] md:max-h-none bg-white shadow-sm border border-gray-100 overflow-hidden">
                                 <DrawingCanvas roomCode={code} isDrawer={isDrawer} isKeyboardOpen={isKeyboardOpen} />
                             </div>
                         </div>
@@ -195,7 +195,7 @@ const Game = () => {
                 </div>
 
                 {/* Sidebar / Chat */}
-                <div className={`w-full md:w-1/4 bg-white border-t md:border-t-0 md:border-l flex flex-col shadow-inner md:shadow-none z-20 transition-all duration-200 ${isKeyboardOpen ? 'h-[40%] flex-grow border-t-2' : 'h-[40%] md:h-full p-2 md:p-4'}`}>
+                <div className={`w-full md:w-1/4 bg-white border-t md:border-t-0 md:border-l flex flex-col shadow-inner md:shadow-none z-20 transition-all duration-200 ${isKeyboardOpen ? 'h-[40%] flex-grow border-t-2' : 'h-[30%] md:h-full p-2 md:p-4'}`}>
                     {/* Player List - Hidden when keyboard open */}
                     <div className={`hidden md:block mb-4 h-1/4 overflow-y-auto bg-gray-50 p-2 rounded ${isKeyboardOpen ? '!hidden' : ''}`}>
                         <h3 className="font-bold mb-2 text-primary">Players</h3>
