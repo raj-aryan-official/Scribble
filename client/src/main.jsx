@@ -6,6 +6,10 @@ import './index.css';
 import { GameProvider } from './context/GameContext';
 import { SocketProvider } from './context/SocketContext';
 
+// Clear any leftover session data from the old auto-rejoin feature
+localStorage.removeItem('scribble_session');
+
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <GameProvider>
