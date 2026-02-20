@@ -30,7 +30,7 @@ const Lobby = () => {
     };
 
     const handleCopyLink = () => {
-        const link = `${window.location.origin}/?join=${code}`;
+        const link = `${window.location.origin}/join/${code}`;
         navigator.clipboard.writeText(link);
         setCopiedLink(true);
         setTimeout(() => setCopiedLink(false), 2000);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
 import { EVENTS } from '../../../shared/types';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,18 +14,17 @@ const Landing = () => {
     const [rounds, setRounds] = useState(3);
     const [activeTab, setActiveTab] = useState('create');
     const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
-    const joinCode = searchParams.get('join'); // e.g. /?join=OCMSD1
+    const { code } = useParams();
     const { state, dispatch } = useGame();
     const socket = useSocket();
 
-    // Handle Direct Join via URL query param: /?join=ROOMCODE
+    // Handle Direct Join via URL
     useEffect(() => {
-        if (joinCode) {
+        if (code) {
             setActiveTab('join');
-            setRoomCode(joinCode.toUpperCase());
+            setRoomCode(code.toUpperCase());
         }
-    }, [joinCode]);
+    }, [code]);
 
     useEffect(() => {
         if (state.error) {
@@ -37,11 +36,14 @@ const Landing = () => {
     }, [state.error, dispatch]);
 
     useEffect(() => {
-        // Only auto-redirect if on plain / with no join param
-        if (state.roomCode && !joinCode) {
+        // If the user arrived via a /join/:code invite link, always show the
+        // landing page so they can type their name and click Join.
+        // Only auto-redirect when the user is already in a room and simply
+        // navigated to "/" (no join code in the URL).
+        if (state.roomCode && !code) {
             navigate(`/lobby/${state.roomCode}`);
         }
-    }, [state.roomCode, navigate, joinCode]);
+    }, [state.roomCode, navigate, code]);
 
     const getSessionId = () => {
         let sessionId = localStorage.getItem('scribble_session_id');
