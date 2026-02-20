@@ -29,6 +29,7 @@ const Landing = () => {
 
     useEffect(() => {
         if (state.error) {
+            setIsJoining(false); // Reset if server returns an error
             const timer = setTimeout(() => {
                 dispatch({ type: 'SET_ERROR', payload: null });
             }, 3000);
@@ -93,7 +94,7 @@ const Landing = () => {
                         <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 mb-3">
                             Joining Room...
                         </h2>
-                        <p className="text-slate-400 text-base font-medium">You have joined the room! Redirecting...</p>
+                        <p className="text-slate-400 text-base font-medium">Connecting to the room...</p>
                         <div className="flex gap-2 mt-6">
                             {[0, 1, 2].map(i => (
                                 <motion.div
@@ -266,7 +267,7 @@ const Landing = () => {
                                         className="w-full py-4 bg-gradient-to-r from-pink-500 to-rose-600 rounded-xl font-bold text-lg text-white shadow-lg shadow-pink-500/20 relative overflow-hidden group"
                                     >
                                         <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-                                        <span className="relative flex items-center justify-center gap-2" onClick={() => handleJoinRoom()}><Play size={20} /> Join Adventure</span>
+                                        <span className="relative flex items-center justify-center gap-2"><Play size={20} /> Join Adventure</span>
                                     </motion.button>
                                 </motion.div>
                             )}
