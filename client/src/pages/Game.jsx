@@ -42,21 +42,24 @@ const Game = () => {
     // Keyboard detection
     const [isKeyboardOpen, setIsKeyboardOpen] = React.useState(false);
     const [viewportHeight, setViewportHeight] = React.useState(window.visualViewport?.height || window.innerHeight);
+    const [viewportOffsetTop, setViewportOffsetTop] = React.useState(window.visualViewport?.offsetTop || 0);
 
     useEffect(() => {
         const handleResize = () => {
             if (window.visualViewport) {
                 const currentHeight = window.visualViewport.height;
+                const offsetTop = window.visualViewport.offsetTop;
                 setViewportHeight(currentHeight);
-                // If visual viewport is significantly smaller than window innerHeight, keyboard is likely open
-                // Or just if height is very small (< 500px) which is typical for phones with keyboard
-                const isSmall = currentHeight < 500;
+                setViewportOffsetTop(offsetTop);
+                // Keyboard is open when the visual viewport is significantly
+                // smaller than the full window height
+                const isSmall = currentHeight < (window.screen.height * 0.75);
                 setIsKeyboardOpen(isSmall);
             }
         };
 
         window.visualViewport?.addEventListener('resize', handleResize);
-        window.visualViewport?.addEventListener('scroll', handleResize); // Listen to scroll too just in case
+        window.visualViewport?.addEventListener('scroll', handleResize);
         handleResize(); // Check initial
 
         return () => {
@@ -137,7 +140,18 @@ const Game = () => {
             {/* Unified Layout to prevent Unmounting/Focus Loss */}
             <div
                 className="flex flex-col md:flex-row w-full overflow-hidden"
-                style={{ height: isKeyboardOpen ? viewportHeight : '100%', position: isKeyboardOpen ? 'fixed' : 'relative' }}
+                style={isKeyboardOpen ? {
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: `${viewportHeight}px`,
+                    // Shift the container down by however much the browser has
+                    // scrolled the page to make room for the keyboard, so the
+                    // bottom of our container sits exactly at the top of the keyboard.
+                    transform: `translateY(${viewportOffsetTop}px)`,
+                    willChange: 'transform',
+                } : { height: '100%', position: 'relative' }}
             >
                 <div className={`w-full md:w-3/4 flex flex-col transition-all duration-200 ${isKeyboardOpen ? 'h-[60%] shrink-0' : 'h-[70%] md:h-full p-2 md:p-4'}`}>
                     {/* Header - Adaptive */}
