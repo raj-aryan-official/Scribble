@@ -13,6 +13,7 @@ const Landing = () => {
     const [drawTime, setDrawTime] = useState(60);
     const [rounds, setRounds] = useState(3);
     const [activeTab, setActiveTab] = useState('create');
+    const [isJoining, setIsJoining] = useState(false); // true after clicking Join/Create
     const navigate = useNavigate();
     const { code } = useParams();
     const { state, dispatch } = useGame();
@@ -36,14 +37,14 @@ const Landing = () => {
     }, [state.error, dispatch]);
 
     useEffect(() => {
-        // If the user arrived via a /join/:code invite link, always show the
-        // landing page so they can type their name and click Join.
-        // Only auto-redirect when the user is already in a room and simply
-        // navigated to "/" (no join code in the URL).
-        if (state.roomCode && !code) {
+        if (!state.roomCode) return;
+        // Redirect to lobby when:
+        // 1. User just clicked Join/Create (isJoining = true), OR
+        // 2. User navigated to "/" and already had a room (no join code in URL)
+        if (isJoining || !code) {
             navigate(`/lobby/${state.roomCode}`);
         }
-    }, [state.roomCode, navigate, code]);
+    }, [state.roomCode, navigate, code, isJoining]);
 
     const getSessionId = () => {
         let sessionId = localStorage.getItem('scribble_session_id');
@@ -58,6 +59,7 @@ const Landing = () => {
         e?.preventDefault();
         if (!username) return dispatch({ type: 'SET_ERROR', payload: 'Username is required!' });
         const sessionId = getSessionId();
+        setIsJoining(true);
         socket.emit(EVENTS.CREATE_ROOM, { username, avatar: '👤', settings: { drawTime, rounds }, sessionId });
     };
 
@@ -65,11 +67,47 @@ const Landing = () => {
         e?.preventDefault();
         if (!username || !roomCode) return dispatch({ type: 'SET_ERROR', payload: 'Username and Code required!' });
         const sessionId = getSessionId();
+        setIsJoining(true);
         socket.emit(EVENTS.JOIN_ROOM, { roomCode, username, avatar: '👤', sessionId });
     };
 
     return (
         <div className="h-full bg-[#0f172a] text-white overflow-hidden relative font-sans selection:bg-cyan-500/30">
+
+            {/* Joining Overlay */}
+            <AnimatePresence>
+                {isJoining && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#0f172a]/95 backdrop-blur-xl"
+                    >
+                        <motion.div
+                            animate={{ scale: [1, 1.1, 1] }}
+                            transition={{ repeat: Infinity, duration: 1.2, ease: 'easeInOut' }}
+                            className="text-6xl mb-6"
+                        >
+                            🎨
+                        </motion.div>
+                        <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 mb-3">
+                            Joining Room...
+                        </h2>
+                        <p className="text-slate-400 text-base font-medium">You have joined the room! Redirecting...</p>
+                        <div className="flex gap-2 mt-6">
+                            {[0, 1, 2].map(i => (
+                                <motion.div
+                                    key={i}
+                                    animate={{ y: [0, -10, 0] }}
+                                    transition={{ repeat: Infinity, duration: 0.8, delay: i * 0.15 }}
+                                    className="w-2.5 h-2.5 bg-cyan-400 rounded-full"
+                                />
+                            ))}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {/* Animated Background Elements */}
             <div className="absolute inset-0 z-0 overflow-hidden">
                 <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-purple-600/20 rounded-full blur-[120px] animate-pulse" />
@@ -80,6 +118,7 @@ const Landing = () => {
                 <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-150 contrast-150 mix-blend-overlay" />
                 <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:50px_50px]" />
             </div>
+
 
             <div className="relative z-10 container mx-auto px-4 h-full flex flex-col items-center justify-center">
 
@@ -227,7 +266,7 @@ const Landing = () => {
                                         className="w-full py-4 bg-gradient-to-r from-pink-500 to-rose-600 rounded-xl font-bold text-lg text-white shadow-lg shadow-pink-500/20 relative overflow-hidden group"
                                     >
                                         <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-                                        <span className="relative flex items-center justify-center gap-2"><Play size={20} /> Join Adventure</span>
+                                        <span className="relative flex items-center justify-center gap-2" onClick={() => handleJoinRoom()}><Play size={20} /> Join Adventure</span>
                                     </motion.button>
                                 </motion.div>
                             )}
