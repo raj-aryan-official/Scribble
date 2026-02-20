@@ -36,14 +36,11 @@ const Landing = () => {
     }, [state.error, dispatch]);
 
     useEffect(() => {
-        if (state.roomCode) {
-            // Valid room in state. Is user trying to join a DIFFERENT room?
-            if (code && code.toUpperCase() !== state.roomCode) {
-                // Don't redirect yet. Let them click "Join".
-                // Ideally, we might want to warn them "You are currently in room X".
-                // But for now, just blocking the auto-redirect allows them to fill the form and "Join", which triggers the server-side room switch we just implemented.
-                return;
-            }
+        // If the user arrived via a /join/:code invite link, always show the
+        // landing page so they can type their name and click Join.
+        // Only auto-redirect when the user is already in a room and simply
+        // navigated to "/" (no join code in the URL).
+        if (state.roomCode && !code) {
             navigate(`/lobby/${state.roomCode}`);
         }
     }, [state.roomCode, navigate, code]);
