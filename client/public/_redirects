@@ -1,1 +1,5 @@
+/join/* /index.html 200
+/lobby/* /index.html 200
+/game/* /index.html 200
+/end/* /index.html 200
 /* /index.html 200
