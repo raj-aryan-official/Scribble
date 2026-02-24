@@ -288,7 +288,7 @@ const Landing = () => {
 
                 <div className="mt-12 text-slate-500 text-xs font-mono tracking-widest text-center">
                     <p>ENGINEERED FOR PERFORMANCE</p>
-                    <p className="mt-1 opacity-50">v3.0.0 • RAJ ARYAN</p>
+                    <p className="mt-1 opacity-50">v3.1.0 • RAJ ARYAN</p>
                 </div>
             </div>
         </div>
