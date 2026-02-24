@@ -1,5 +1,5 @@
 const roomManager = require('./RoomManager');
-const { EVENTS, GAME_STATES } = require('../../shared/types');
+const { EVENTS, GAME_STATES } = require('../../shared/types.cjs');
 const { getRandomWords } = require('./wordBank');
 
 module.exports = (io, socket) => {

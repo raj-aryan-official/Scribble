@@ -1,5 +1,5 @@
 const { v4: uuidv4 } = require('uuid');
-const { GAME_STATES } = require('../../shared/types');
+const { GAME_STATES } = require('../../shared/types.cjs');
 
 class RoomManager {
     constructor() {
