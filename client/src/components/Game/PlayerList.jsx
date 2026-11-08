@@ -9,9 +9,11 @@ export const PlayerList = ({
     drawerId,
     guessedPlayerIds = [],
     speakingPeers = {},
+    turnInfo = null,
     variant = 'desktop', // 'desktop' | 'mobile'
     className = '',
 }) => {
+    const queue = Array.isArray(turnInfo?.queue) ? turnInfo.queue : [];
     // Sort players by score descending
     const rankedPlayers = [...players].sort(
         (a, b) => (scores[b.id] || 0) - (scores[a.id] || 0)
@@ -45,15 +47,26 @@ export const PlayerList = ({
         return (
             <div
                 data-testid="player-list-mobile"
+                role="region"
                 aria-label="Player scoreboard"
-                className={`h-[56px] min-h-[56px] max-h-[56px] flex items-center gap-2 overflow-x-auto py-1 px-1 scrollbar-hide max-w-full select-none ${className}`}
+                tabIndex={0}
+                className={`h-[56px] min-h-[56px] max-h-[56px] flex items-center gap-2 overflow-x-auto py-1 px-1 scrollbar-hide max-w-full select-none focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none ${className}`}
             >
                 {rankedPlayers.map((player, index) => {
-                    const isDrawer = player.id === drawerId;
-                    const hasGuessed = guessedPlayerIds.includes(player.id);
+                    const isDrawer = player.id === drawerId || player.playerId === drawerId;
+                    const hasGuessed = guessedPlayerIds.includes(player.id) || (player.playerId && guessedPlayerIds.includes(player.playerId));
                     const isSpeaking = Boolean(speakingPeers[player.id]);
                     const score = scores[player.id] || 0;
                     const gain = floatingGains[player.id];
+                    const queueIndex = queue.findIndex(id => id === player.id || id === player.playerId);
+                    let drawOrderLabel = null;
+                    if (!isDrawer && !hasGuessed) {
+                        if (queueIndex === 0) {
+                            drawOrderLabel = 'Draws next';
+                        } else if (queueIndex > 0) {
+                            drawOrderLabel = `Draws in ${queueIndex + 1}`;
+                        }
+                    }
 
                     return (
                         <div
@@ -62,6 +75,7 @@ export const PlayerList = ({
                             data-player-id={player.id}
                             data-player-score={score}
                             data-player-state={isDrawer ? 'drawing' : hasGuessed ? 'guessed' : 'guessing'}
+                            data-draw-order={drawOrderLabel || undefined}
                             className={`min-h-[44px] flex items-center gap-1.5 px-2.5 py-1 rounded-full border-2 border-ink shadow-hard-sm shrink-0 relative transition-transform ${
                                 player.isDisconnected
                                     ? 'bg-paper opacity-50 border-dashed'
@@ -104,12 +118,25 @@ export const PlayerList = ({
                                 {player.username}
                             </span>
 
+                            {drawOrderLabel && (
+                                <span
+                                    data-testid="draw-order-label"
+                                    className="text-[9px] font-bold text-ink-soft bg-paper/80 px-1 py-0.5 rounded border border-ink/20 shrink-0"
+                                >
+                                    {drawOrderLabel}
+                                </span>
+                            )}
+
                             {/* State indicators: Drawing (pencil), Guessed (tick), Still guessing */}
                             {isDrawer && (
-                                <Pencil className="w-3 h-3 text-ink shrink-0" aria-label="Drawing" />
+                                <span role="img" title="Drawing" aria-label="Drawing" className="shrink-0 flex items-center">
+                                    <Pencil className="w-3 h-3 text-ink" aria-hidden="true" />
+                                </span>
                             )}
                             {hasGuessed && (
-                                <Check className="w-3 h-3 text-white shrink-0 stroke-[3]" aria-label="Guessed" />
+                                <span role="img" title="Guessed" aria-label="Guessed" className="shrink-0 flex items-center">
+                                    <Check className="w-3 h-3 text-white stroke-[3]" aria-hidden="true" />
+                                </span>
                             )}
 
                             {/* Score and floating gain */}
@@ -157,11 +184,21 @@ export const PlayerList = ({
 
             <div className="flex flex-col gap-2 overflow-y-auto max-h-[calc(100vh-220px)] pr-1">
                 {rankedPlayers.map((player, index) => {
-                    const isDrawer = player.id === drawerId;
-                    const hasGuessed = guessedPlayerIds.includes(player.id);
+                    const isDrawer = player.id === drawerId || player.playerId === drawerId;
+                    const hasGuessed = guessedPlayerIds.includes(player.id) || (player.playerId && guessedPlayerIds.includes(player.playerId));
                     const isSpeaking = Boolean(speakingPeers[player.id]);
-                    const score = scores[player.id] || 0;
+                    const isAway = Boolean(player.isDisconnected || player.status === 'away');
+                    const score = scores[player.id] !== undefined ? scores[player.id] : (player.score || 0);
                     const gain = floatingGains[player.id];
+                    const queueIndex = queue.findIndex(id => id === player.id || id === player.playerId);
+                    let drawOrderLabel = null;
+                    if (!isDrawer && !hasGuessed) {
+                        if (queueIndex === 0) {
+                            drawOrderLabel = 'Draws next';
+                        } else if (queueIndex > 0) {
+                            drawOrderLabel = `Draws in ${queueIndex + 1}`;
+                        }
+                    }
 
                     return (
                         <div
@@ -170,8 +207,9 @@ export const PlayerList = ({
                             data-player-id={player.id}
                             data-player-score={score}
                             data-player-state={isDrawer ? 'drawing' : hasGuessed ? 'guessed' : 'guessing'}
+                            data-draw-order={drawOrderLabel || undefined}
                             className={`flex items-center gap-2.5 p-2 rounded-[8px] border-2 border-ink shadow-hard-sm transition-all ${
-                                player.isDisconnected
+                                isAway
                                     ? 'bg-paper opacity-50 border-dashed'
                                     : hasGuessed
                                     ? 'bg-leaf-deep text-white'
@@ -217,23 +255,33 @@ export const PlayerList = ({
                                         <Crown className="w-3 h-3 text-marigold fill-marigold shrink-0" aria-label="Host" />
                                     )}
                                 </div>
-                                {player.isDisconnected && (
-                                    <span className="text-[10px] font-bold text-tomato uppercase tracking-wide">
-                                        away
-                                    </span>
-                                )}
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                    {isAway && (
+                                        <span className="text-[10px] font-bold text-tomato uppercase tracking-wide">
+                                            away
+                                        </span>
+                                    )}
+                                    {drawOrderLabel && (
+                                        <span
+                                            data-testid="draw-order-label"
+                                            className="text-[10px] font-bold text-ink-soft leading-none"
+                                        >
+                                            {isAway ? `• ${drawOrderLabel}` : drawOrderLabel}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
 
                             <div className="relative flex items-center gap-1.5 shrink-0">
                                 {/* State indicators: Drawing (pencil), Guessed (tick) */}
                                 {isDrawer && (
-                                    <span title="Drawing" aria-label="Drawing">
-                                        <Pencil className="w-4 h-4 text-ink" />
+                                    <span role="img" title="Drawing" aria-label="Drawing">
+                                        <Pencil className="w-4 h-4 text-ink" aria-hidden="true" />
                                     </span>
                                 )}
                                 {hasGuessed && (
-                                    <span title="Guessed" aria-label="Guessed">
-                                        <Check className="w-4 h-4 text-white stroke-[3]" />
+                                    <span role="img" title="Guessed" aria-label="Guessed">
+                                        <Check className="w-4 h-4 text-white stroke-[3]" aria-hidden="true" />
                                     </span>
                                 )}
 
@@ -246,11 +294,12 @@ export const PlayerList = ({
                                         {gain && (
                                             <motion.span
                                                 key={gain.id}
+                                                aria-hidden="true"
                                                 initial={{ opacity: 1, y: 0, scale: 0.9 }}
-                                                animate={{ opacity: 0, y: -20, scale: 1.1 }}
+                                                animate={{ opacity: [1, 1, 0], y: -20, scale: 1.1 }}
                                                 exit={{ opacity: 0 }}
-                                                transition={{ duration: 1.2, ease: 'easeOut' }}
-                                                className="absolute -top-4 -right-1 font-mono font-black text-xs text-leaf-deep pointer-events-none select-none z-10"
+                                                transition={{ duration: 1.2, times: [0, 0.8, 1], ease: 'easeOut' }}
+                                                className="absolute -top-4 -right-1 font-mono font-black text-xs text-ink pointer-events-none select-none z-10"
                                                 data-testid="floating-score-gain"
                                             >
                                                 +{gain.amount}

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useCanvas } from '../../hooks/useCanvas';
 import ToolTray from '../Game/ToolTray';
 
-const DrawingCanvasComponent = ({ roomCode, isDrawer }) => {
+const DrawingCanvasComponent = ({ roomCode, isDrawer, drawerName = 'Maya' }) => {
     const {
         canvasRef,
         onPointerDown,
@@ -58,6 +58,12 @@ const DrawingCanvasComponent = ({ roomCode, isDrawer }) => {
                 >
                     <canvas
                         ref={canvasRef}
+                        role="img"
+                        aria-label={
+                            isDrawer
+                                ? 'Drawing paper. Sketch your secret word.'
+                                : `Drawing in progress by ${drawerName}`
+                        }
                         onPointerDown={onPointerDown}
                         onPointerMove={onPointerMove}
                         onPointerUp={onPointerUp}
@@ -73,10 +79,11 @@ const DrawingCanvasComponent = ({ roomCode, isDrawer }) => {
                     {/* Faint Start Drawing Prompt */}
                     {isDrawer && strokeCount === 0 && (
                         <div
+                            aria-hidden="true"
                             className="pointer-events-none absolute inset-0 flex items-center justify-center p-4 text-center select-none transition-opacity duration-300"
                             data-testid="empty-canvas-prompt"
                         >
-                            <span className="text-sm sm:text-base font-bold font-heading text-ink-soft/40 italic tracking-wide">
+                            <span className="text-sm sm:text-base font-bold font-heading text-ink-soft italic tracking-wide">
                                 Start drawing. No letters or numbers!
                             </span>
                         </div>

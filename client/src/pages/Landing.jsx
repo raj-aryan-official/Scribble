@@ -2,13 +2,14 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
-import { Dice5 } from 'lucide-react';
+import { Dice5, Volume2, VolumeX } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { useSocket } from '../hooks/useSocket';
+import { useSound } from '../hooks/useSound';
 import { EVENTS } from '../../../shared/types';
 import { CREDIT_LINE } from '../config';
 import { FUN_NAMES, getRandomFunName } from '../constants/funNames';
-import { AVATAR_IDS } from '../components/ui/Avatar';
+import Avatar, { AVATAR_IDS } from '../components/ui/Avatar';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import AvatarPicker from '../components/ui/AvatarPicker';
@@ -19,16 +20,33 @@ import DoodleCat from '../components/Landing/DoodleCat';
 import RoomCodeInput, { extractRoomCode } from '../components/Landing/RoomCodeInput';
 import HowToPlayModal from '../components/Landing/HowToPlayModal';
 
+const getApiBaseUrl = () => {
+    if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+    if (typeof window === 'undefined') return 'http://localhost:3000';
+    if (window.location.hostname === 'localhost') return 'http://localhost:3000';
+    if (window.location.port === '5173') {
+        const protocol = window.location.protocol;
+        const hostname = window.location.hostname;
+        return `${protocol}//${hostname}:3000`;
+    }
+    return window.location.origin;
+};
+
 export const Landing = () => {
     const navigate = useNavigate();
     const { code } = useParams();
     const { state, dispatch } = useGame();
     const socket = useSocket();
+    const { isMuted, toggleMute } = useSound();
 
     // Form inputs
     const [username, setUsername] = useState('');
     const [avatar, setAvatar] = useState('avatar-1');
     const [roomCode, setRoomCode] = useState('');
+
+    // Saved room preview for instant rejoin
+    const [savedRejoin, setSavedRejoin] = useState(null);
+    const [savedPreview, setSavedPreview] = useState(null);
 
     // Field-level error states
     const [nicknameError, setNicknameError] = useState('');
@@ -69,6 +87,49 @@ export const Landing = () => {
         // Autofocus nickname on desktop only (viewport width >= 768px)
         if (typeof window !== 'undefined' && window.innerWidth >= 768) {
             nicknameInputRef.current?.focus();
+        }
+    }, []);
+
+    // Check for saved room preview on mount
+    useEffect(() => {
+        let rejoin = null;
+        try {
+            const raw = localStorage.getItem('scribble_rejoin');
+            if (raw) rejoin = JSON.parse(raw);
+        } catch {
+            // ignore
+        }
+        if (!rejoin?.roomCode) {
+            try {
+                const code = sessionStorage.getItem('scribble_room_code');
+                if (code) rejoin = { roomCode: code };
+            } catch {
+                // ignore
+            }
+        }
+
+        if (rejoin?.roomCode) {
+            setSavedRejoin(rejoin);
+            const baseUrl = getApiBaseUrl();
+            fetch(`${baseUrl}/api/rooms/${rejoin.roomCode}/preview`)
+                .then((res) => (res.ok ? res.json() : { exists: false }))
+                .then((data) => {
+                    if (data && data.exists) {
+                        setSavedPreview(data);
+                    } else {
+                        try {
+                            localStorage.removeItem('scribble_rejoin');
+                            sessionStorage.removeItem('scribble_room_code');
+                        } catch {
+                            // ignore
+                        }
+                        setSavedRejoin(null);
+                        setSavedPreview(null);
+                    }
+                })
+                .catch(() => {
+                    // Ignore preview network errors
+                });
         }
     }, []);
 
@@ -243,6 +304,43 @@ export const Landing = () => {
         });
     };
 
+    // Handle Rejoin Saved Room
+    const handleRejoinSavedRoom = () => {
+        if (!savedRejoin?.roomCode) return;
+        if (!socket || !socket.connected) {
+            setServerUnreachable(true);
+            lastActionRef.current = () => handleRejoinSavedRoom();
+            return;
+        }
+
+        setIsConnecting(true);
+        setConnectingAction('join');
+        if (savedRejoin.rejoinToken) {
+            socket.emit(EVENTS.REJOIN_ROOM, {
+                roomCode: savedRejoin.roomCode,
+                rejoinToken: savedRejoin.rejoinToken,
+            });
+        } else {
+            const sessionId = getSessionId();
+            socket.emit(EVENTS.REJOIN_ROOM, {
+                roomCode: savedRejoin.roomCode,
+                sessionId,
+            });
+        }
+    };
+
+    // Handle Dismiss Saved Room
+    const handleDismissSavedRoom = () => {
+        try {
+            localStorage.removeItem('scribble_rejoin');
+            sessionStorage.removeItem('scribble_room_code');
+        } catch {
+            // ignore
+        }
+        setSavedRejoin(null);
+        setSavedPreview(null);
+    };
+
     // Enter submits active action
     const handleCardKeyDown = (e) => {
         if (e.key === 'Enter') {
@@ -257,6 +355,23 @@ export const Landing = () => {
     return (
         <div className="flex-1 w-full max-w-[1100px] mx-auto flex flex-col justify-center px-4 py-3 sm:py-6 md:py-8 lg:py-10 relative">
             <h1 tabIndex={-1} className="sr-only">Scribble</h1>
+
+            {/* Sound Toggle accessible from Landing */}
+            <div className="absolute top-2 right-4 z-elevated">
+                <button
+                    type="button"
+                    onClick={toggleMute}
+                    aria-label={isMuted ? 'Unmute game sounds' : 'Mute game sounds'}
+                    title={isMuted ? 'Unmute sounds' : 'Mute sounds'}
+                    className="min-w-[40px] min-h-[40px] p-2 bg-card hover:bg-paper border-2 border-ink rounded-[6px] shadow-hard-sm flex items-center justify-center text-ink cursor-pointer active:translate-x-[1px] active:translate-y-[1px] focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none"
+                >
+                    {isMuted ? (
+                        <VolumeX className="w-5 h-5 text-tomato" />
+                    ) : (
+                        <Volume2 className="w-5 h-5 text-ink" />
+                    )}
+                </button>
+            </div>
 
             {/* Server Unreachable Toast with Retry */}
             <Toast
@@ -312,6 +427,52 @@ export const Landing = () => {
                     transition={{ type: 'spring', stiffness: 300, damping: 26, delay: 0.05 }}
                     className="order-1 md:order-2 w-full max-w-md mx-auto md:max-w-none"
                 >
+                    {savedPreview?.exists && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="w-full mb-3 sm:mb-4 p-4 bg-marigold/15 border-2 border-ink rounded-[12px] shadow-hard flex flex-col gap-2.5 text-left"
+                            data-testid="rejoin-room-card"
+                        >
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-ink bg-marigold px-2 py-0.5 rounded-[4px] border border-ink">
+                                        Active Game
+                                    </span>
+                                    <span className="text-xs sm:text-sm font-bold text-ink">
+                                        Room <strong className="font-mono tracking-wider">{savedPreview.code}</strong>
+                                    </span>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleDismissSavedRoom}
+                                    aria-label="Dismiss saved room"
+                                    className="text-xs font-bold text-ink-soft hover:text-tomato underline cursor-pointer"
+                                >
+                                    Dismiss
+                                </button>
+                            </div>
+                            <div className="flex items-center justify-between gap-3 pt-1">
+                                <div className="flex items-center gap-2 min-w-0">
+                                    {savedPreview.host?.avatar && (
+                                        <Avatar avatarId={savedPreview.host.avatar} size="xs" />
+                                    )}
+                                    <span className="text-xs text-ink-soft truncate">
+                                        Host: <strong className="text-ink">{savedPreview.host?.username || 'Host'}</strong> • {savedPreview.playerCount} player{savedPreview.playerCount === 1 ? '' : 's'}
+                                    </span>
+                                </div>
+                                <Button
+                                    variant="primary"
+                                    size="sm"
+                                    onClick={handleRejoinSavedRoom}
+                                    className="bg-cobalt hover:bg-cobalt-deep text-white shrink-0"
+                                >
+                                    Rejoin room {savedPreview.code}
+                                </Button>
+                            </div>
+                        </motion.div>
+                    )}
+
                     <Card
                         onKeyDown={handleCardKeyDown}
                         className="flex flex-col gap-3.5 sm:gap-4 p-4 sm:p-6 bg-card border-2 border-ink shadow-hard-lg rounded-[12px]"
@@ -457,7 +618,7 @@ export const Landing = () => {
                         >
                             How to play
                         </button>
-                        <p className="text-xs text-ink-soft/80 text-center font-normal">
+                        <p className="text-xs text-ink-soft text-center font-normal">
                             {CREDIT_LINE}
                         </p>
                     </div>

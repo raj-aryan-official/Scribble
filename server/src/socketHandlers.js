@@ -1,10 +1,12 @@
 const logger = require('./logger');
+const roomManager = require('./RoomManager');
 const { toPublicRoom, toPublicPlayer, clearRoomTimers } = require('./RoomManager');
 const {
     getMemberRoom,
     isDrawer,
     isHost,
     sanitizeNickname,
+    sanitiseText,
     rejectWithError
 } = require('./handlers/utils');
 const {
@@ -12,6 +14,7 @@ const {
     makeSnapshot,
     cleanEndGame
 } = require('./game/loop');
+const { enqueueRoomAction } = require('./handlers/actionQueue');
 const { registerRoomHandlers } = require('./handlers/room');
 const { registerGameHandlers } = require('./handlers/game');
 const { registerDrawingHandlers } = require('./handlers/drawing');
@@ -27,12 +30,18 @@ const { registerVoiceHandlers } = require('./handlers/voice');
 function registerHandlers(io, socket) {
     const safeOn = (eventName, handler) => {
         socket.on(eventName, (payload) => {
-            try {
-                handler(payload);
-            } catch (err) {
-                logger.error(`Error in event handler ${eventName}:`, err);
-                rejectWithError(socket, 'Internal server error');
-            }
+            const roomCode = (payload && typeof payload === 'object' && typeof payload.roomCode === 'string')
+                ? payload.roomCode
+                : roomManager.getRoomByPlayerId(socket.id)?.code;
+
+            return enqueueRoomAction(roomCode, () => {
+                try {
+                    return handler(payload);
+                } catch (err) {
+                    logger.error(`Error in event handler ${eventName}:`, err);
+                    rejectWithError(socket, 'Internal server error');
+                }
+            });
         });
     };
 
@@ -49,6 +58,7 @@ registerHandlers.isDrawer = isDrawer;
 registerHandlers.isHost = isHost;
 registerHandlers.cleanEndGame = cleanEndGame;
 registerHandlers.sanitizeNickname = sanitizeNickname;
+registerHandlers.sanitiseText = sanitiseText;
 registerHandlers.rejectWithError = rejectWithError;
 registerHandlers.toPublicRoom = toPublicRoom;
 registerHandlers.toPublicPlayer = toPublicPlayer;

@@ -127,7 +127,11 @@ VITE_ICE_SERVERS='[{"urls":["stun:stun.l.google.com:19302"]},{"urls":["turn:turn
 - **Live Canvas**:
   - 4:3 letterboxed fixed paper backing store.
   - Batch streamed pointer curves with midpoint smoothing.
-- **Resilience**:
-  - 60-second disconnect grace periods with automatic state snapshots on rejoin.
+- **Resilience & Session Persistence**:
+  - Split identity architecture: public per-room `playerId` and secret 32-byte hex `rejoinToken` (stored as SHA-256 hash, verified with constant-time `crypto.timingSafeEqual`).
+  - Disconnected players transition to `'away'` (reserving seat & score) and then `'left'` after 90 seconds. Token rejoins instantly restore score, rank, avatar, and turn state.
+  - Pluggable `RoomStore` with in-memory default and `FileStore` disk persistence: saves debounced room state snapshots to disk (`ROOM_STORE_DIR`). On server boot, active rooms and player records are restored with players marked `'away'`.
+  - *Note on hosting*: Free hosting tiers (such as Render or Railway with ephemeral filesystems) may wipe local JSON store files on redeployment or instance spin-down unless backed by a persistent volume.
+  - Seat claim protocol: players reconnecting without secret token can request their seat, prompting the host to accept or decline.
   - React `ErrorBoundary` with fallback UI and reload button.
   - Process-level `uncaughtException` and `unhandledRejection` handlers.

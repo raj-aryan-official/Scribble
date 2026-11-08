@@ -29,6 +29,14 @@ const useRoomSessionCheck = () => {
     try {
         savedRoom = sessionStorage.getItem('scribble_room_code');
         savedSession = localStorage.getItem('scribble_session_id');
+        const rawRejoin = localStorage.getItem('scribble_rejoin');
+        if (rawRejoin) {
+            const rejoin = JSON.parse(rawRejoin);
+            if (rejoin?.rejoinToken) {
+                savedSession = savedSession || rejoin.rejoinToken;
+                savedRoom = savedRoom || rejoin.roomCode;
+            }
+        }
     } catch {
         // Ignore storage access errors
     }
@@ -60,6 +68,7 @@ export const LobbyGuard = ({ children }) => {
         if (state.error) {
             try {
                 sessionStorage.removeItem('scribble_room_code');
+                localStorage.removeItem('scribble_rejoin');
             } catch {
                 // Ignore storage errors
             }
@@ -94,6 +103,7 @@ export const GameGuard = ({ children }) => {
         if (state.error) {
             try {
                 sessionStorage.removeItem('scribble_room_code');
+                localStorage.removeItem('scribble_rejoin');
             } catch {
                 // Ignore storage errors
             }
@@ -128,6 +138,7 @@ export const EndGuard = ({ children }) => {
         if (state.error) {
             try {
                 sessionStorage.removeItem('scribble_room_code');
+                localStorage.removeItem('scribble_rejoin');
             } catch {
                 // Ignore storage errors
             }

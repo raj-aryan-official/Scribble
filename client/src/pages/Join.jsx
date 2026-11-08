@@ -2,9 +2,10 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
-import { ArrowLeft, RefreshCw, Sparkles, User, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Sparkles, User, AlertTriangle, Volume2, VolumeX } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { useSocket } from '../hooks/useSocket';
+import { useSound } from '../hooks/useSound';
 import { EVENTS } from '../../../shared/types';
 import { CREDIT_LINE } from '../config';
 import { FUN_NAMES, getRandomFunName } from '../constants/funNames';
@@ -32,6 +33,7 @@ export const Join = () => {
     const navigate = useNavigate();
     const { state, dispatch } = useGame();
     const socket = useSocket();
+    const { isMuted, toggleMute } = useSound();
 
     const cleanCode = (code || '').trim().toUpperCase();
 
@@ -244,7 +246,7 @@ export const Join = () => {
                 className="w-full max-w-md flex flex-col gap-4"
             >
                 <Card className="flex flex-col gap-5 p-5 sm:p-6 bg-card border-2 border-ink shadow-hard-lg rounded-[12px]">
-                    {/* Header: Card Title & Room Code Badge */}
+                    {/* Header: Card Title, Room Code Badge & Sound Toggle */}
                     <div className="flex items-center justify-between border-b-2 border-ink/10 pb-3">
                         <div className="flex items-center gap-2">
                             <span className="w-2.5 h-2.5 rounded-full bg-tomato animate-pulse" />
@@ -252,9 +254,24 @@ export const Join = () => {
                                 You're invited
                             </h1>
                         </div>
-                        <span className="font-mono font-black text-xs sm:text-sm text-ink-soft bg-paper px-2.5 py-1 rounded-[6px] border-2 border-ink shadow-hard-sm">
-                            {cleanCode}
-                        </span>
+                        <div className="flex items-center gap-2">
+                            <span className="font-mono font-black text-xs sm:text-sm text-ink-soft bg-paper px-2.5 py-1 rounded-[6px] border-2 border-ink shadow-hard-sm">
+                                {cleanCode}
+                            </span>
+                            <button
+                                type="button"
+                                onClick={toggleMute}
+                                aria-label={isMuted ? 'Unmute game sounds' : 'Mute game sounds'}
+                                title={isMuted ? 'Unmute sounds' : 'Mute sounds'}
+                                className="min-w-[36px] min-h-[36px] p-1.5 bg-paper hover:bg-card border-2 border-ink rounded-[6px] shadow-hard-sm flex items-center justify-center text-ink cursor-pointer active:translate-x-[1px] active:translate-y-[1px] focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none"
+                            >
+                                {isMuted ? (
+                                    <VolumeX className="w-4 h-4 text-tomato" />
+                                ) : (
+                                    <Volume2 className="w-4 h-4 text-ink" />
+                                )}
+                            </button>
+                        </div>
                     </div>
 
                     {/* STATE 1: Loading Preview */}
@@ -490,7 +507,7 @@ export const Join = () => {
                         <ArrowLeft className="w-4 h-4" />
                         <span>Back to home</span>
                     </button>
-                    <span className="text-[11px] text-ink-soft/70">
+                    <span className="text-[11px] text-ink-soft">
                         {CREDIT_LINE}
                     </span>
                 </div>

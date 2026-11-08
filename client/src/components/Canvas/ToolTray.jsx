@@ -32,7 +32,7 @@ export const ToolTray = ({
             {/* Row 1 on mobile (Tools & Size + Actions) / Left group on desktop */}
             <div className="w-full sm:w-auto flex items-center justify-between sm:justify-start gap-2">
                 <div className="flex items-center gap-1.5">
-                    {/* Tools: Pencil & Eraser */}
+                    {/* Tools: Pencil & Eraser with roving tabindex */}
                     <div
                         role="group"
                         aria-label="Drawing tool toggle"
@@ -41,9 +41,17 @@ export const ToolTray = ({
                         <button
                             type="button"
                             aria-pressed={tool === 'pencil'}
+                            tabIndex={tool === 'pencil' ? 0 : -1}
                             aria-label="Pencil tool (P)"
                             title="Pencil tool (P)"
                             onClick={() => setTool?.('pencil')}
+                            onKeyDown={(e) => {
+                                if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+                                    e.preventDefault();
+                                    setTool?.('eraser');
+                                    e.currentTarget.nextElementSibling?.focus();
+                                }
+                            }}
                             className={`min-w-[44px] min-h-[44px] p-2 rounded-[4px] font-bold flex items-center justify-center transition-transform cursor-pointer focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none ${
                                 tool === 'pencil'
                                     ? 'bg-card text-ink border-2 border-ink shadow-hard-sm'
@@ -55,9 +63,17 @@ export const ToolTray = ({
                         <button
                             type="button"
                             aria-pressed={tool === 'eraser'}
+                            tabIndex={tool === 'eraser' ? 0 : -1}
                             aria-label="Eraser tool (E)"
                             title="Eraser tool (E)"
                             onClick={() => setTool?.('eraser')}
+                            onKeyDown={(e) => {
+                                if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                                    e.preventDefault();
+                                    setTool?.('pencil');
+                                    e.currentTarget.previousElementSibling?.focus();
+                                }
+                            }}
                             className={`min-w-[44px] min-h-[44px] p-2 rounded-[4px] font-bold flex items-center justify-center transition-transform cursor-pointer focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none ${
                                 tool === 'eraser'
                                     ? 'bg-card text-ink border-2 border-ink shadow-hard-sm'

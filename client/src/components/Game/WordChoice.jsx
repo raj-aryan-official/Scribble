@@ -75,20 +75,23 @@ export const WordChoice = ({ roomCode, cardsReady = true }) => {
     }, [state.drawerId, state.currentRound]);
 
     const handlePick = useCallback((index) => {
+        console.log('HANDLE PICK CALLED:', index, 'choices:', state.wordChoices, 'pickedWord:', pickedWord);
         if (!state.wordChoices || !state.wordChoices[index] || pickedWord) return;
         const choice = state.wordChoices[index];
         const wordText = typeof choice === 'string' ? choice : choice.word;
+        console.log('HANDLE PICK WORD:', wordText, 'roomCode:', roomCode);
         setPickedWord({ word: wordText, index });
 
         // Slide up into word chip and emit after 300ms
         setTimeout(() => {
+            console.log('EMITTING CHOOSE_WORD:', wordText, 'roomCode:', roomCode);
             socket.emit(EVENTS.CHOOSE_WORD, { roomCode, word: wordText });
         }, 300);
     }, [state.wordChoices, pickedWord, socket, roomCode]);
 
     // Keyboard controls for drawer: 1, 2, 3, ArrowLeft, ArrowRight, Enter
     useEffect(() => {
-        if (!isWordSelection || !isDrawer || pickedWord || !cardsReady) return;
+        if (!isWordSelection || !isDrawer || pickedWord) return;
 
         const handleKeyDown = (e) => {
             if (!state.wordChoices || state.wordChoices.length === 0) return;
@@ -167,7 +170,7 @@ export const WordChoice = ({ roomCode, cardsReady = true }) => {
                             {/* Stylized pencil in avatar corner */}
                             <svg
                                 viewBox="0 0 32 32"
-                                className="absolute -bottom-1 -right-2 w-8 h-8 drop-shadow-sm select-none"
+                                className="absolute -bottom-1 -right-2 w-8 h-8 select-none"
                                 aria-hidden="true"
                             >
                                 <path d="M8 24 L22 10 L26 14 L12 28 Z" fill="#F6B72C" stroke="#1C1B18" strokeWidth="1.5" />
@@ -265,6 +268,7 @@ export const WordChoice = ({ roomCode, cardsReady = true }) => {
                                 return (
                                     <motion.button
                                         key={wordText + idx}
+                                        data-testid={`word-choice-card-${idx}`}
                                         ref={(el) => (cardRefs.current[idx] = el)}
                                         type="button"
                                         onClick={() => handlePick(idx)}
@@ -305,7 +309,10 @@ export const WordChoice = ({ roomCode, cardsReady = true }) => {
                                             </div>
                                         </div>
 
-                                        <span className="text-xl sm:text-2xl font-heading font-black text-ink capitalize tracking-wide group-hover:text-tomato transition-colors my-2">
+                                        <span
+                                            data-testid="card-word"
+                                            className="text-xl sm:text-2xl font-heading font-black text-ink capitalize tracking-wide group-hover:text-tomato transition-colors my-2"
+                                        >
                                             {wordText}
                                         </span>
 

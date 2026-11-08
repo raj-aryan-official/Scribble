@@ -253,9 +253,9 @@ export const Lobby = () => {
         emitUpdateSettings({ packs: nextPacks });
     };
 
-    // Debounce custom words updates
+    // Debounce custom words updates (only when the user actually types)
     useEffect(() => {
-        if (!isHost) return;
+        if (!isHost || !isTypingCustomWords.current) return;
         const handler = setTimeout(() => {
             isTypingCustomWords.current = false;
             emitUpdateSettings({ customWords: customWordsText });
@@ -385,7 +385,7 @@ export const Lobby = () => {
                         </div>
                         <span
                             className={`text-xs font-black uppercase px-2.5 py-1 rounded-[4px] border border-ink ${
-                                canStart ? 'bg-leaf/15 text-leaf-deep' : 'bg-tomato/15 text-tomato'
+                                canStart ? 'bg-card text-leaf-deep' : 'bg-card text-tomato-deep'
                             }`}
                         >
                             {canStart ? 'Ready to play' : 'Need 2+ players'}

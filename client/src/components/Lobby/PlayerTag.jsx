@@ -10,7 +10,7 @@ export const PlayerTag = ({
     onKick,
     onChangeAvatar,
 }) => {
-    const isDisconnected = Boolean(player.isDisconnected);
+    const isDisconnected = Boolean(player.isDisconnected || player.status === 'away');
 
     return (
         <motion.li
@@ -55,11 +55,12 @@ export const PlayerTag = ({
 
                         {player.isHost && (
                             <span
+                                role="img"
                                 title="Room Host"
                                 aria-label="Room Host"
                                 className="inline-flex items-center text-marigold fill-marigold shrink-0"
                             >
-                                <Crown className="w-4 h-4 text-marigold fill-marigold" />
+                                <Crown className="w-4 h-4 text-marigold fill-marigold" aria-hidden="true" />
                             </span>
                         )}
 

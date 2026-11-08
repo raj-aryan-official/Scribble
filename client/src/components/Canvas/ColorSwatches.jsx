@@ -24,17 +24,37 @@ export const ColorSwatches = ({ color = '#1C1B18', setColor, className = '' }) =
             data-testid="color-swatches"
         >
             {/* Desktop: 2 rows of 6. Phone: 1 row with horizontal scroll-snap */}
-            <div className="flex md:grid md:grid-cols-6 md:grid-rows-2 items-center gap-1.5 overflow-x-auto snap-x snap-mandatory scrollbar-hide py-1 max-w-full">
+            <div
+                role="group"
+                aria-label="Color swatches"
+                className="flex md:grid md:grid-cols-6 md:grid-rows-2 items-center gap-1.5 overflow-x-auto snap-x snap-mandatory scrollbar-hide py-1 max-w-full"
+            >
                 {PRESET_COLORS.map(({ name, hex }, index) => {
                     const isSelected = color.toLowerCase() === hex.toLowerCase();
                     return (
                         <button
                             key={hex}
                             type="button"
-                            aria-label={`Select ${name} color (Key ${index < 9 ? index + 1 : ''})`}
                             aria-pressed={isSelected}
+                            tabIndex={isSelected ? 0 : -1}
+                            aria-label={`Select ${name} color (Key ${index < 9 ? index + 1 : ''})`}
                             title={`${name} ${index < 9 ? `(${index + 1})` : ''}`}
                             onClick={() => setColor?.(hex)}
+                            onKeyDown={(e) => {
+                                let nextIndex = null;
+                                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                                    e.preventDefault();
+                                    nextIndex = (index + 1) % PRESET_COLORS.length;
+                                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                                    e.preventDefault();
+                                    nextIndex = (index - 1 + PRESET_COLORS.length) % PRESET_COLORS.length;
+                                }
+                                if (nextIndex !== null) {
+                                    const nextColor = PRESET_COLORS[nextIndex];
+                                    setColor?.(nextColor.hex);
+                                    e.currentTarget.parentElement?.children[nextIndex]?.focus();
+                                }
+                            }}
                             className="min-w-[44px] min-h-[44px] snap-center flex items-center justify-center cursor-pointer p-1 rounded-full focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none shrink-0"
                         >
                             <span

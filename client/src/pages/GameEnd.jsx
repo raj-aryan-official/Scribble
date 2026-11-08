@@ -36,7 +36,7 @@ const HandDrawnCrown = () => (
             strokeWidth="2.5"
             strokeLinejoin="round"
         />
-        <circle cx="24" cy="18" r="2.5" fill="#E4472B" stroke="#1C1B18" strokeWidth="1" />
+        <circle cx="24" cy="18" r="2.5" fill="#D2381C" stroke="#1C1B18" strokeWidth="1" />
         <circle cx="14" cy="20" r="1.5" fill="#2F4FD8" stroke="#1C1B18" strokeWidth="1" />
         <circle cx="34" cy="20" r="1.5" fill="#2E9E6B" stroke="#1C1B18" strokeWidth="1" />
     </svg>
@@ -68,7 +68,7 @@ export const GameEnd = () => {
             if (canceled) return;
             const duration = 2000;
             const animationEnd = Date.now() + duration;
-            const paletteColors = ['#E4472B', '#F6B72C', '#2F4FD8', '#2E9E6B', '#1C1B18'];
+            const paletteColors = ['#D2381C', '#F6B72C', '#2F4FD8', '#2E9E6B', '#1C1B18'];
 
             const frame = () => {
                 if (canceled) return;
@@ -229,7 +229,7 @@ export const GameEnd = () => {
         ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
         // Header accent line
-        ctx.fillStyle = '#E4472B';
+        ctx.fillStyle = '#D2381C';
         ctx.fillRect(0, 0, canvasWidth, 6);
 
         // Title
@@ -456,7 +456,7 @@ export const GameEnd = () => {
                                         <span className="font-mono font-black text-2xl sm:text-4xl">
                                             {player.rank}
                                         </span>
-                                        <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest opacity-90">
+                                        <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest">
                                             {isFirst ? 'Winner' : getOrdinal(player.rank)}
                                         </span>
                                     </div>
@@ -548,7 +548,10 @@ export const GameEnd = () => {
                         {/* Swipeable Strip */}
                         <div
                             data-testid="drawings-strip"
-                            className="flex items-center gap-4 overflow-x-auto pb-4 pt-1 px-1 scrollbar-hide max-w-full"
+                            role="region"
+                            aria-label="Drawings of the match"
+                            tabIndex={0}
+                            className="flex items-center gap-4 overflow-x-auto pb-4 pt-1 px-1 scrollbar-hide max-w-full focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none rounded-[6px]"
                         >
                             {matchDrawings.map((drawing, idx) => (
                                 <DrawingCard

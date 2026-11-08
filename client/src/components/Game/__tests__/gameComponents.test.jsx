@@ -4,6 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import HintTiles from '../HintTiles';
 import TimerBar from '../TimerBar';
 import PlayerList from '../PlayerList';
+import TurnWaitOverlay from '../TurnWaitOverlay';
 
 describe('In-Game Components - Visual Language & Behavior', () => {
     describe('HintTiles (reveal state)', () => {
@@ -125,6 +126,79 @@ describe('In-Game Components - Visual Language & Behavior', () => {
 
             expect(bobIndex).toBeLessThan(charlieIndex);
             expect(charlieIndex).toBeLessThan(aliceIndex);
+        });
+
+        it('shows turn order lookahead: "Draws next" and "Draws in 2" from turnInfo queue', () => {
+            const turnInfo = {
+                queue: ['p3', 'p1'], // p3 draws next, p1 draws in 2
+                drawerId: 'p2'
+            };
+
+            const htmlDesktop = renderToStaticMarkup(
+                <PlayerList
+                    players={players}
+                    scores={scores}
+                    drawerId="p2"
+                    turnInfo={turnInfo}
+                    variant="desktop"
+                />
+            );
+
+            expect(htmlDesktop).toContain('Draws next');
+            expect(htmlDesktop).toContain('Draws in 2');
+            expect(htmlDesktop).toContain('data-draw-order="Draws next"');
+            expect(htmlDesktop).toContain('data-draw-order="Draws in 2"');
+
+            const htmlMobile = renderToStaticMarkup(
+                <PlayerList
+                    players={players}
+                    scores={scores}
+                    drawerId="p2"
+                    turnInfo={turnInfo}
+                    variant="mobile"
+                />
+            );
+
+            expect(htmlMobile).toContain('Draws next');
+            expect(htmlMobile).toContain('Draws in 2');
+        });
+
+        it('does not show draw order for the active drawer or players who have already guessed', () => {
+            const turnInfo = {
+                queue: ['p3'],
+                drawerId: 'p2'
+            };
+
+            const html = renderToStaticMarkup(
+                <PlayerList
+                    players={players}
+                    scores={scores}
+                    drawerId="p2"
+                    guessedPlayerIds={['p3']}
+                    turnInfo={turnInfo}
+                    variant="desktop"
+                />
+            );
+
+            // p2 is drawer (shows drawing pencil, not Draws next)
+            // p3 has guessed (shows tick, not Draws next)
+            expect(html).not.toContain('Draws next');
+        });
+    });
+
+    describe('TurnWaitOverlay (8s calm reconnect countdown)', () => {
+        it('renders calm countdown card with "Waiting for Maya to reconnect (6s)"', () => {
+            const endsAt = Date.now() + 6000;
+            const html = renderToStaticMarkup(
+                <TurnWaitOverlay waitingFor="Maya" endsAt={endsAt} />
+            );
+
+            expect(html).toContain('data-testid="turn-wait-overlay"');
+            expect(html).toContain('role="status"');
+            expect(html).toContain('aria-live="polite"');
+            expect(html).toContain('Waiting for Maya to reconnect (6s)');
+            expect(html).toContain('Holding the turn');
+            expect(html).toContain('Resuming automatically...');
         });
     });
 });

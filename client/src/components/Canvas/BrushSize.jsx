@@ -43,18 +43,38 @@ export const BrushSize = ({ lineWidth = 6, setLineWidth, className = '' }) => {
             className={`flex items-center gap-1.5 relative ${className}`}
             data-testid="brush-size-controls"
         >
-            {/* Three presets (Small, Medium, Large) */}
-            <div className="flex items-center gap-1 bg-paper p-1 border-2 border-ink rounded-[6px]">
-                {SIZE_PRESETS.map((preset) => {
+            {/* Three presets (Small, Medium, Large) with roving tabindex */}
+            <div
+                role="group"
+                aria-label="Brush size presets"
+                className="flex items-center gap-1 bg-paper p-1 border-2 border-ink rounded-[6px]"
+            >
+                {SIZE_PRESETS.map((preset, index) => {
                     const isSelected = lineWidth === preset.size;
                     return (
                         <button
                             key={preset.name}
                             type="button"
-                            aria-label={`Brush size ${preset.name} (${preset.size}px)`}
                             aria-pressed={isSelected}
+                            tabIndex={isSelected ? 0 : -1}
+                            aria-label={`Brush size ${preset.name} (${preset.size}px)`}
                             title={`${preset.name} (${preset.size}px)`}
                             onClick={() => setLineWidth?.(preset.size)}
+                            onKeyDown={(e) => {
+                                let nextIndex = null;
+                                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                                    e.preventDefault();
+                                    nextIndex = (index + 1) % SIZE_PRESETS.length;
+                                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                                    e.preventDefault();
+                                    nextIndex = (index - 1 + SIZE_PRESETS.length) % SIZE_PRESETS.length;
+                                }
+                                if (nextIndex !== null) {
+                                    const nextPreset = SIZE_PRESETS[nextIndex];
+                                    setLineWidth?.(nextPreset.size);
+                                    e.currentTarget.parentElement?.children[nextIndex]?.focus();
+                                }
+                            }}
                             className={`min-w-[44px] min-h-[44px] p-2 rounded-[4px] flex items-center justify-center transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none ${
                                 isSelected
                                     ? 'bg-card border-2 border-ink shadow-hard-sm'

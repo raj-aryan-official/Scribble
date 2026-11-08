@@ -1,7 +1,19 @@
 const { EVENTS, GAME_STATES } = require('../../../shared/types.cjs');
 const { rejectWithError, getMemberRoom, isDrawer } = require('./utils');
+const { canDraw } = require('../game/machine');
 
 function registerDrawingHandlers(io, socket, safeOn) {
+    function resetAfk(room) {
+        if (!room) return;
+        const drawerRec = room.records
+            ? (room.records.get(room.drawerId) || Array.from(room.records.values()).find(r => r.socketId === socket.id))
+            : null;
+        if (drawerRec) {
+            drawerRec.consecutiveAutoPicks = 0;
+            drawerRec.isAfkSkipped = false;
+        }
+    }
+
     safeOn(EVENTS.DRAW_STROKE, (payload) => {
         if (!payload || typeof payload !== 'object') {
             return rejectWithError(socket, 'Invalid payload');
@@ -13,12 +25,20 @@ function registerDrawingHandlers(io, socket, safeOn) {
         if (!isDrawer(room, socket)) {
             return rejectWithError(socket, 'Only the drawer can draw');
         }
-        if (room.gameState !== GAME_STATES.DRAWING) {
+        if (!canDraw(room)) {
             return rejectWithError(socket, 'Drawing is not active');
+        }
+        // E20: Turn ID check
+        if (payload.turnId && room.currentTurnId && payload.turnId !== room.currentTurnId) {
+            return rejectWithError(socket, 'Stale turn ID', 'STALE_TURN');
         }
         const stroke = payload.stroke;
         if (!stroke || typeof stroke !== 'object' || !Array.isArray(stroke.points)) {
             return rejectWithError(socket, 'Invalid stroke data');
+        }
+        // E12: Drop stroke whose id it already has
+        if (stroke.id && room.strokes.some(s => s.id === stroke.id)) {
+            return;
         }
         if (stroke.points.length > 2000) {
             return rejectWithError(socket, 'Points per stroke limit exceeded (max 2000)');
@@ -26,6 +46,11 @@ function registerDrawingHandlers(io, socket, safeOn) {
         if (room.strokes.length >= 3000) {
             return rejectWithError(socket, 'Room stroke limit reached (max 3000)');
         }
+
+        stroke.seq = ++room.strokeSeq;
+        stroke.turnId = room.currentTurnId;
+        resetAfk(room);
+
         room.strokes.push(stroke);
         socket.to(room.code).emit(EVENTS.STROKE_RECEIVED, stroke);
     });
@@ -41,12 +66,20 @@ function registerDrawingHandlers(io, socket, safeOn) {
         if (!isDrawer(room, socket)) {
             return rejectWithError(socket, 'Only the drawer can draw');
         }
-        if (room.gameState !== GAME_STATES.DRAWING) {
+        if (!canDraw(room)) {
             return rejectWithError(socket, 'Drawing is not active');
+        }
+        // E20: Turn ID check
+        if (payload.turnId && room.currentTurnId && payload.turnId !== room.currentTurnId) {
+            return rejectWithError(socket, 'Stale turn ID', 'STALE_TURN');
         }
         const id = typeof payload.id === 'string' ? payload.id.trim() : null;
         if (!id) {
             return rejectWithError(socket, 'Invalid stroke ID');
+        }
+        // E12: Drop duplicate stroke ID
+        if (room.strokes.some(s => s.id === id)) {
+            return;
         }
         if (room.strokes.length >= 3000) {
             return rejectWithError(socket, 'Room stroke limit reached (max 3000)');
@@ -57,8 +90,12 @@ function registerDrawingHandlers(io, socket, safeOn) {
         const color = typeof payload.color === 'string' ? payload.color.slice(0, 32) : '#000000';
         const size = typeof payload.size === 'number' && payload.size > 0 ? Math.min(100, payload.size) : 5;
 
+        resetAfk(room);
+
         const stroke = {
             id,
+            seq: ++room.strokeSeq,
+            turnId: room.currentTurnId,
             tool,
             color,
             size,
@@ -68,6 +105,7 @@ function registerDrawingHandlers(io, socket, safeOn) {
 
         socket.to(room.code).emit(EVENTS.STROKE_START, {
             id,
+            seq: stroke.seq,
             tool,
             color,
             size,
@@ -87,8 +125,12 @@ function registerDrawingHandlers(io, socket, safeOn) {
         if (!isDrawer(room, socket)) {
             return rejectWithError(socket, 'Only the drawer can draw');
         }
-        if (room.gameState !== GAME_STATES.DRAWING) {
+        if (!canDraw(room)) {
             return rejectWithError(socket, 'Drawing is not active');
+        }
+        // E20: Turn ID check
+        if (payload.turnId && room.currentTurnId && payload.turnId !== room.currentTurnId) {
+            return rejectWithError(socket, 'Stale turn ID', 'STALE_TURN');
         }
         const id = typeof payload.id === 'string' ? payload.id.trim() : null;
         if (!id || !Array.isArray(payload.points) || payload.points.length === 0) {
@@ -131,8 +173,12 @@ function registerDrawingHandlers(io, socket, safeOn) {
         if (!isDrawer(room, socket)) {
             return rejectWithError(socket, 'Only the drawer can draw');
         }
-        if (room.gameState !== GAME_STATES.DRAWING) {
+        if (!canDraw(room)) {
             return rejectWithError(socket, 'Drawing is not active');
+        }
+        // E20: Turn ID check
+        if (payload.turnId && room.currentTurnId && payload.turnId !== room.currentTurnId) {
+            return rejectWithError(socket, 'Stale turn ID', 'STALE_TURN');
         }
         const id = typeof payload.id === 'string' ? payload.id.trim() : null;
         if (!id) {
@@ -152,7 +198,7 @@ function registerDrawingHandlers(io, socket, safeOn) {
         if (!isDrawer(room, socket)) {
             return rejectWithError(socket, 'Only the drawer can clear canvas');
         }
-        if (room.gameState !== GAME_STATES.DRAWING) {
+        if (!canDraw(room)) {
             return rejectWithError(socket, 'Drawing is not active');
         }
         room.strokes = [];
@@ -170,7 +216,7 @@ function registerDrawingHandlers(io, socket, safeOn) {
         if (!isDrawer(room, socket)) {
             return rejectWithError(socket, 'Only the drawer can undo strokes');
         }
-        if (room.gameState !== GAME_STATES.DRAWING) {
+        if (!canDraw(room)) {
             return rejectWithError(socket, 'Drawing is not active');
         }
         if (room.strokes.length > 0) {

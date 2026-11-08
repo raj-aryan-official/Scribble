@@ -47,6 +47,7 @@ export const AppHeader = ({
         setShowLeaveConfirm(false);
         try {
             sessionStorage.removeItem('scribble_room_code');
+            localStorage.removeItem('scribble_rejoin');
         } catch {
             // Ignore session storage errors
         }

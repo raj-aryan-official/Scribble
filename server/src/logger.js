@@ -2,6 +2,9 @@ const LOG_LEVELS = { debug: 0, info: 1, warn: 2, error: 3 };
 const CURRENT_LEVEL = process.env.LOG_LEVEL || (process.env.NODE_ENV === 'test' ? 'error' : 'info');
 
 function scrub(arg) {
+    if (arg instanceof Error) {
+        return arg.stack || arg.message;
+    }
     if (typeof arg === 'string') {
         return arg.replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '[SESSION]');
     }

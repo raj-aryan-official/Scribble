@@ -3,7 +3,7 @@ import { Lock, Settings as SettingsIcon } from 'lucide-react';
 import Card from '../ui/Card';
 import Chip from '../ui/Chip';
 
-const ROUND_OPTIONS = [2, 3, 5, 7, 10, 12];
+const ROUND_OPTIONS = [1, 2, 3, 5, 7, 10, 12];
 const DRAW_TIME_OPTIONS = [60, 80, 100, 120];
 const DIFFICULTY_OPTIONS = ['Easy', 'Medium', 'Hard', 'Mixed'];
 const AVAILABLE_PACKS = [
@@ -63,6 +63,7 @@ export const SettingsCard = ({
                                     <button
                                         key={num}
                                         type="button"
+                                        data-testid={`round-option-${num}`}
                                         onClick={() => onRoundsChange?.(num)}
                                         className={`py-1.5 text-xs sm:text-sm font-bold rounded-[4px] transition-all cursor-pointer select-none ${
                                             isSelected

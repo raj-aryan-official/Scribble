@@ -1,9 +1,10 @@
 const { EVENTS, GAME_STATES } = require('../../../shared/types.cjs');
 const { normalize, isCorrect, isClose } = require('../guess');
 const blocklist = require('../blocklist');
-const { rejectWithError, getMemberRoom } = require('./utils');
+const { rejectWithError, getMemberRoom, sanitiseText } = require('./utils');
 const { calculateGuessScore, calculateDrawerBonus } = require('../game/scoring');
 const { getTimeLeft, recordChatMessage, endRound } = require('../game/loop');
+const { isGuesserEligibleForBonus } = require('../game/turns');
 
 // Per-socket message rate-limiting store (socketId -> Array<timestamp>)
 const socketMessageTimestamps = new Map();
@@ -52,14 +53,11 @@ function registerChatHandlers(io, socket, safeOn) {
         recentTimestamps.push(now);
         socketMessageTimestamps.set(socket.id, recentTimestamps);
 
-        // Trim, reject empty, cap at 100 characters, strip control characters
-        const rawText = typeof payload.text === 'string' ? payload.text : '';
-        const stripped = rawText.replace(/[\x00-\x1F\x7F-\x9F]/g, '');
-        const trimmed = stripped.trim();
-        if (!trimmed) {
+        // Trim, reject empty, cap at 100 characters, sanitize via sanitiseText (E18)
+        const text = sanitiseText(typeof payload.text === 'string' ? payload.text : '', 100);
+        if (!text) {
             return;
         }
-        const text = trimmed.slice(0, 100);
 
         const player = room.players.find(p => p.id === socket.id);
         const drawer = room.players[room.currentDrawerIndex];
@@ -84,7 +82,9 @@ function registerChatHandlers(io, socket, safeOn) {
         }
 
         // Active game during DRAWING phase: message from player who hasn't guessed yet
-        if (room.gameState === GAME_STATES.DRAWING && room.wordToGuess) {
+        // E20: Stale turnId messages are dropped from being counted as guesses
+        const isStaleTurn = Boolean(payload.turnId && room.currentTurnId && payload.turnId !== room.currentTurnId);
+        if (room.gameState === GAME_STATES.DRAWING && room.wordToGuess && !isStaleTurn) {
             if (isCorrect(text, room.wordToGuess)) {
                 if (!room.guessedPlayers) room.guessedPlayers = new Set();
                 room.guessedPlayers.add(socket.id);
@@ -117,17 +117,51 @@ function registerChatHandlers(io, socket, safeOn) {
                     }
                 }
 
+                // Look up guesser and drawer records
+                const guesserRecord = room.records
+                    ? (room.records.get(player?.playerId || socket.id) || Array.from(room.records.values()).find(r => r.socketId === socket.id))
+                    : null;
+                const drawerRecord = room.records
+                    ? (room.records.get(drawerId) || Array.from(room.records.values()).find(r => r.playerId === drawerId || r.socketId === drawerId))
+                    : null;
+
+                if (guesserRecord) {
+                    guesserRecord.score = (guesserRecord.score || 0) + gained;
+                    guesserRecord.guessedThisTurn = true;
+                    guesserRecord.correctGuesses = (guesserRecord.correctGuesses || 0) + 1;
+                    if (!guesserRecord.guessMs) guesserRecord.guessMs = [];
+                    guesserRecord.guessMs.push(Math.round(guessDuration * 1000));
+                }
+
                 room.scores[socket.id] += gained;
-                const total = room.scores[socket.id];
+                if (guesserRecord) {
+                    room.scores[guesserRecord.playerId] = guesserRecord.score;
+                }
+                const total = guesserRecord ? guesserRecord.score : room.scores[socket.id];
 
                 if (!room.roundGained) room.roundGained = {};
                 room.roundGained[socket.id] = (room.roundGained[socket.id] || 0) + gained;
+                if (guesserRecord) {
+                    room.roundGained[guesserRecord.playerId] = (room.roundGained[guesserRecord.playerId] || 0) + gained;
+                }
 
-                // Drawer bonus at 10% of each guess
-                if (drawerId) {
+                // Drawer bonus at 10% of each guess - awards only if guesser was present when word was chosen
+                const isEligibleForBonus = isGuesserEligibleForBonus(room, socket.id) || (guesserRecord && isGuesserEligibleForBonus(room, guesserRecord.playerId));
+                if (drawerId && isEligibleForBonus) {
                     const drawerBonus = calculateDrawerBonus(gained);
-                    room.scores[drawerId] += drawerBonus;
+                    if (drawerRecord) {
+                        drawerRecord.score = (drawerRecord.score || 0) + drawerBonus;
+                        room.scores[drawerRecord.playerId] = drawerRecord.score;
+                        if (drawerRecord.socketId) {
+                            room.scores[drawerRecord.socketId] = drawerRecord.score;
+                        }
+                    } else {
+                        room.scores[drawerId] = (room.scores[drawerId] || 0) + drawerBonus;
+                    }
                     room.roundGained[drawerId] = (room.roundGained[drawerId] || 0) + drawerBonus;
+                    if (drawerRecord) {
+                        room.roundGained[drawerRecord.playerId] = (room.roundGained[drawerRecord.playerId] || 0) + drawerBonus;
+                    }
                     room.drawerBonus = (room.drawerBonus || 0) + drawerBonus;
                 }
 
@@ -158,7 +192,10 @@ function registerChatHandlers(io, socket, safeOn) {
                 recordChatMessage(room, correctMsg);
                 io.to(room.code).emit(EVENTS.MESSAGE_RECEIVED, correctMsg);
 
-                const activeGuessers = room.players.filter(p => !p.isDisconnected && p.id !== drawerId).length;
+                const activeGuessers = room.records
+                    ? Array.from(room.records.values()).filter(r => r.status === 'connected' && r.playerId !== drawerId && r.socketId !== drawerId).length
+                    : room.players.filter(p => !p.isDisconnected && p.id !== drawerId).length;
+
                 if (room.guessedPlayers.size >= activeGuessers && activeGuessers > 0) {
                     endRound(io, room);
                 }

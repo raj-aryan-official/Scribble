@@ -79,7 +79,7 @@ export const HintTiles = ({
                     data-testid="drawer-word-chip"
                     className="inline-flex items-center gap-2 bg-marigold text-ink border-2 border-ink shadow-hard-sm px-4 py-1.5 rounded-[6px] font-mono font-black text-lg sm:text-xl md:text-2xl uppercase tracking-wider select-none"
                 >
-                    <span className="text-xs uppercase font-bold text-ink-soft tracking-widest mr-1">
+                    <span className="text-xs uppercase font-bold text-ink tracking-widest mr-1">
                         Draw:
                     </span>
                     <span>{word}</span>

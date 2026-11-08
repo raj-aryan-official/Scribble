@@ -31,6 +31,8 @@ const initialState = {
     myGainedPoints: 0,
     joinedMidRound: false,
     endReason: null,
+    turnInfo: null,
+    turnWait: null,
     error: null
 };
 
@@ -54,19 +56,39 @@ const gameReducer = (state, action) => {
             const snapshot = action.payload;
             const room = snapshot.publicRoom || snapshot.room;
             const myId = action.socketId || state.currentUser?.id;
-            const me = room?.players?.find(p => p.id === myId) || state.currentUser;
+            let me = room?.players?.find(p => p.id === myId || (snapshot.playerId && p.playerId === snapshot.playerId)) || state.currentUser;
+            if (snapshot.ownRecord && me) {
+                me = { ...me, ...snapshot.ownRecord };
+            }
             const currentGameState = snapshot.gameState || room?.gameState || state.gameState;
             const isMid = Boolean(
                 currentGameState &&
                 currentGameState !== GAME_STATES.LOBBY &&
                 state.gameState === GAME_STATES.LOBBY
             );
+            const myGuessed = Boolean(snapshot.ownRecord?.guessedThisTurn);
+            const updatedGuessed = myGuessed && myId && !state.guessedPlayers.includes(myId)
+                ? [...state.guessedPlayers, myId]
+                : state.guessedPlayers;
+
+            const updatedScores = room?.scores || state.scores;
+            if (snapshot.ownRecord && myId && snapshot.ownRecord.score !== undefined) {
+                updatedScores[myId] = snapshot.ownRecord.score;
+            }
+
+            const isTurnWait = currentGameState === GAME_STATES.TURN_WAIT || Boolean(snapshot.turnWaitEndsAt);
+            const turnWaitObj = isTurnWait ? {
+                waitingFor: snapshot.waitingFor || (room?.players?.find(p => p.id === snapshot.waitingForDrawerId || p.playerId === snapshot.waitingForDrawerId)?.username) || 'Player',
+                waitingForDrawerId: snapshot.waitingForDrawerId,
+                endsAt: snapshot.turnWaitEndsAt || snapshot.endsAt
+            } : null;
+
             return {
                 ...state,
                 gameState: currentGameState,
                 roomCode: room?.code || state.roomCode,
                 players: room?.players || state.players,
-                scores: room?.scores || state.scores,
+                scores: updatedScores,
                 totalRounds: room?.settings?.rounds || state.totalRounds,
                 currentRound: room?.currentRound || state.currentRound,
                 settings: room?.settings || state.settings,
@@ -75,14 +97,35 @@ const gameReducer = (state, action) => {
                 wordHint: snapshot.hint || '',
                 wordLength: snapshot.word ? snapshot.word.length : (snapshot.hint ? snapshot.hint.replace(/\s+/g, '').length : 0),
                 timer: snapshot.timeLeft ?? state.timer,
-                wordToGuess: snapshot.word || null,
+                wordToGuess: snapshot.word || state.wordToGuess,
+                guessedPlayers: updatedGuessed,
                 wordChoices: snapshot.wordChoices || [],
                 messages: Array.isArray(snapshot.recentChat) && snapshot.recentChat.length > 0 ? snapshot.recentChat.slice(-100) : state.messages.slice(-100),
                 startsAt: snapshot.startsAt || null,
                 selectionEndsAt: snapshot.selectionEndsAt || null,
                 roundEndsAt: snapshot.roundEndsAt || null,
                 joinedMidRound: isMid || state.joinedMidRound,
+                turnInfo: snapshot.turnInfo || snapshot.TURN_INFO || state.turnInfo,
+                turnWait: turnWaitObj,
                 error: null
+            };
+        }
+        case 'PLAYER_STATUS': {
+            const { playerId, status } = action.payload || {};
+            if (!playerId) return state;
+            const updatedPlayers = state.players.map(p => {
+                if (p.id === playerId || p.playerId === playerId) {
+                    return {
+                        ...p,
+                        status,
+                        isDisconnected: status === 'away' || status === 'left'
+                    };
+                }
+                return p;
+            });
+            return {
+                ...state,
+                players: updatedPlayers
             };
         }
         case 'UPDATE_PLAYERS':
@@ -116,6 +159,7 @@ const gameReducer = (state, action) => {
                 roundEndsAt: action.payload.roundEndsAt || null,
                 startsAt: null,
                 selectionEndsAt: null,
+                turnWait: null,
                 myGainedPoints: 0
             };
         case 'HINT_UPDATE':
@@ -130,6 +174,14 @@ const gameReducer = (state, action) => {
             return { ...state, autoPickedWord: null };
         case 'DISMISS_MID_ROUND':
             return { ...state, joinedMidRound: false };
+        case 'TURN_INFO':
+            return {
+                ...state,
+                turnInfo: action.payload,
+                drawerId: action.payload?.drawerId || state.drawerId,
+                currentRound: action.payload?.round || state.currentRound,
+                totalRounds: action.payload?.totalRounds || state.totalRounds
+            };
         case 'CORRECT_GUESS': {
             const isMe = action.payload.playerId === state.currentUser?.id;
             const newScore = action.payload.total ?? action.payload.points;
@@ -144,7 +196,8 @@ const gameReducer = (state, action) => {
                 wordToGuess: isMe && action.payload.word ? action.payload.word : state.wordToGuess
             };
         }
-        case 'GAME_STARTED':
+        case 'GAME_STARTED': {
+            const isTurnWait = (action.payload.gameState === GAME_STATES.TURN_WAIT);
             return {
                 ...state,
                 gameState: action.payload.gameState || state.gameState,
@@ -159,8 +212,18 @@ const gameReducer = (state, action) => {
                 guessedPlayers: [],
                 autoPickedWord: null,
                 myGainedPoints: 0,
-                joinedMidRound: false
+                joinedMidRound: false,
+                wordHint: '',
+                wordLength: 0,
+                wordToGuess: null,
+                turnInfo: action.payload.turnInfo || state.turnInfo,
+                turnWait: isTurnWait ? {
+                    waitingFor: action.payload.waitingFor || 'Player',
+                    waitingForDrawerId: action.payload.waitingForDrawerId,
+                    endsAt: action.payload.endsAt || action.payload.turnWaitEndsAt
+                } : null
             };
+        }
         case 'ROUND_ENDED':
             return {
                 ...state,
@@ -172,7 +235,9 @@ const gameReducer = (state, action) => {
                 currentRound: action.payload.currentRound || state.currentRound,
                 guessedPlayers: [],
                 myGainedPoints: 0,
-                joinedMidRound: false
+                joinedMidRound: false,
+                wordHint: '',
+                wordLength: 0
             };
         case 'GAME_ENDED':
             return {

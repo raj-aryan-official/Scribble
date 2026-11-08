@@ -17,9 +17,13 @@
     "test:e2e": "playwright test",
     "build:client": "npm run build --prefix client",
     "build": "npm run build:client",
+    "lhci": "lhci autorun",
+    "test:lhci": "lhci autorun",
     "check": "npm run sync:shared && npm run lint && npm run test && npm run test:e2e && npm run build"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@lhci/cli": "^0.16.0",
     "@playwright/test": "^1.65.0"
   }
 }

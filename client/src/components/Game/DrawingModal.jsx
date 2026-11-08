@@ -199,12 +199,10 @@ export const DrawingModal = ({
                 </div>
 
                 {/* Canvas Display */}
-                <div
-                    className="relative w-full aspect-4/3 bg-card border-2 border-ink rounded-[8px] overflow-hidden shadow-hard-sm"
-                    aria-label={altText}
-                >
+                <div className="relative w-full aspect-4/3 bg-card border-2 border-ink rounded-[8px] overflow-hidden shadow-hard-sm">
                     <canvas
                         ref={canvasRef}
+                        role="img"
                         className="w-full h-full block"
                         aria-label={altText}
                     />

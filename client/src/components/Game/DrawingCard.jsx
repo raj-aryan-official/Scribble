@@ -117,17 +117,7 @@ export const DrawingCard = ({
     return (
         <div
             data-testid="drawing-card"
-            role="button"
-            tabIndex={0}
-            onClick={() => onSelect?.(drawing)}
-            onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    onSelect?.(drawing);
-                }
-            }}
-            aria-label={`View ${altText} full size`}
-            className={`flex flex-col bg-card border-2 border-ink rounded-[12px] shadow-hard p-3 w-64 sm:w-72 shrink-0 select-none cursor-pointer hover:-translate-y-0.5 transition-transform outline-none focus-visible:ring-2 focus-visible:ring-cobalt ${className}`}
+            className={`flex flex-col bg-card border-2 border-ink rounded-[12px] shadow-hard p-3 w-64 sm:w-72 shrink-0 select-none ${className}`}
         >
             <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2 min-w-0">
@@ -141,17 +131,19 @@ export const DrawingCard = ({
                 </span>
             </div>
 
-            {/* Canvas Preview Paper */}
-            <div
-                className="relative w-full aspect-[4/3] bg-paper border-2 border-ink rounded-[6px] overflow-hidden shadow-hard-sm"
-                aria-label={altText}
+            {/* Canvas Preview Paper Button (opens full size modal) */}
+            <button
+                type="button"
+                onClick={() => onSelect?.(drawing)}
+                aria-label={`View ${altText} full size`}
+                className="relative w-full aspect-[4/3] bg-paper border-2 border-ink rounded-[6px] overflow-hidden shadow-hard-sm cursor-pointer hover:opacity-95 focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none transition-transform hover:-translate-y-0.5"
             >
                 <canvas
                     ref={canvasRef}
                     className="w-full h-full block"
                     aria-label={altText}
                 />
-            </div>
+            </button>
 
             <div className="flex items-center justify-between mt-2.5">
                 <span className="font-heading font-black text-base sm:text-lg text-ink capitalize truncate">

@@ -301,7 +301,7 @@ export const RoundEndOverlay = ({
                     {/* Score Table */}
                     <div
                         className="flex-1 w-full flex flex-col gap-1.5 min-w-0"
-                        role="table"
+                        role="list"
                         aria-label="Round scores"
                     >
                         {displayedRows.map((item, index) => {
@@ -311,6 +311,7 @@ export const RoundEndOverlay = ({
                             return (
                                 <motion.div
                                     key={item.id}
+                                    role="listitem"
                                     layout={!shouldReduceMotion}
                                     transition={{
                                         type: 'spring',
@@ -334,9 +335,9 @@ export const RoundEndOverlay = ({
                                                 {item.isFastest && (
                                                     <span
                                                         data-testid="fastest-badge"
-                                                        className="inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.2 bg-marigold/30 text-ink border border-ink rounded-[4px] shrink-0"
+                                                        className="inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.2 bg-marigold text-ink border border-ink rounded-[4px] shrink-0"
                                                     >
-                                                        <Zap className="w-2.5 h-2.5 fill-marigold stroke-ink" />
+                                                        <Zap className="w-2.5 h-2.5 fill-ink stroke-ink" aria-hidden="true" />
                                                         Fastest
                                                     </span>
                                                 )}

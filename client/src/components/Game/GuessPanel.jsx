@@ -46,6 +46,18 @@ export const GuessPanel = ({
         }
     }, [state.error, dispatch]);
 
+    // Escape closes bottom sheet
+    useEffect(() => {
+        if (!isBottomSheetOpen) return;
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') {
+                setIsBottomSheetOpen(false);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isBottomSheetOpen]);
+
     // Use visualViewport only to lift the sheet and bottom input above the keyboard
     useEffect(() => {
         if (typeof window === 'undefined' || !window.visualViewport) return;
@@ -67,10 +79,6 @@ export const GuessPanel = ({
     useEffect(() => {
         if (!socket) return;
 
-        const handleMessage = (msg) => {
-            dispatch({ type: 'ADD_MESSAGE', payload: msg });
-        };
-
         const handleCloseGuess = () => {
             setCloseHint(true);
             if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
@@ -79,15 +87,13 @@ export const GuessPanel = ({
             }, 2000);
         };
 
-        socket.on(EVENTS.MESSAGE_RECEIVED, handleMessage);
         socket.on(EVENTS.CLOSE_GUESS, handleCloseGuess);
 
         return () => {
-            socket.off(EVENTS.MESSAGE_RECEIVED, handleMessage);
             socket.off(EVENTS.CLOSE_GUESS, handleCloseGuess);
             if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
         };
-    }, [socket, dispatch]);
+    }, [socket]);
 
     const handleSubmit = (textToSend) => {
         const trimmed = (textToSend || message).trim();

@@ -14,6 +14,7 @@ import ToolTray from '../components/Canvas/ToolTray';
 import GuessPanel from '../components/Game/GuessPanel';
 import WordChoice from '../components/Game/WordChoice';
 import RoundEndOverlay from '../components/Game/RoundEndOverlay';
+import TurnWaitOverlay from '../components/Game/TurnWaitOverlay';
 import GameStartCountdown from '../components/Game/GameStartCountdown';
 import TurnIntro from '../components/Game/TurnIntro';
 import ScoringCoachmark from '../components/Game/ScoringCoachmark';
@@ -21,6 +22,7 @@ import AutoPickedBanner from '../components/Game/AutoPickedBanner';
 import MidRoundBanner from '../components/Game/MidRoundBanner';
 import EdgeState, { mapErrorToEdgeState } from '../components/Game/EdgeState';
 import { RemoteAudio } from '../components/Chat/RemoteAudio';
+import { audioManager } from '../audio/manager';
 
 export const Game = () => {
     const { code } = useParams();
@@ -146,6 +148,15 @@ export const Game = () => {
         handleEnableSound,
     } = useVoiceChat(code, state.currentUser?.username, state.players.length);
 
+    // Audio ducking: lower other sound volumes while someone speaks on voice
+    useEffect(() => {
+        const someoneSpeaking = Object.values(speakingPeers || {}).some(Boolean);
+        audioManager.setDucking(someoneSpeaking);
+        return () => {
+            audioManager.setDucking(false);
+        };
+    }, [speakingPeers]);
+
     // Measure canvas element width for cursor ring scaling
     useEffect(() => {
         const updateWidth = () => {
@@ -270,6 +281,7 @@ export const Game = () => {
                         drawerId={state.drawerId}
                         guessedPlayerIds={state.guessedPlayers}
                         speakingPeers={speakingPeers}
+                        turnInfo={state.turnInfo}
                         variant="desktop"
                     />
                 </div>
@@ -287,7 +299,7 @@ export const Game = () => {
                     )}
 
                     {/* First Game Scoring Coachmark */}
-                    <div className="w-full shrink-0">
+                    <div className="w-full shrink-0 landscape:hidden">
                         <ScoringCoachmark />
                     </div>
 
@@ -295,7 +307,7 @@ export const Game = () => {
                     <div className="w-full shrink-0">
                         <HintTiles
                             word={isDrawer ? state.wordToGuess : ''}
-                            hint={state.wordHint}
+                            hint={state.gameState === 'DRAWING' ? state.wordHint : ''}
                             isDrawer={isDrawer}
                             guessedCount={state.guessedPlayers?.length || 0}
                             totalGuessers={totalGuessers}
@@ -303,18 +315,10 @@ export const Game = () => {
                     </div>
 
                     {/* 3. The Paper at full width minus a 16 px gutter, 4:3 (Landscape: largest size that fits height) */}
-                    <div
-                        className="w-full flex-1 min-h-0 flex items-center justify-center p-0.5 overflow-hidden"
-                        style={{ containerType: 'size' }}
-                    >
+                    <div className="w-full flex-1 min-h-0 flex items-center justify-center p-0.5 overflow-hidden">
                         <div
                             data-testid="drawing-paper"
-                            className="relative bg-card rounded-[12px] border-2 border-ink shadow-hard overflow-hidden flex flex-col items-center justify-center max-w-[calc(100vw-16px)]"
-                            style={{
-                                aspectRatio: '4 / 3',
-                                width: 'min(calc(100vw - 16px), 100cqw, calc(100cqh * 4 / 3))',
-                                height: 'min(100cqh, calc(100cqw * 3 / 4))',
-                            }}
+                            className="relative bg-card rounded-[12px] border-2 border-ink shadow-hard overflow-hidden flex flex-col items-center justify-center max-w-[calc(100vw-16px)] max-h-full landscape:max-h-[220px] aspect-[4/3] w-auto h-full"
                         >
                             {/* Draining Ink Timer Bar Across Top of Paper */}
                             <TimerBar
@@ -324,9 +328,16 @@ export const Game = () => {
                             />
 
                             {/* Canvas Element with touch-action: none */}
-                            <div className="relative flex-1 w-full h-full min-h-0 canvas-paper">
+                            <div className="relative flex-1 w-full min-h-0 flex items-center justify-center">
                                 <canvas
                                     ref={canvasRef}
+                                    data-testid="canvas-element"
+                                    role="img"
+                                    aria-label={
+                                        isDrawer
+                                            ? 'Drawing paper. Sketch your secret word.'
+                                            : `Drawing in progress by ${drawer?.username || 'Maya'}`
+                                    }
                                     onPointerDown={onPointerDown}
                                     onPointerMove={onPointerMove}
                                     onPointerUp={onPointerUp}
@@ -342,10 +353,11 @@ export const Game = () => {
                                 {/* Faint Start Drawing Prompt (fades out on first stroke) */}
                                 {isDrawer && strokeCount === 0 && state.gameState === 'DRAWING' && (
                                     <div
+                                        aria-hidden="true"
                                         className="pointer-events-none absolute inset-0 flex items-center justify-center p-4 text-center select-none transition-opacity duration-300"
                                         data-testid="empty-canvas-prompt"
                                     >
-                                        <span className="text-sm sm:text-base font-bold font-heading text-ink-soft/40 italic tracking-wide">
+                                        <span className="text-sm sm:text-base font-bold font-heading text-ink-soft italic tracking-wide">
                                             Start drawing. No letters or numbers!
                                         </span>
                                     </div>
@@ -377,7 +389,7 @@ export const Game = () => {
                                 {state.gameState === 'WORD_SELECTION' && !showCountdown && (
                                     <WordChoice
                                         roomCode={code}
-                                        cardsReady={cardsReady}
+                                        cardsReady={cardsReady || !showTurnIntro}
                                     />
                                 )}
 
@@ -428,6 +440,14 @@ export const Game = () => {
                                         onSkip={handleSkipRoundEnd}
                                     />
                                 )}
+
+                                {/* TURN_WAIT Phase ('Waiting for Maya to reconnect (6s)') */}
+                                {(state.gameState === 'TURN_WAIT' || state.turnWait) && (
+                                    <TurnWaitOverlay
+                                        waitingFor={state.turnWait?.waitingFor || drawer?.username || 'Player'}
+                                        endsAt={state.turnWait?.endsAt}
+                                    />
+                                )}
                             </div>
                         </div>
                     </div>
@@ -440,6 +460,7 @@ export const Game = () => {
                             drawerId={state.drawerId}
                             guessedPlayerIds={state.guessedPlayers}
                             speakingPeers={speakingPeers}
+                            turnInfo={state.turnInfo}
                             variant="mobile"
                         />
                     </div>

@@ -10,7 +10,7 @@ import { motion, useReducedMotion } from 'framer-motion';
  */
 export const DoodleCat = ({ className = '' }) => {
     const shouldReduceMotion = useReducedMotion();
-    const [cycleStep, setCycleStep] = useState(shouldReduceMotion ? 3 : 0);
+    const [cycleStep, setCycleStep] = useState(0);
 
     useEffect(() => {
         if (shouldReduceMotion) return;
@@ -37,7 +37,9 @@ export const DoodleCat = ({ className = '' }) => {
             setTimeout(() => setCycleStep(0), 5600);
         }, 6000);
 
-        return () => {
+        if (shouldReduceMotion) return null;
+
+    return () => {
             intervals.forEach(clearTimeout);
             clearInterval(loopTimer);
         };
@@ -56,6 +58,8 @@ export const DoodleCat = ({ className = '' }) => {
             },
         },
     };
+
+    if (shouldReduceMotion) return null;
 
     return (
         <div

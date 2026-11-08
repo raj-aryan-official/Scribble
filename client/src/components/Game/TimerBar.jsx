@@ -51,7 +51,7 @@ export const TimerBar = ({
     return (
         <div
             className={`w-full relative select-none ${className}`}
-            role="timer"
+            role="progressbar"
             aria-label="Round countdown"
             aria-valuenow={secondsLeft}
             aria-valuemin={0}

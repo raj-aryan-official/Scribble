@@ -21,6 +21,19 @@ export const VoiceControls = ({
         }
     }, [voiceError]);
 
+    // Escape closes popover
+    useEffect(() => {
+        if (!showErrorPopover) return;
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') {
+                setShowErrorPopover(false);
+                onClearVoiceError?.();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [showErrorPopover, onClearVoiceError]);
+
     const handleDismiss = () => {
         setShowErrorPopover(false);
         onClearVoiceError?.();

@@ -58,21 +58,19 @@ export const MessageList = ({
             const latestMsg = displayedMessages[displayedMessages.length - 1];
 
             // Throttled accessibility announcements:
-            // "wrong guesses are not announced to other players' screen readers"
+            // "guesses are not announced at all except your own result"
             const isMyMsg = latestMsg.playerId === currentUserId || latestMsg.userId === currentUserId;
             const isCorrect = latestMsg.type === 'correct';
             const isSystem = latestMsg.type === 'system';
 
-            // Only announce correct guesses, system messages, or user's own sent messages
-            if (isCorrect || isSystem || isMyMsg) {
+            // Only announce your own correct guess or system notifications
+            if ((isMyMsg && isCorrect) || isSystem) {
                 const now = Date.now();
-                if (now - lastAnnouncementTimeRef.current >= 1200) {
+                if (now - lastAnnouncementTimeRef.current >= 800) {
                     lastAnnouncementTimeRef.current = now;
                     const announcement = isCorrect
-                        ? `${latestMsg.username} guessed the word!`
-                        : isSystem
-                        ? latestMsg.text
-                        : `${latestMsg.username}: ${latestMsg.text}`;
+                        ? `You guessed the word! +${latestMsg.gained || 320} points`
+                        : latestMsg.text;
                     setLiveAnnouncement(announcement);
                 }
             }
@@ -104,21 +102,21 @@ export const MessageList = ({
                 className="flex-1 overflow-y-auto p-3 space-y-2 bg-paper border-2 border-ink rounded-[8px] min-h-0 text-sm focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none"
             >
                 {displayedMessages.map((msg, idx) => {
-                    // Correct Guess Message: leaf-deep text on leaf tint + check icon
+                    // Correct Guess Message: leaf tint with ink text + check icon
                     if (msg.type === 'correct') {
                         const gainedText = msg.gained ? ` (+${msg.gained})` : '';
                         return (
                             <div
                                 key={idx}
                                 data-testid="correct-message-item"
-                                className="p-2 rounded-[6px] bg-leaf/20 text-leaf-deep border border-leaf/40 flex items-center justify-between font-bold text-xs sm:text-sm select-none"
+                                className="p-2 rounded-[6px] bg-leaf/20 text-ink border border-leaf/40 flex items-center justify-between font-bold text-xs sm:text-sm select-none"
                             >
                                 <span className="flex items-center gap-1.5">
                                     <Check className="w-4 h-4 text-leaf-deep stroke-[3] shrink-0" />
                                     <span>{msg.username} guessed the word!</span>
                                 </span>
                                 {msg.gained && (
-                                    <span className="font-mono text-xs font-bold text-leaf-deep">
+                                    <span className="font-mono text-xs font-bold text-ink">
                                         {gainedText}
                                     </span>
                                 )}
