@@ -69,13 +69,13 @@ export const AppHeader = ({
             aria-label="Application header"
             className={`h-[48px] md:h-[56px] w-full px-3 md:px-6 bg-card border-b-2 border-ink shadow-hard-sm z-bar flex items-center justify-between select-none shrink-0 ${className}`}
         >
-            {/* Left: Small Wordmark */}
+            {/* Left: Small Wordmark (hidden on mobile when in game to make room for room code, 'Round 2 of 3', sound, menu) */}
             <Tooltip content="Leave this game">
                 <button
                     type="button"
                     onClick={() => setShowLeaveConfirm(true)}
                     aria-label="Leave game"
-                    className="flex items-center gap-1.5 cursor-pointer transform -rotate-1 hover:rotate-0 transition-transform focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none rounded-[4px] p-1 -ml-1"
+                    className={`${isInGame ? 'hidden sm:flex' : 'flex'} items-center gap-1.5 cursor-pointer transform -rotate-1 hover:rotate-0 transition-transform focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none rounded-[4px] p-1 -ml-1`}
                 >
                     <span className="font-heading font-black text-xl md:text-2xl tracking-tighter text-tomato stroke-ink">
                         SCRIBBLE
@@ -103,12 +103,12 @@ export const AppHeader = ({
 
                 {isInGame && state?.currentRound > 0 && (
                     <div
-                        className="hidden sm:inline-flex items-center gap-1 bg-paper border-2 border-ink shadow-hard-sm px-2.5 py-1 rounded-[6px]"
+                        className="inline-flex items-center gap-1 bg-paper border-2 border-ink shadow-hard-sm px-2 sm:px-2.5 py-1 rounded-[6px]"
                         title="Current Round"
+                        data-testid="header-round-counter"
                     >
-                        <span className="text-[10px] font-bold uppercase text-ink-soft">Round</span>
-                        <span className="font-mono font-black text-xs md:text-sm text-ink">
-                            {state.currentRound}/{state.totalRounds || state.settings?.rounds || 3}
+                        <span className="font-heading font-black text-xs sm:text-sm text-ink whitespace-nowrap">
+                            Round {state.currentRound || 1} of {state.totalRounds || state.settings?.rounds || 3}
                         </span>
                     </div>
                 )}
@@ -122,12 +122,12 @@ export const AppHeader = ({
                         type="button"
                         onClick={toggleMute}
                         aria-label={isMuted ? 'Unmute sounds' : 'Mute sounds'}
-                        className="min-w-[40px] min-h-[40px] md:min-w-[44px] md:min-h-[44px] p-2 bg-paper hover:bg-card border-2 border-ink rounded-[6px] shadow-hard-sm flex items-center justify-center text-ink cursor-pointer active:translate-x-[1px] active:translate-y-[1px] focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none"
+                        className="min-w-[44px] min-h-[44px] p-2 bg-paper hover:bg-card border-2 border-ink rounded-[6px] shadow-hard-sm flex items-center justify-center text-ink cursor-pointer active:translate-x-[1px] active:translate-y-[1px] focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none"
                     >
                         {isMuted ? (
-                            <VolumeX className="w-4 h-4 md:w-5 md:h-5 text-tomato" />
+                            <VolumeX className="w-5 h-5 text-tomato" />
                         ) : (
-                            <Volume2 className="w-4 h-4 md:w-5 md:h-5 text-ink" />
+                            <Volume2 className="w-5 h-5 text-ink" />
                         )}
                     </button>
                 </Tooltip>
@@ -141,7 +141,7 @@ export const AppHeader = ({
                             disabled={!activeVoice.isVoiceAllowed}
                             aria-label={activeVoice.isMicOn ? 'Mute microphone' : 'Unmute microphone'}
                             aria-pressed={activeVoice.isMicOn}
-                            className={`min-w-[40px] min-h-[40px] md:min-w-[44px] md:min-h-[44px] p-2 border-2 border-ink rounded-[6px] shadow-hard-sm flex items-center justify-center cursor-pointer active:translate-x-[1px] active:translate-y-[1px] focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none ${
+                            className={`min-w-[44px] min-h-[44px] p-2 border-2 border-ink rounded-[6px] shadow-hard-sm flex items-center justify-center cursor-pointer active:translate-x-[1px] active:translate-y-[1px] focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none ${
                                 !activeVoice.isVoiceAllowed
                                     ? 'opacity-40 cursor-not-allowed bg-paper text-ink-soft'
                                     : activeVoice.isMicOn
@@ -150,9 +150,9 @@ export const AppHeader = ({
                             }`}
                         >
                             {activeVoice.isMicOn ? (
-                                <Mic className="w-4 h-4 md:w-5 md:h-5" />
+                                <Mic className="w-5 h-5" />
                             ) : (
-                                <MicOff className="w-4 h-4 md:w-5 md:h-5" />
+                                <MicOff className="w-5 h-5" />
                             )}
                         </button>
                     </Tooltip>
@@ -166,9 +166,9 @@ export const AppHeader = ({
                             onClick={() => setShowMenu((prev) => !prev)}
                             aria-label="Open game menu"
                             aria-expanded={showMenu}
-                            className="min-w-[40px] min-h-[40px] md:min-w-[44px] md:min-h-[44px] p-2 bg-paper hover:bg-card border-2 border-ink rounded-[6px] shadow-hard-sm flex items-center justify-center text-ink cursor-pointer active:translate-x-[1px] active:translate-y-[1px] focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none"
+                            className="min-w-[44px] min-h-[44px] p-2 bg-paper hover:bg-card border-2 border-ink rounded-[6px] shadow-hard-sm flex items-center justify-center text-ink cursor-pointer active:translate-x-[1px] active:translate-y-[1px] focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none"
                         >
-                            <MoreVertical className="w-4 h-4 md:w-5 md:h-5" />
+                            <MoreVertical className="w-5 h-5" />
                         </button>
                     </Tooltip>
 

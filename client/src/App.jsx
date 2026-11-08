@@ -7,6 +7,7 @@ import Join from './pages/Join';
 import Lobby from './pages/Lobby';
 import Game from './pages/Game';
 import GameEnd from './pages/GameEnd';
+import TestHarness from './pages/TestHarness';
 import AppHeader from './components/Layout/AppHeader';
 import ConnectionBanner from './components/ui/ConnectionBanner';
 import { LobbyGuard, GameGuard, EndGuard } from './components/Routing/RouteGuards';
@@ -23,8 +24,8 @@ function App() {
     return segment.toLowerCase();
   }, [location.pathname]);
 
-  // Determine if Shell Top Bar should be shown: Lobby, Game and GameEnd only
-  const showTopBar = topLevelRoute === 'lobby' || topLevelRoute === 'game' || topLevelRoute === 'end';
+  // Determine if Shell Top Bar should be shown: Lobby, Game, GameEnd, and Test View
+  const showTopBar = topLevelRoute === 'lobby' || topLevelRoute === 'game' || topLevelRoute === 'end' || topLevelRoute === 'test-view';
   const currentRoomCode = location.pathname.split('/')[2]?.toUpperCase() || state.roomCode || '';
 
   // 5. Document title per screen:
@@ -144,6 +145,7 @@ function App() {
                     </EndGuard>
                   }
                 />
+                <Route path="/test-view/:view" element={<TestHarness />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </motion.div>

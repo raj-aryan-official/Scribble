@@ -227,7 +227,7 @@ export const Game = () => {
     const myTurnNumber = myPlayerIndex >= 0 ? myPlayerIndex + 1 : state.players.length;
 
     return (
-        <div className="flex-1 w-full max-w-[1280px] mx-auto bg-paper flex flex-col select-none p-2 sm:p-3 md:p-4 gap-2 sm:gap-3">
+        <div className="game-viewport-container flex-1 w-full max-w-[1280px] mx-auto bg-paper flex flex-col select-none px-2 py-1 sm:p-2 md:p-4 gap-1.5 sm:gap-2 overflow-x-hidden overflow-y-hidden h-[calc(100dvh-48px)] md:h-[calc(100dvh-56px)]">
             <h1 tabIndex={-1} className="sr-only">
                 Round {state.currentRound || 1} of {state.totalRounds || state.settings?.rounds || 3}
             </h1>
@@ -241,10 +241,10 @@ export const Game = () => {
                 onEnableSound={handleEnableSound}
             />
 
-            {/* Main In-Game Area */}
-            <div className="flex-1 w-full min-h-0 flex flex-col md:flex-row gap-2 sm:gap-3 overflow-hidden">
+            {/* Main In-Game Area: Responsive flex layout for Portrait, Landscape, and Desktop */}
+            <div className="flex-1 w-full min-h-0 flex flex-col md:flex-row landscape:flex-row gap-1.5 sm:gap-3 overflow-hidden">
                 {/* Desktop Left Column: Ranked Player Scoreboard */}
-                <div className="hidden md:flex w-56 lg:w-64 h-full shrink-0">
+                <div className="hidden md:flex landscape:hidden md:landscape:flex w-56 lg:w-64 h-full shrink-0">
                     <PlayerList
                         players={state.players}
                         scores={state.scores}
@@ -255,20 +255,8 @@ export const Game = () => {
                     />
                 </div>
 
-                {/* Phone Top Strip: Player Avatars & Score Chips */}
-                <div className="flex md:hidden w-full shrink-0">
-                    <PlayerList
-                        players={state.players}
-                        scores={state.scores}
-                        drawerId={state.drawerId}
-                        guessedPlayerIds={state.guessedPlayers}
-                        speakingPeers={speakingPeers}
-                        variant="mobile"
-                    />
-                </div>
-
-                {/* Center Column: Hint Tiles + 4:3 Paper Canvas + Tool Tray */}
-                <main className="flex-1 min-h-0 flex flex-col items-center justify-between gap-2 overflow-hidden">
+                {/* Center Main Area: Paper Canvas, Hint Tiles, Tool Tray */}
+                <main className="flex-1 min-h-0 flex flex-col items-center justify-between gap-1 sm:gap-2 overflow-hidden landscape:h-full">
                     {/* Joined mid-round quiet banner */}
                     {state.joinedMidRound && (
                         <div className="w-full shrink-0">
@@ -284,7 +272,7 @@ export const Game = () => {
                         <ScoringCoachmark />
                     </div>
 
-                    {/* Word Hint Tiles Header */}
+                    {/* 2. Hint Tiles and Timer Line */}
                     <div className="w-full shrink-0">
                         <HintTiles
                             word={isDrawer ? state.wordToGuess : ''}
@@ -295,18 +283,17 @@ export const Game = () => {
                         />
                     </div>
 
-                    {/* Fixed 4:3 Letterboxed Paper Canvas */}
+                    {/* 3. The Paper at full width minus a 16 px gutter, 4:3 (Landscape: largest size that fits height) */}
                     <div
                         className="w-full flex-1 min-h-0 flex items-center justify-center p-0.5 overflow-hidden"
                         style={{ containerType: 'size' }}
                     >
                         <div
-                            className="relative bg-card rounded-[12px] border-2 border-ink shadow-hard overflow-hidden flex flex-col items-center justify-center"
+                            data-testid="drawing-paper"
+                            className="relative bg-card rounded-[12px] border-2 border-ink shadow-hard overflow-hidden flex flex-col items-center justify-center max-w-[calc(100vw-16px)]"
                             style={{
                                 aspectRatio: '4 / 3',
-                                maxWidth: '100%',
-                                maxHeight: '100%',
-                                width: 'min(100cqw, calc(100cqh * 4 / 3))',
+                                width: 'min(calc(100vw - 16px), 100cqw, calc(100cqh * 4 / 3))',
                                 height: 'min(100cqh, calc(100cqw * 3 / 4))',
                             }}
                         >
@@ -317,8 +304,8 @@ export const Game = () => {
                                 timeLeft={state.timer}
                             />
 
-                            {/* Canvas Element */}
-                            <div className="relative flex-1 w-full h-full min-h-0">
+                            {/* Canvas Element with touch-action: none */}
+                            <div className="relative flex-1 w-full h-full min-h-0 canvas-paper">
                                 <canvas
                                     ref={canvasRef}
                                     onPointerDown={onPointerDown}
@@ -327,7 +314,7 @@ export const Game = () => {
                                     onPointerCancel={onPointerCancel}
                                     onPointerEnter={onPointerEnter}
                                     onPointerLeave={onPointerLeave}
-                                    className={`w-full h-full block touch-none select-none ${
+                                    className={`w-full h-full block touch-none select-none canvas-paper ${
                                         isDrawer ? 'cursor-none' : 'cursor-default'
                                     }`}
                                     style={{ touchAction: 'none' }}
@@ -414,9 +401,39 @@ export const Game = () => {
                         </div>
                     </div>
 
-                    {/* Drawer Tool Tray (below the 4:3 paper) */}
+                    {/* 4. Player Strip, 56 px (Portrait only, below paper!) */}
+                    <div className="flex md:hidden landscape:hidden w-full h-[56px] min-h-[56px] max-h-[56px] shrink-0">
+                        <PlayerList
+                            players={state.players}
+                            scores={state.scores}
+                            drawerId={state.drawerId}
+                            guessedPlayerIds={state.guessedPlayers}
+                            speakingPeers={speakingPeers}
+                            variant="mobile"
+                        />
+                    </div>
+
+                    {/* 5. Bottom Area (Portrait only: Drawer ToolTray or Guesser GuessPanel) */}
+                    <div className="flex md:hidden landscape:hidden w-full shrink-0 flex-col">
+                        {isDrawer ? (
+                            <ToolTray
+                                tool={tool}
+                                setTool={setTool}
+                                lineWidth={lineWidth}
+                                setLineWidth={setLineWidth}
+                                color={color}
+                                setColor={setColor}
+                                undo={undo}
+                                clearCanvas={clearCanvas}
+                            />
+                        ) : (
+                            <GuessPanel roomCode={code} isMobile={true} />
+                        )}
+                    </div>
+
+                    {/* Drawer Tool Tray on Desktop / Landscape (docked under paper) */}
                     {isDrawer && (
-                        <div className="w-full shrink-0">
+                        <div className="hidden md:block landscape:block w-full shrink-0">
                             <ToolTray
                                 tool={tool}
                                 setTool={setTool}
@@ -429,16 +446,24 @@ export const Game = () => {
                             />
                         </div>
                     )}
-
-                    {/* Mobile Pinned Guess Input directly under paper */}
-                    <div className="flex md:hidden w-full shrink-0">
-                        <GuessPanel roomCode={code} isMobile={true} />
-                    </div>
                 </main>
 
-                {/* Desktop Right Column: Chat & Guess Panel */}
-                <div className="hidden md:flex w-72 lg:w-80 h-full shrink-0">
-                    <GuessPanel roomCode={code} isMobile={false} />
+                {/* Right Column: (Desktop or Landscape phone: PlayerList + GuessPanel / Chat) */}
+                <div className="hidden md:flex landscape:flex w-72 lg:w-80 h-full shrink-0 flex-col gap-2">
+                    {/* On mobile landscape, show PlayerList in right column */}
+                    <div className="flex md:hidden w-full h-[56px] shrink-0">
+                        <PlayerList
+                            players={state.players}
+                            scores={state.scores}
+                            drawerId={state.drawerId}
+                            guessedPlayerIds={state.guessedPlayers}
+                            speakingPeers={speakingPeers}
+                            variant="mobile"
+                        />
+                    </div>
+                    <div className="flex-1 min-h-0">
+                        <GuessPanel roomCode={code} isMobile={false} />
+                    </div>
                 </div>
             </div>
         </div>

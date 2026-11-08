@@ -46,7 +46,7 @@ export const PlayerList = ({
             <div
                 data-testid="player-list-mobile"
                 aria-label="Player scoreboard"
-                className={`flex items-center gap-2 overflow-x-auto py-1 px-1 scrollbar-hide max-w-full select-none ${className}`}
+                className={`h-[56px] min-h-[56px] max-h-[56px] flex items-center gap-2 overflow-x-auto py-1 px-1 scrollbar-hide max-w-full select-none ${className}`}
             >
                 {rankedPlayers.map((player, index) => {
                     const isDrawer = player.id === drawerId;
@@ -62,7 +62,7 @@ export const PlayerList = ({
                             data-player-id={player.id}
                             data-player-score={score}
                             data-player-state={isDrawer ? 'drawing' : hasGuessed ? 'guessed' : 'guessing'}
-                            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border-2 border-ink shadow-hard-sm shrink-0 relative transition-transform ${
+                            className={`min-h-[44px] flex items-center gap-1.5 px-2.5 py-1 rounded-full border-2 border-ink shadow-hard-sm shrink-0 relative transition-transform ${
                                 player.isDisconnected
                                     ? 'bg-paper opacity-50 border-dashed'
                                     : hasGuessed
