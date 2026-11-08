@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, MessageSquare, X, Check, Sparkles } from 'lucide-react';
+import { MessageSquare, X } from 'lucide-react';
 import { useGame } from '../../context/GameContext';
 import { useSocket } from '../../hooks/useSocket';
 import { EVENTS } from '../../../../shared/types';
 import Button from '../ui/Button';
+import GuessInput from '../Chat/GuessInput';
+import MessageList from '../Chat/MessageList';
 
 export const GuessPanel = ({
     roomCode,
@@ -17,48 +19,19 @@ export const GuessPanel = ({
     const [message, setMessage] = useState('');
     const [closeHint, setCloseHint] = useState(false);
     const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
-    const [screenReaderAnnouncement, setScreenReaderAnnouncement] = useState('');
 
-    const messagesEndRef = useRef(null);
     const closeTimeoutRef = useRef(null);
-    const lastAnnouncementTimeRef = useRef(0);
 
-    const isDrawer = state.currentUser?.id === state.drawerId;
-    const hasGuessed = Boolean(state.guessedPlayers?.includes(state.currentUser?.id));
+    const myId = state.currentUser?.id;
+    const isDrawer = Boolean(myId && myId === state.drawerId);
+    const hasGuessed = Boolean(myId && state.guessedPlayers?.includes(myId));
     const isGuessedOrDrawer = isDrawer || hasGuessed;
-
-    const inputPlaceholder = isDrawer
-        ? "Chat with players who've guessed..."
-        : hasGuessed
-        ? 'You guessed! Chat with winners...'
-        : 'Type your guess here...';
-
-    const inputLabel = isDrawer
-        ? "Chatting with players who've guessed"
-        : hasGuessed
-        ? 'Chat with players who guessed'
-        : 'Type your guess';
-
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    };
 
     useEffect(() => {
         if (!socket) return;
 
         const handleMessage = (msg) => {
             dispatch({ type: 'ADD_MESSAGE', payload: msg });
-
-            // Throttled screen reader announcement
-            const now = Date.now();
-            if (now - lastAnnouncementTimeRef.current >= 1200) {
-                lastAnnouncementTimeRef.current = now;
-                const announcement =
-                    msg.type === 'correct'
-                        ? `${msg.username} guessed the word!`
-                        : `${msg.username}: ${msg.text}`;
-                setScreenReaderAnnouncement(announcement);
-            }
         };
 
         const handleCloseGuess = () => {
@@ -79,123 +52,22 @@ export const GuessPanel = ({
         };
     }, [socket, dispatch]);
 
-    useEffect(() => {
-        scrollToBottom();
-    }, [state.messages]);
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        const trimmed = message.trim();
-        if (!trimmed) return;
+    const handleSubmit = (textToSend) => {
+        const trimmed = (textToSend || message).trim();
+        if (!trimmed || !socket) return;
 
         socket.emit(EVENTS.SEND_MESSAGE, { roomCode, text: trimmed });
-        setMessage('');
     };
 
-    const renderMessageStream = () => {
-        const displayedMessages = state.messages.slice(-100).filter((msg) => {
-            if (isDrawer) {
-                // Drawer chat shows only the guessed-players channel, correct guess announcements, and system messages
-                return msg.type === 'guessed' || msg.type === 'correct' || msg.type === 'system';
-            }
-            return true;
-        });
+    const headerTitle = isGuessedOrDrawer
+        ? "Chatting with players who've guessed"
+        : 'Guesses';
 
-        return (
-            <div
-                tabIndex={0}
-                role="region"
-                aria-label="Chat messages"
-                className="flex-1 overflow-y-auto p-3 space-y-2 bg-paper border-2 border-ink rounded-[8px] min-h-0 text-sm focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none"
-            >
-                {displayedMessages.map((msg, idx) => {
-                if (msg.type === 'correct') {
-                    const gainedText = msg.gained ? ` (+${msg.gained})` : '';
-                    return (
-                        <div
-                            key={idx}
-                            className="p-2 rounded-[6px] bg-leaf-deep text-white border-2 border-ink shadow-hard-sm flex items-center justify-between font-bold text-xs sm:text-sm select-none"
-                        >
-                            <span className="flex items-center gap-1.5">
-                                <Check className="w-4 h-4 shrink-0 text-white" />
-                                <span>{msg.username} guessed the word!</span>
-                            </span>
-                            {msg.gained && (
-                                <span className="font-mono bg-paper text-ink px-2 py-0.5 rounded-[4px] border border-ink text-xs">
-                                    {gainedText}
-                                </span>
-                            )}
-                        </div>
-                    );
-                }
-
-                if (msg.type === 'system') {
-                    return (
-                        <div
-                            key={idx}
-                            className="text-center text-xs font-bold text-ink-soft italic py-1"
-                        >
-                            {msg.text}
-                        </div>
-                    );
-                }
-
-                if (msg.type === 'guessed') {
-                    return (
-                        <div
-                            key={idx}
-                            className="p-1.5 rounded-[6px] bg-marigold/20 border border-ink text-ink text-xs sm:text-sm"
-                        >
-                            <span className="font-bold text-ink mr-1">
-                                {msg.username}:
-                            </span>
-                            <span>{msg.text}</span>
-                        </div>
-                    );
-                }
-
-                return (
-                    <div
-                        key={idx}
-                        className="text-xs sm:text-sm text-ink leading-relaxed"
-                    >
-                        <span className="font-bold text-ink mr-1">
-                            {msg.username}:
-                        </span>
-                        <span>{msg.text}</span>
-                    </div>
-                );
-            })}
-            <div ref={messagesEndRef} />
-        </div>
-    );
-};
-
-    // Mobile View: Pinned input + bottom sheet chat toggle
+    // Mobile View: Pinned input directly under the paper with bottom sheet for chat messages
     if (isMobile) {
         return (
             <div className={`w-full select-none ${className}`}>
-                {/* Screen reader live region */}
-                <div className="sr-only" role="status" aria-live="polite">
-                    {screenReaderAnnouncement}
-                </div>
-
-                {/* Close Hint Popover */}
-                <AnimatePresence>
-                    {closeHint && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 10 }}
-                            className="mb-2 p-2 bg-marigold text-ink border-2 border-ink rounded-[6px] shadow-hard-sm text-center font-bold text-xs flex items-center justify-center gap-1.5"
-                        >
-                            <Sparkles className="w-4 h-4 text-ink" />
-                            <span>You're very close!</span>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-
-                {/* Bottom Sheet Drawer for Chat */}
+                {/* Bottom Sheet Drawer for Chat Messages */}
                 <AnimatePresence>
                     {isBottomSheetOpen && (
                         <div className="fixed inset-0 z-sheet flex flex-col justify-end bg-ink/60">
@@ -208,7 +80,7 @@ export const GuessPanel = ({
                             >
                                 <div className="flex items-center justify-between border-b-2 border-ink/10 pb-2 mb-2">
                                     <h3 className="font-heading font-black text-sm uppercase text-ink">
-                                        {isDrawer ? "Chatting with players who've guessed" : 'Chat & Guesses'}
+                                        {headerTitle}
                                     </h3>
                                     <Button
                                         variant="quiet"
@@ -221,51 +93,41 @@ export const GuessPanel = ({
                                     </Button>
                                 </div>
 
-                                {renderMessageStream()}
+                                <MessageList
+                                    messages={state.messages}
+                                    isDrawer={isDrawer}
+                                    currentUserId={myId}
+                                />
                             </motion.div>
                         </div>
                     )}
                 </AnimatePresence>
 
-                {/* Pinned Guess Input Bar */}
-                <form
-                    onSubmit={handleSubmit}
-                    className="flex items-center gap-2 w-full p-2 bg-card border-2 border-ink rounded-[12px] shadow-hard-sm"
-                >
+                {/* Mobile Pinned Guess Input Bar */}
+                <div className="flex items-center gap-2 w-full p-2 bg-card border-2 border-ink rounded-[12px] shadow-hard-sm">
                     <button
                         type="button"
                         onClick={() => setIsBottomSheetOpen(true)}
-                        aria-label="Open chat bottom sheet"
-                        className="min-h-[44px] min-w-[44px] p-2 bg-paper border-2 border-ink rounded-[6px] shadow-hard-sm flex items-center justify-center text-ink cursor-pointer hover:bg-card active:translate-x-[1px] active:translate-y-[1px]"
+                        aria-label="Open chat messages"
+                        title="Open chat"
+                        className="min-h-[44px] min-w-[44px] p-2 bg-paper border-2 border-ink rounded-[6px] shadow-hard-sm flex items-center justify-center text-ink cursor-pointer hover:bg-card active:translate-x-[1px] active:translate-y-[1px] shrink-0"
                     >
                         <MessageSquare className="w-5 h-5" />
                     </button>
 
-                    <label htmlFor="mobile-guess-input" className="sr-only">
-                        {inputLabel}
-                    </label>
-                    <input
-                        id="mobile-guess-input"
-                        type="text"
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                        placeholder={inputPlaceholder}
-                        maxLength={100}
-                        autoComplete="off"
-                        className="flex-1 min-h-[44px] px-3 py-2 text-base font-body bg-paper text-ink placeholder:text-ink-soft/60 border-2 border-ink rounded-[6px] focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none"
+                    <GuessInput
+                        message={message}
+                        setMessage={setMessage}
+                        onSubmit={handleSubmit}
+                        isMobile={true}
+                        isDrawer={isDrawer}
+                        hasGuessed={hasGuessed}
+                        gainedPoints={state.myGainedPoints}
+                        closeHint={closeHint}
+                        idPrefix="mobile"
+                        className="flex-1 min-w-0"
                     />
-
-                    <Button
-                        type="submit"
-                        variant="primary"
-                        size="md"
-                        disabled={!message.trim()}
-                        aria-label="Submit guess"
-                        className="min-h-[44px] px-4"
-                    >
-                        <Send className="w-4 h-4" />
-                    </Button>
-                </form>
+                </div>
             </div>
         );
     }
@@ -276,81 +138,49 @@ export const GuessPanel = ({
             aria-label="Chat and guesses"
             className={`w-full flex flex-col gap-3 p-3 bg-card border-2 border-ink shadow-hard rounded-[12px] overflow-hidden select-none h-full ${className}`}
         >
-            {/* Screen reader live region */}
-            <div className="sr-only" role="status" aria-live="polite">
-                {screenReaderAnnouncement}
-            </div>
-
-            <div className="flex items-center justify-between border-b-2 border-ink/10 pb-2 px-1">
-                <div className="flex items-center gap-2">
-                    <MessageSquare className="w-4 h-4 text-ink" />
-                    <h3 className="font-heading font-black text-sm uppercase tracking-wider text-ink">
-                        {isDrawer
-                            ? "Chatting with players who've guessed"
-                            : isGuessedOrDrawer
-                            ? 'Winner Chat'
-                            : 'Guesses'}
+            {/* Header: Panel label changes to 'Chatting with players who've guessed' */}
+            <div className="flex items-center justify-between border-b-2 border-ink/10 pb-2 px-1 shrink-0">
+                <div className="flex items-center gap-2 min-w-0">
+                    <MessageSquare className="w-4 h-4 text-ink shrink-0" />
+                    <h3 className="font-heading font-black text-xs sm:text-sm uppercase tracking-wider text-ink truncate">
+                        {headerTitle}
                     </h3>
                 </div>
                 {isDrawer ? (
-                    <span className="text-[10px] font-bold bg-marigold px-2 py-0.5 rounded-[4px] border border-ink text-ink">
+                    <span className="text-[10px] font-bold bg-marigold px-2 py-0.5 rounded-[4px] border border-ink text-ink shrink-0">
                         Drawer Chat
                     </span>
-                ) : isGuessedOrDrawer ? (
-                    <span className="text-[10px] font-bold bg-marigold px-2 py-0.5 rounded-[4px] border border-ink text-ink">
-                        Guessed Room
+                ) : hasGuessed ? (
+                    <span className="text-[10px] font-bold bg-leaf text-white px-2 py-0.5 rounded-[4px] border border-ink shrink-0">
+                        Guessed
                     </span>
                 ) : null}
             </div>
 
-            {/* Close Hint Popover */}
-            <AnimatePresence>
-                {closeHint && (
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        className="p-2 bg-marigold text-ink border-2 border-ink rounded-[6px] shadow-hard-sm text-center font-bold text-xs flex items-center justify-center gap-1.5"
-                    >
-                        <Sparkles className="w-4 h-4 text-ink" />
-                        <span>You are very close!</span>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            {/* Message Stream */}
-            {renderMessageStream()}
-
-            {/* Input Form */}
-            <form onSubmit={handleSubmit} className="flex items-center gap-2 pt-1">
-                <label htmlFor="desktop-guess-input" className="sr-only">
-                    {inputLabel}
-                </label>
-                <input
-                    id="desktop-guess-input"
-                    type="text"
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder={inputPlaceholder}
-                    maxLength={100}
-                    autoComplete="off"
-                    className="flex-1 min-h-[44px] px-3 py-2 text-sm font-body bg-paper text-ink placeholder:text-ink-soft/60 border-2 border-ink rounded-[6px] focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none"
+            {/* Desktop: Guess input is prominent at the TOP of the right column */}
+            <div className="w-full shrink-0">
+                <GuessInput
+                    message={message}
+                    setMessage={setMessage}
+                    onSubmit={handleSubmit}
+                    isMobile={false}
+                    isDrawer={isDrawer}
+                    hasGuessed={hasGuessed}
+                    gainedPoints={state.myGainedPoints}
+                    closeHint={closeHint}
+                    idPrefix="desktop"
                 />
+            </div>
 
-                <Button
-                    type="submit"
-                    variant="primary"
-                    size="md"
-                    disabled={!message.trim()}
-                    aria-label="Send message or guess"
-                    className="min-h-[44px] px-3.5"
-                >
-                    <Send className="w-4 h-4" />
-                </Button>
-            </form>
+            {/* Scrollable Message List */}
+            <MessageList
+                messages={state.messages}
+                isDrawer={isDrawer}
+                currentUserId={myId}
+                className="flex-1 min-h-0"
+            />
         </aside>
     );
 };
 
 export default GuessPanel;
-

@@ -147,3 +147,4 @@ export const BrushSize = ({ lineWidth = 6, setLineWidth, className = '' }) => {
 };
 
 export default BrushSize;
+

@@ -18,6 +18,7 @@ import GameStartCountdown from '../components/Game/GameStartCountdown';
 import TurnIntro from '../components/Game/TurnIntro';
 import ScoringCoachmark from '../components/Game/ScoringCoachmark';
 import AutoPickedBanner from '../components/Game/AutoPickedBanner';
+import MidRoundBanner from '../components/Game/MidRoundBanner';
 import EdgeState, { mapErrorToEdgeState } from '../components/Game/EdgeState';
 import { RemoteAudio } from '../components/Chat/RemoteAudio';
 
@@ -162,7 +163,11 @@ export const Game = () => {
         if (!socket) return;
 
         const handleCorrectGuess = (payload) => {
-            play('joinPop');
+            if (payload.playerId === state.currentUser?.id) {
+                play('correct');
+            } else {
+                play('joinPop');
+            }
             dispatch({ type: 'CORRECT_GUESS', payload });
         };
 
@@ -178,7 +183,7 @@ export const Game = () => {
             socket.off(EVENTS.CORRECT_GUESS, handleCorrectGuess);
             socket.off(EVENTS.ROUND_ENDED, handleRoundEnded);
         };
-    }, [socket, play, dispatch]);
+    }, [socket, play, dispatch, state.currentUser?.id]);
 
     // Tick sound for the last 5 seconds of the drawing round
     useEffect(() => {
@@ -218,6 +223,8 @@ export const Game = () => {
     const totalGuessers = state.players.filter(
         (p) => !p.isDisconnected && p.id !== state.drawerId
     ).length;
+    const myPlayerIndex = state.players.findIndex((p) => p.id === myId);
+    const myTurnNumber = myPlayerIndex >= 0 ? myPlayerIndex + 1 : state.players.length;
 
     return (
         <div className="flex-1 w-full max-w-[1280px] mx-auto bg-paper flex flex-col select-none p-2 sm:p-3 md:p-4 gap-2 sm:gap-3">
@@ -262,6 +269,16 @@ export const Game = () => {
 
                 {/* Center Column: Hint Tiles + 4:3 Paper Canvas + Tool Tray */}
                 <main className="flex-1 min-h-0 flex flex-col items-center justify-between gap-2 overflow-hidden">
+                    {/* Joined mid-round quiet banner */}
+                    {state.joinedMidRound && (
+                        <div className="w-full shrink-0">
+                            <MidRoundBanner
+                                turnNumber={myTurnNumber}
+                                onDismiss={() => dispatch({ type: 'DISMISS_MID_ROUND' })}
+                            />
+                        </div>
+                    )}
+
                     {/* First Game Scoring Coachmark */}
                     <div className="w-full shrink-0">
                         <ScoringCoachmark />
@@ -270,7 +287,7 @@ export const Game = () => {
                     {/* Word Hint Tiles Header */}
                     <div className="w-full shrink-0">
                         <HintTiles
-                            word={state.wordToGuess}
+                            word={isDrawer ? state.wordToGuess : ''}
                             hint={state.wordHint}
                             isDrawer={isDrawer}
                             guessedCount={state.guessedPlayers?.length || 0}
@@ -413,8 +430,8 @@ export const Game = () => {
                         </div>
                     )}
 
-                    {/* Mobile Pinned Guess Input with Bottom Sheet for Chat */}
-                    <div className="flex md:hidden w-full shrink-0 mt-auto">
+                    {/* Mobile Pinned Guess Input directly under paper */}
+                    <div className="flex md:hidden w-full shrink-0">
                         <GuessPanel roomCode={code} isMobile={true} />
                     </div>
                 </main>

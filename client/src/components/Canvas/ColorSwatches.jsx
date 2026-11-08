@@ -77,3 +77,4 @@ export const ColorSwatches = ({ color = '#1C1B18', setColor, className = '' }) =
 };
 
 export default ColorSwatches;
+

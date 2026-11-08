@@ -92,3 +92,4 @@ export const ShortcutHelp = ({ className = '' }) => {
 };
 
 export default ShortcutHelp;
+
