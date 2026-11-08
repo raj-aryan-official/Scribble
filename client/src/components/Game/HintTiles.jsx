@@ -103,3 +103,4 @@ export const HintTiles = ({
 };
 
 export default HintTiles;
+

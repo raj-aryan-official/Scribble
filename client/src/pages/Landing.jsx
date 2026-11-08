@@ -108,7 +108,8 @@ export const Landing = () => {
     };
 
     return (
-        <div className="flex-1 w-full flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 relative">
+        <div className="flex-1 w-full max-w-[1100px] mx-auto flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 relative">
+            <h1 tabIndex={-1} className="sr-only">Scribble</h1>
             {/* Server Error Toast */}
             <Toast
                 isOpen={Boolean(state.error)}
@@ -122,7 +123,7 @@ export const Landing = () => {
                 <div
                     role="status"
                     aria-live="polite"
-                    className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-paper/85 backdrop-blur-none p-4"
+                    className="fixed inset-0 z-sheet flex flex-col items-center justify-center bg-paper/85 backdrop-blur-none p-4"
                 >
                     <Card className="flex flex-col items-center justify-center p-8 max-w-xs text-center shadow-hard-lg">
                         <Spinner size="lg" label="Entering room..." />

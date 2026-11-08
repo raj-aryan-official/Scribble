@@ -7,7 +7,6 @@ import { useCanvas } from '../hooks/useCanvas';
 import { useSound } from '../hooks/useSound';
 import { EVENTS } from '../../../shared/types';
 
-import TopBar from '../components/Game/TopBar';
 import PlayerList from '../components/Game/PlayerList';
 import HintTiles from '../components/Game/HintTiles';
 import TimerBar from '../components/Game/TimerBar';
@@ -23,7 +22,7 @@ export const Game = () => {
     const { state, dispatch } = useGame();
     const navigate = useNavigate();
     const socket = useSocket();
-    const { isMuted, toggleMute, play } = useSound();
+    const { play } = useSound();
 
     const [canvasWidth, setCanvasWidth] = useState(800);
     const lastTickSecondRef = useRef(null);
@@ -31,8 +30,6 @@ export const Game = () => {
     // Current player roles
     const myId = state.currentUser?.id;
     const isDrawer = Boolean(myId && myId === state.drawerId);
-    const me = state.players.find((p) => p.id === myId);
-    const isHost = Boolean(me?.isHost);
 
     // Canvas management
     const {
@@ -57,14 +54,9 @@ export const Game = () => {
 
     // WebRTC Voice chat
     const {
-        isMicOn,
-        toggleMic,
         isDeafened,
-        toggleDeafen,
         remoteStreams,
-        peersCount,
         speakingPeers,
-        isVoiceAllowed,
         voiceError,
         isAutoplayBlocked,
         setIsAutoplayBlocked,
@@ -132,12 +124,6 @@ export const Game = () => {
         window.location.href = '/';
     };
 
-    const handleEndGameEarly = () => {
-        if (socket && isHost) {
-            socket.emit(EVENTS.END_GAME_EARLY, { roomCode: code });
-        }
-    };
-
     // Edge state check (kicked, disconnected, room not found, mic denied)
     const edgeStateType = mapErrorToEdgeState(state.error || (voiceError ? 'mic' : null));
     if (edgeStateType && edgeStateType !== 'RECONNECTING') {
@@ -156,7 +142,11 @@ export const Game = () => {
     const totalDrawTime = state.settings?.drawTime || 60;
 
     return (
-        <div className="h-[100dvh] w-full bg-paper flex flex-col overflow-hidden select-none p-2 sm:p-3 md:p-4 gap-2 sm:gap-3">
+        <div className="flex-1 w-full max-w-[1280px] mx-auto bg-paper flex flex-col select-none p-2 sm:p-3 md:p-4 gap-2 sm:gap-3">
+            <h1 tabIndex={-1} className="sr-only">
+                Round {state.currentRound || 1} of {state.totalRounds || state.settings?.rounds || 3}
+            </h1>
+
             {/* Managed Remote Audio Elements & Autoplay Prompt */}
             <RemoteAudio
                 streams={remoteStreams}
@@ -168,26 +158,6 @@ export const Game = () => {
 
             {/* Overlays */}
             <WordChoice roomCode={code} />
-
-            {/* Top Navigation Bar */}
-            <TopBar
-                roomCode={code}
-                currentRound={state.currentRound}
-                totalRounds={state.totalRounds}
-                isHost={isHost}
-                onExit={handleExit}
-                onEndGameEarly={handleEndGameEarly}
-                isMuted={isMuted}
-                toggleMute={toggleMute}
-                voiceState={{
-                    isMicOn,
-                    toggleMic,
-                    isDeafened,
-                    toggleDeafen,
-                    peersCount,
-                    isVoiceAllowed,
-                }}
-            />
 
             {/* Main In-Game Area */}
             <div className="flex-1 w-full min-h-0 flex flex-col md:flex-row gap-2 sm:gap-3 overflow-hidden">
@@ -267,7 +237,7 @@ export const Game = () => {
                                 {/* Drawer Brush Size Ring Cursor */}
                                 {isDrawer && isCursorInside && (
                                     <div
-                                        className="pointer-events-none absolute rounded-full border-2 border-ink -translate-x-1/2 -translate-y-1/2 z-30 transition-none"
+                                        className="pointer-events-none absolute rounded-full border-2 border-ink -translate-x-1/2 -translate-y-1/2 z-cursor transition-none"
                                         style={{
                                             left: cursorPos.x,
                                             top: cursorPos.y,

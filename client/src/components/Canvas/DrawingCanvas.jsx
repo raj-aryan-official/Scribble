@@ -72,7 +72,7 @@ const DrawingCanvasComponent = ({ roomCode, isDrawer }) => {
                     {/* Drawer Brush Size Ring Cursor */}
                     {isDrawer && isCursorInside && (
                         <div
-                            className="pointer-events-none absolute rounded-full border-2 border-ink -translate-x-1/2 -translate-y-1/2 z-30 transition-none"
+                            className="pointer-events-none absolute rounded-full border-2 border-ink -translate-x-1/2 -translate-y-1/2 z-cursor transition-none"
                             style={{
                                 left: cursorPos.x,
                                 top: cursorPos.y,

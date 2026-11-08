@@ -89,7 +89,7 @@ export const GameEnd = () => {
     const matchDrawings = state.matchDrawings || [];
 
     return (
-        <div className="flex-1 w-full bg-paper flex flex-col items-center p-4 sm:p-6 md:p-8 overflow-y-auto select-none">
+        <div className="flex-1 w-full max-w-[1000px] mx-auto bg-paper flex flex-col items-center p-4 sm:p-6 md:p-8 select-none">
             <Toast
                 isOpen={Boolean(toastMessage)}
                 onClose={() => setToastMessage('')}
@@ -97,13 +97,13 @@ export const GameEnd = () => {
                 variant={toastVariant}
             />
 
-            <div className="w-full max-w-4xl flex flex-col items-center gap-8">
+            <div className="w-full flex flex-col items-center gap-8">
                 {/* Header */}
                 <div className="text-center">
                     <span className="text-xs font-bold uppercase tracking-wider text-ink-soft">
                         Match Complete
                     </span>
-                    <h1 className="text-4xl sm:text-5xl md:text-6xl font-black font-heading text-ink tracking-tight mt-1">
+                    <h1 tabIndex={-1} className="text-4xl sm:text-5xl md:text-6xl font-black font-heading text-ink tracking-tight mt-1">
                         Winner's Circle
                     </h1>
                 </div>
@@ -141,7 +141,7 @@ export const GameEnd = () => {
                                 initial={{ y: 100, opacity: 0 }}
                                 animate={{ y: 0, opacity: 1 }}
                                 transition={{ type: 'spring', stiffness: 300, damping: 24 }}
-                                className="flex-1 flex flex-col items-center z-10"
+                                className="flex-1 flex flex-col items-center z-elevated"
                             >
                                 <div className="relative mb-2 text-center flex flex-col items-center">
                                     {/* Gold Crown SVG */}

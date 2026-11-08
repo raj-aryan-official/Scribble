@@ -60,7 +60,7 @@ export const RoundEndOverlay = ({
     return (
         <div
             data-testid="round-end-overlay"
-            className="absolute inset-0 z-40 bg-paper/90 backdrop-blur-none flex flex-col items-center justify-center p-4 sm:p-6 overflow-y-auto select-none"
+            className="absolute inset-0 z-sheet bg-paper/90 backdrop-blur-none flex flex-col items-center justify-center p-4 sm:p-6 overflow-y-auto select-none"
         >
             <div className="max-w-md w-full flex flex-col items-center gap-4 text-center">
                 <div>
@@ -130,3 +130,4 @@ export const RoundEndOverlay = ({
 };
 
 export default RoundEndOverlay;
+

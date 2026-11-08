@@ -5,6 +5,7 @@ import App from './App';
 import './index.css';
 import { GameProvider } from './context/GameContext';
 import { SocketProvider } from './context/SocketContext';
+import { VoiceProvider } from './context/VoiceContext';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 
 // Clear any leftover session data from the old auto-rejoin feature
@@ -15,9 +16,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <ErrorBoundary>
       <GameProvider>
         <SocketProvider>
-          <BrowserRouter>
-            <App />
-          </BrowserRouter>
+          <VoiceProvider>
+            <BrowserRouter>
+              <App />
+            </BrowserRouter>
+          </VoiceProvider>
         </SocketProvider>
       </GameProvider>
     </ErrorBoundary>

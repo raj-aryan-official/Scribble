@@ -59,14 +59,15 @@ export const RemoteAudio = ({
 
             {/* First-tap 'Enable sound' prompt where autoplay is blocked */}
             {isAutoplayBlocked && (
-                <div className="fixed top-16 md:top-6 left-1/2 -translate-x-1/2 z-50 bg-amber-500 text-white px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-3 animate-bounce border border-amber-300">
-                    <Volume2 size={20} className="shrink-0" />
-                    <span className="text-xs md:text-sm font-semibold">
+                <div className="fixed top-16 md:top-6 left-1/2 -translate-x-1/2 z-toast bg-marigold text-ink px-4 py-2.5 rounded-[8px] border-2 border-ink shadow-hard flex items-center gap-3">
+                    <Volume2 size={20} className="shrink-0 text-ink" />
+                    <span className="text-xs md:text-sm font-bold">
                         Browser blocked voice audio. Tap to enable sound.
                     </span>
                     <button
+                        type="button"
                         onClick={onEnableSound}
-                        className="bg-white text-amber-800 hover:bg-amber-50 px-3 py-1 rounded-lg font-bold text-xs shadow transition active:scale-95 cursor-pointer whitespace-nowrap"
+                        className="bg-card text-ink hover:bg-paper px-3 py-1 rounded-[6px] border-2 border-ink font-bold text-xs shadow-hard-sm transition active:translate-x-[1px] active:translate-y-[1px] cursor-pointer whitespace-nowrap focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none"
                         aria-label="Enable sound"
                     >
                         Enable Sound

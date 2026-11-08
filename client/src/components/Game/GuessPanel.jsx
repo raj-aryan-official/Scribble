@@ -188,7 +188,7 @@ export const GuessPanel = ({
                 {/* Bottom Sheet Drawer for Chat */}
                 <AnimatePresence>
                     {isBottomSheetOpen && (
-                        <div className="fixed inset-0 z-50 flex flex-col justify-end bg-ink/60">
+                        <div className="fixed inset-0 z-sheet flex flex-col justify-end bg-ink/60">
                             <motion.div
                                 initial={{ y: '100%' }}
                                 animate={{ y: 0 }}
@@ -335,3 +335,4 @@ export const GuessPanel = ({
 };
 
 export default GuessPanel;
+

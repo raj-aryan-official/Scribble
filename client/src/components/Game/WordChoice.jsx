@@ -45,7 +45,7 @@ export const WordChoice = ({ roomCode }) => {
     // Non-drawers see drawer avatar and "NAME is choosing a word" on dim paper
     if (!isDrawer) {
         return (
-            <div className="fixed inset-0 z-40 bg-paper/85 flex items-center justify-center p-4 backdrop-blur-none">
+            <div className="fixed inset-0 z-sheet bg-paper/85 flex items-center justify-center p-4 backdrop-blur-none">
                 <Card className="flex flex-col items-center justify-center p-6 sm:p-8 max-w-sm w-full text-center shadow-hard-lg bg-card gap-4">
                     <Avatar avatarId={drawer?.avatar || 'avatar-1'} size="xl" />
                     <div>
@@ -73,7 +73,7 @@ export const WordChoice = ({ roomCode }) => {
     const rotations = ['rotate-[-4deg]', 'rotate-0', 'rotate-[4deg]'];
 
     return (
-        <div className="fixed inset-0 z-40 bg-paper/85 flex items-center justify-center p-4 backdrop-blur-none">
+        <div className="fixed inset-0 z-sheet bg-paper/85 flex items-center justify-center p-4 backdrop-blur-none">
             <div className="max-w-2xl w-full flex flex-col items-center gap-6">
                 <div className="text-center">
                     <h2 className="text-2xl sm:text-3xl font-black font-heading text-ink">
@@ -120,7 +120,7 @@ export const WordChoice = ({ roomCode }) => {
                                     key={idx}
                                     type="button"
                                     onClick={() => handleChoose(wordText)}
-                                    className={`group transform ${rotationClass} hover:rotate-0 hover:scale-105 hover:z-20 transition-all duration-150 cursor-pointer text-center bg-card border-2 border-ink shadow-hard rounded-[12px] p-5 w-48 sm:w-52 min-h-[140px] flex flex-col justify-between items-center focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none focus-visible:ring-offset-2`}
+                                    className={`group transform ${rotationClass} hover:rotate-0 hover:scale-105 hover:z-hover transition-all duration-150 cursor-pointer text-center bg-card border-2 border-ink shadow-hard rounded-[12px] p-5 w-48 sm:w-52 min-h-[140px] flex flex-col justify-between items-center focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none focus-visible:ring-offset-2`}
                                 >
                                     <span className="text-lg sm:text-xl font-heading font-black text-ink capitalize tracking-wide group-hover:text-tomato transition-colors">
                                         {wordText}

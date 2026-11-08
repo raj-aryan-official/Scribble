@@ -180,7 +180,7 @@ export const Lobby = () => {
     const validCustomWordCount = countValidCustomWords(customWordsText);
 
     return (
-        <div className="flex-1 w-full flex flex-col items-center p-4 sm:p-6 md:p-8 overflow-y-auto">
+        <div className="flex-1 w-full max-w-[1000px] mx-auto flex flex-col items-center p-4 sm:p-6 md:p-8">
             {/* Feedback Toast */}
             <Toast
                 isOpen={Boolean(toastMessage)}
@@ -211,7 +211,7 @@ export const Lobby = () => {
                             <ArrowLeft className="w-5 h-5 text-ink" />
                         </Button>
                         <div>
-                            <h1 className="text-2xl font-black font-heading text-ink leading-tight">
+                            <h1 tabIndex={-1} className="text-2xl font-black font-heading text-ink leading-tight">
                                 Game Lobby
                             </h1>
                             <p className="text-xs text-ink-soft">

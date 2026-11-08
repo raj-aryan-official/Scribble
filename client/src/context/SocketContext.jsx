@@ -8,6 +8,7 @@ export const SocketContext = createContext();
 
 const getSocketUrl = () => {
     if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+    if (typeof window === 'undefined') return 'http://localhost:3000';
     if (window.location.hostname === 'localhost') return 'http://localhost:3000';
     if (window.location.port === '5173') {
         const protocol = window.location.protocol;

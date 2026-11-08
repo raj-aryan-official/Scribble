@@ -75,7 +75,7 @@ export const TimerBar = ({
             </div>
 
             {/* Numeric Badge */}
-            <div className="absolute right-2 top-3 pointer-events-none z-10">
+            <div className="absolute right-2 top-3 pointer-events-none z-elevated">
                 <span
                     data-testid="timer-seconds"
                     className={`inline-flex items-center justify-center font-mono font-black text-xs sm:text-sm px-2 py-0.5 rounded-[4px] border-2 border-ink shadow-hard-sm ${

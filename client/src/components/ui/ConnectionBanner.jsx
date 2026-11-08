@@ -56,7 +56,7 @@ export const ConnectionBanner = () => {
                     animate={{ y: 0, opacity: 1 }}
                     exit={{ y: -50, opacity: 0 }}
                     transition={{ type: 'spring', stiffness: 300, damping: 24 }}
-                    className="bg-marigold text-ink px-4 py-2 text-sm flex items-center justify-between border-b-2 border-ink shadow-hard-sm z-50 fixed top-0 left-0 right-0 font-bold"
+                    className="bg-marigold text-ink px-4 py-2 text-sm flex items-center justify-between border-b-2 border-ink shadow-hard-sm z-toast fixed top-0 left-0 right-0 font-bold"
                 >
                     <div className="flex items-center gap-2">
                         <span className="inline-block w-2.5 h-2.5 rounded-full bg-ink animate-pulse" />
@@ -80,7 +80,7 @@ export const ConnectionBanner = () => {
                     animate={{ y: 0, opacity: 1 }}
                     exit={{ y: -50, opacity: 0 }}
                     transition={{ type: 'spring', stiffness: 300, damping: 24 }}
-                    className="bg-leaf text-white px-4 py-2 text-sm flex items-center justify-center gap-2 border-b-2 border-ink shadow-hard-sm z-50 fixed top-0 left-0 right-0 font-bold"
+                    className="bg-leaf text-white px-4 py-2 text-sm flex items-center justify-center gap-2 border-b-2 border-ink shadow-hard-sm z-toast fixed top-0 left-0 right-0 font-bold"
                 >
                     <span>✓ Back online</span>
                 </motion.div>

@@ -57,7 +57,7 @@ export const Tooltip = ({
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.9 }}
                         transition={{ duration: 0.15 }}
-                        className={`absolute z-40 px-2 py-1 bg-ink text-paper text-xs font-bold rounded-[6px] shadow-hard-sm pointer-events-none whitespace-nowrap ${
+                        className={`absolute z-sheet px-2 py-1 bg-ink text-paper text-xs font-bold rounded-[6px] shadow-hard-sm pointer-events-none whitespace-nowrap ${
                             positionClasses[position] || positionClasses.top
                         } ${className}`}
                     >

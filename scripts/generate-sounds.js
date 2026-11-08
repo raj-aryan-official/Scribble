@@ -175,3 +175,4 @@ for (const [filename, samples] of Object.entries(soundMap)) {
     console.log(`Generated ${filename} (${buffer.length} bytes)`);
 }
 console.log('All 6 self-hosted sound files successfully generated!');
+
