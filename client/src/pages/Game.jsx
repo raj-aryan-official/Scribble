@@ -8,7 +8,7 @@ import { useSound } from '../hooks/useSound';
 import { EVENTS } from '../../../shared/types';
 
 import PlayerList from '../components/Game/PlayerList';
-import HintTiles from '../components/Game/HintTiles';
+import GameBar from '../components/Game/GameBar';
 import TimerBar from '../components/Game/TimerBar';
 import ToolTray from '../components/Canvas/ToolTray';
 import GuessPanel from '../components/Game/GuessPanel';
@@ -139,6 +139,7 @@ export const Game = () => {
     }, [isDrawer, state.gameState]);
 
     // WebRTC Voice chat
+    const voiceChat = useVoiceChat(code, state.currentUser?.username, state.players.length);
     const {
         isDeafened,
         remoteStreams,
@@ -146,7 +147,7 @@ export const Game = () => {
         isAutoplayBlocked,
         setIsAutoplayBlocked,
         handleEnableSound,
-    } = useVoiceChat(code, state.currentUser?.username, state.players.length);
+    } = voiceChat;
 
     // Audio ducking: lower other sound volumes while someone speaks on voice
     useEffect(() => {
@@ -250,17 +251,26 @@ export const Game = () => {
 
     const displayRingDiameter = Math.max(4, Math.round(lineWidth * (canvasWidth / 800)));
     const totalDrawTime = state.settings?.drawTime || 60;
-    const totalGuessers = state.players.filter(
-        (p) => !p.isDisconnected && p.id !== state.drawerId
-    ).length;
     const myPlayerIndex = state.players.findIndex((p) => p.id === myId);
     const myTurnNumber = myPlayerIndex >= 0 ? myPlayerIndex + 1 : state.players.length;
 
     return (
-        <div className="game-viewport-container flex-1 w-full max-w-[1280px] mx-auto bg-paper flex flex-col select-none px-2 py-1 sm:p-2 md:p-4 gap-1.5 sm:gap-2 overflow-x-hidden overflow-y-hidden h-[calc(100dvh-48px)] md:h-[calc(100dvh-56px)]">
+        <div className="game-viewport-container flex-1 w-full max-w-[1280px] mx-auto bg-paper flex flex-col select-none overflow-x-hidden overflow-y-hidden h-[100dvh]">
             <h1 tabIndex={-1} className="sr-only">
                 Round {state.currentRound || 1} of {state.totalRounds || state.settings?.rounds || 3}
             </h1>
+
+            {/* Rebuilt Game Navigation & Controls Bar */}
+            <GameBar
+                roomCode={code}
+                voiceState={voiceChat}
+                onExit={handleExit}
+                onEndGameEarly={() => {
+                    if (socket && code) {
+                        socket.emit(EVENTS.END_GAME_EARLY, { roomCode: code });
+                    }
+                }}
+            />
 
             {/* Managed Remote Audio Elements & Autoplay Prompt */}
             <RemoteAudio
@@ -272,7 +282,7 @@ export const Game = () => {
             />
 
             {/* Main In-Game Area: Responsive flex layout for Portrait, Landscape, and Desktop */}
-            <div className="flex-1 w-full min-h-0 flex flex-col md:flex-row landscape:flex-row gap-1.5 sm:gap-3 overflow-hidden">
+            <div className="flex-1 w-full min-h-0 flex flex-col md:flex-row landscape:flex-row gap-1.5 sm:gap-3 p-1 sm:p-2 md:p-3 overflow-hidden">
                 {/* Desktop Left Column: Ranked Player Scoreboard */}
                 <div className="hidden md:flex landscape:hidden md:landscape:flex w-56 lg:w-64 h-full shrink-0">
                     <PlayerList
@@ -301,17 +311,6 @@ export const Game = () => {
                     {/* First Game Scoring Coachmark */}
                     <div className="w-full shrink-0 landscape:hidden">
                         <ScoringCoachmark />
-                    </div>
-
-                    {/* 2. Hint Tiles and Timer Line */}
-                    <div className="w-full shrink-0">
-                        <HintTiles
-                            word={isDrawer ? state.wordToGuess : ''}
-                            hint={state.gameState === 'DRAWING' ? state.wordHint : ''}
-                            isDrawer={isDrawer}
-                            guessedCount={state.guessedPlayers?.length || 0}
-                            totalGuessers={totalGuessers}
-                        />
                     </div>
 
                     {/* 3. The Paper at full width minus a 16 px gutter, 4:3 (Landscape: largest size that fits height) */}

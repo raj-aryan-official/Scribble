@@ -67,8 +67,8 @@ function App() {
     return segment.toLowerCase();
   }, [location.pathname]);
 
-  // Determine if Shell Top Bar should be shown: Lobby, Game, GameEnd, and Test View
-  const showTopBar = topLevelRoute === 'lobby' || topLevelRoute === 'game' || topLevelRoute === 'end' || topLevelRoute === 'test-view';
+  // Determine if Shell Top Bar should be shown: Lobby and GameEnd (Game uses its own GameBar)
+  const showTopBar = topLevelRoute === 'lobby' || topLevelRoute === 'end' || (topLevelRoute === 'test-view' && location.pathname.includes('/lobby'));
   const currentRoomCode = location.pathname.split('/')[2]?.toUpperCase() || state.roomCode || '';
 
   // 5. Document title per screen:

@@ -200,7 +200,7 @@ test.describe('Full 3-Player 2-Round Game with Accessibility Audit & Baselines',
     // Reconnect test: Desktop player (Sam) refreshes the page
     await desktopPage.reload();
     await desktopPage.waitForURL(new RegExp(`/game/${roomCode}`));
-    await expect(desktopPage.locator('header, canvas, #round-end-heading')).toBeVisible();
+    await expect(desktopPage.locator('header, canvas, #round-end-heading').first()).toBeVisible();
 
     // Host skips intermission if skip button is visible
     const skipBtn = hostPage.locator('[data-testid="skip-round-end-button"]');

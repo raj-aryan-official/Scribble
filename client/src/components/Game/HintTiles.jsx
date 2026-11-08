@@ -9,6 +9,7 @@ export const HintTiles = ({
     isDrawer = false,
     guessedCount = 0,
     totalGuessers = 0,
+    compact = false,
     className = '',
 }) => {
     const shouldReduceMotion = useReducedMotion();
@@ -77,7 +78,7 @@ export const HintTiles = ({
             <div className={`flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 ${className}`}>
                 <div
                     data-testid="drawer-word-chip"
-                    className="inline-flex items-center gap-2 bg-marigold text-ink border-2 border-ink shadow-hard-sm px-4 py-1.5 rounded-[6px] font-mono font-black text-lg sm:text-xl md:text-2xl uppercase tracking-wider select-none"
+                    className="inline-flex items-center gap-2 bg-marigold text-ink border-2 border-ink shadow-hard-sm px-4 py-1.5 rounded-[6px] font-heading font-black text-lg sm:text-xl md:text-2xl uppercase tracking-wider select-none"
                 >
                     <span className="text-xs uppercase font-bold text-ink tracking-widest mr-1">
                         Draw:
@@ -131,7 +132,7 @@ export const HintTiles = ({
                             <div
                                 key={`gap-${index}`}
                                 data-testid="hint-gap"
-                                className="w-3 sm:w-4 md:w-5 h-8 flex-shrink-0"
+                                className={`${compact ? 'w-2 sm:w-3 h-6' : 'w-3 sm:w-4 md:w-5 h-8'} flex-shrink-0`}
                                 aria-hidden="true"
                             />
                         );
@@ -150,7 +151,11 @@ export const HintTiles = ({
                             }
                             animate={{ rotateX: 0, opacity: 1 }}
                             transition={{ type: 'spring', stiffness: 300, damping: 24 }}
-                            className={`w-7 h-9 sm:w-8 sm:h-10 md:w-10 md:h-12 border-2 border-ink rounded-[6px] shadow-hard-sm flex items-center justify-center font-mono font-black text-base sm:text-lg md:text-xl text-ink transition-colors ${
+                            className={`${
+                                compact
+                                    ? 'w-6 h-7 sm:w-7 sm:h-8 text-xs sm:text-sm'
+                                    : 'w-7 h-9 sm:w-8 sm:h-10 md:w-10 md:h-12 text-base sm:text-lg md:text-xl'
+                            } border-2 border-ink rounded-[6px] shadow-hard-xs flex items-center justify-center font-mono font-black text-ink transition-colors ${
                                 token.isRevealed ? 'bg-card text-ink' : 'bg-paper'
                             }`}
                         >
@@ -170,7 +175,9 @@ export const HintTiles = ({
                     data-testid="hint-length"
                     aria-label={`Word length: ${lengthDisplay}`}
                     title={`Word length: ${lengthDisplay}`}
-                    className="font-mono font-bold text-xs sm:text-sm bg-card border-2 border-ink px-2 py-1 rounded-[6px] shadow-hard-xs text-ink shrink-0"
+                    className={`font-mono font-bold ${
+                        compact ? 'text-[11px] px-1.5 py-0.5' : 'text-xs sm:text-sm px-2 py-1'
+                    } bg-card border-2 border-ink rounded-[6px] shadow-hard-xs text-ink shrink-0`}
                 >
                     {lengthDisplay}
                 </span>
