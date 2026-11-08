@@ -104,7 +104,7 @@ const calculateAwards = (room) => {
     return { bestArtist, fastestGuesser };
 };
 
-const cleanEndGame = (io, room) => {
+const cleanEndGame = (io, room, reason = null) => {
     if (!room) return;
     clearRoomTimers(room);
     room.gameState = GAME_STATES.GAME_END;
@@ -130,7 +130,8 @@ const cleanEndGame = (io, room) => {
         scores: room.scores || {},
         matchDrawings: room.matchDrawings || [],
         awards,
-        stats: awards
+        stats: awards,
+        reason: reason || room.endReason || null
     });
 };
 
@@ -439,6 +440,8 @@ const handlePlayerLeave = (io, room, leavingPlayerId, _reason = null) => {
     const leavingIndex = room.players.findIndex(p => p.id === leavingPlayerId);
     if (leavingIndex === -1) return;
 
+    const leavingPlayer = room.players[leavingIndex];
+    const departingDrawerName = leavingPlayer?.username || 'Maya';
     const wasDrawer = (leavingIndex === room.currentDrawerIndex);
     const wasMidGame = (room.gameState !== GAME_STATES.LOBBY && room.gameState !== GAME_STATES.GAME_END);
     const wasInTurn = (room.gameState === GAME_STATES.WORD_SELECTION || room.gameState === GAME_STATES.DRAWING);
@@ -453,10 +456,10 @@ const handlePlayerLeave = (io, room, leavingPlayerId, _reason = null) => {
 
     // Mid-game check: If fewer than 2 players remain mid-game, end the game and send GAME_ENDED
     if (wasMidGame && updatedRoom.players.length < 2) {
-        cleanEndGame(io, updatedRoom);
+        cleanEndGame(io, updatedRoom, 'not-enough-players');
         const msg = {
             username: 'System',
-            text: 'Game ended: not enough players to continue.',
+            text: 'Everyone else left, so the game ended.',
             type: 'system'
         };
         recordChatMessage(updatedRoom, msg);
@@ -486,12 +489,13 @@ const handlePlayerLeave = (io, room, leavingPlayerId, _reason = null) => {
             drawerBonus: updatedRoom.drawerBonus || 0,
             nextDrawerId: null,
             reason: 'drawer-left',
+            drawerName: departingDrawerName,
             strokes: updatedRoom.strokes || []
         });
 
         const msg = {
             username: 'System',
-            text: 'Drawer left the game! Advancing to the next turn...',
+            text: `${departingDrawerName} left. Skipping to the next drawer.`,
             type: 'system'
         };
         recordChatMessage(updatedRoom, msg);

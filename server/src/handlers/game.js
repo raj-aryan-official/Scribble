@@ -65,7 +65,7 @@ function registerGameHandlers(io, socket, safeOn) {
         if (!isHost(room, socket)) {
             return rejectWithError(socket, 'Only the host can end the game');
         }
-        cleanEndGame(io, room);
+        cleanEndGame(io, room, 'host-ended');
     });
 
     safeOn(EVENTS.SKIP_ROUND_END, (payload) => {

@@ -20,6 +20,8 @@ export const RoundEndOverlay = ({
     players = [],
     duration = 5,
     isHost = false,
+    reason = null,
+    departedDrawerName = null,
     onSkip,
     onComplete,
 }) => {
@@ -262,6 +264,18 @@ export const RoundEndOverlay = ({
 
             {/* Central Round-End Paper Card */}
             <div className="bg-paper border-2 border-ink rounded-[12px] shadow-hard p-3 sm:p-5 max-w-lg w-full flex flex-col gap-3 max-h-[95%] overflow-y-auto">
+                {/* Drawer Left Notice */}
+                {reason === 'drawer-left' && (
+                    <div
+                        role="status"
+                        aria-live="polite"
+                        data-testid="drawer-left-notice"
+                        className="w-full bg-marigold text-ink font-bold px-3 py-1.5 rounded-[6px] border-2 border-ink shadow-hard-xs text-xs sm:text-sm text-center mb-1"
+                    >
+                        {departedDrawerName || 'Maya'} left. Skipping to the next drawer.
+                    </div>
+                )}
+
                 {/* Word Reveal Header */}
                 <div className="text-center">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-ink-soft block">

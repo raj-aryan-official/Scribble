@@ -141,7 +141,6 @@ export const Game = () => {
         isDeafened,
         remoteStreams,
         speakingPeers,
-        voiceError,
         isAutoplayBlocked,
         setIsAutoplayBlocked,
         handleEnableSound,
@@ -211,15 +210,28 @@ export const Game = () => {
         window.location.href = '/';
     };
 
-    // Edge state check (kicked, disconnected, room not found, mic denied)
-    const edgeStateType = mapErrorToEdgeState(state.error || (voiceError ? 'mic' : null));
+    // Edge state check (kicked, room not found, closed, host ended, not enough players)
+    const edgeStateType = mapErrorToEdgeState(state.error);
     if (edgeStateType && edgeStateType !== 'RECONNECTING') {
+        const handleSeeScores = () => {
+            const roomCodeStr = state.roomCode || code;
+            window.location.href = `/end/${roomCodeStr}`;
+        };
+        const handleBackToLobby = () => {
+            const roomCodeStr = state.roomCode || code;
+            window.location.href = `/lobby/${roomCodeStr}`;
+        };
+
+        let onAction = handleExit;
+        if (edgeStateType === 'HOST_ENDED') onAction = handleSeeScores;
+        if (edgeStateType === 'NOT_ENOUGH_PLAYERS') onAction = handleBackToLobby;
+
         return (
             <div className="min-h-[100dvh] w-full flex items-center justify-center p-4 bg-paper">
                 <EdgeState
                     type={edgeStateType}
-                    onAction={handleExit}
-                    actionText="Back to Home"
+                    onAction={onAction}
+                    onSecondaryAction={handleExit}
                 />
             </div>
         );
@@ -411,6 +423,8 @@ export const Game = () => {
                                         players={state.players}
                                         duration={5}
                                         isHost={isHost}
+                                        reason={state.roundEndData?.reason}
+                                        departedDrawerName={state.roundEndData?.drawerName}
                                         onSkip={handleSkipRoundEnd}
                                     />
                                 )}

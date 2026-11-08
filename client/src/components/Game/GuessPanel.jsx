@@ -17,15 +17,34 @@ export const GuessPanel = ({
 
     const [message, setMessage] = useState('');
     const [closeHint, setCloseHint] = useState(false);
+    const [rateLimitWarning, setRateLimitWarning] = useState(false);
     const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
     const [keyboardOffset, setKeyboardOffset] = useState(0);
 
     const closeTimeoutRef = useRef(null);
+    const rateLimitTimeoutRef = useRef(null);
 
     const myId = state.currentUser?.id;
     const isDrawer = Boolean(myId && myId === state.drawerId);
     const hasGuessed = Boolean(myId && state.guessedPlayers?.includes(myId));
     const isGuessedOrDrawer = isDrawer || hasGuessed;
+
+    // Watch state.error for chat rate limiting ("Slow down")
+    useEffect(() => {
+        if (!state.error) return;
+        const errStr = typeof state.error === 'string' ? state.error : state.error.message;
+        if (
+            errStr &&
+            (errStr.toLowerCase().includes('slow down') || errStr.toLowerCase().includes('rate limit'))
+        ) {
+            setRateLimitWarning(true);
+            if (rateLimitTimeoutRef.current) clearTimeout(rateLimitTimeoutRef.current);
+            rateLimitTimeoutRef.current = setTimeout(() => {
+                setRateLimitWarning(false);
+            }, 2000);
+            dispatch({ type: 'SET_ERROR', payload: null });
+        }
+    }, [state.error, dispatch]);
 
     // Use visualViewport only to lift the sheet and bottom input above the keyboard
     useEffect(() => {
@@ -138,6 +157,7 @@ export const GuessPanel = ({
                         hasGuessed={hasGuessed}
                         gainedPoints={state.myGainedPoints}
                         closeHint={closeHint}
+                        rateLimitWarning={rateLimitWarning}
                         idPrefix="mobile"
                         className="w-full"
                     />
@@ -247,6 +267,7 @@ export const GuessPanel = ({
                     hasGuessed={hasGuessed}
                     gainedPoints={state.myGainedPoints}
                     closeHint={closeHint}
+                    rateLimitWarning={rateLimitWarning}
                     idPrefix="desktop"
                 />
             </div>

@@ -12,6 +12,7 @@ export const GuessInput = ({
     hasGuessed = false,
     gainedPoints = 0,
     closeHint = false,
+    rateLimitWarning = false,
     idPrefix = 'desktop',
     className = '',
 }) => {
@@ -183,6 +184,21 @@ export const GuessInput = ({
                         <Sparkles className="w-3.5 h-3.5 text-ink shrink-0" />
                         <span>Close!</span>
                     </motion.div>
+                )}
+            </AnimatePresence>
+            {/* Rate Limit Warning: Helper text under input for 2 s */}
+            <AnimatePresence>
+                {rateLimitWarning && (
+                    <motion.p
+                        role="alert"
+                        data-testid="rate-limit-helper"
+                        initial={{ opacity: 0, y: -2 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -2 }}
+                        className="text-xs text-tomato font-bold mt-1 select-none"
+                    >
+                        Slow down a little.
+                    </motion.p>
                 )}
             </AnimatePresence>
         </div>

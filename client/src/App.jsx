@@ -1,22 +1,65 @@
-import React, { useEffect, useMemo } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion, MotionConfig, useReducedMotion } from 'framer-motion';
 import { useGame } from './context/GameContext';
+import { useSocket } from './hooks/useSocket';
 import Landing from './pages/Landing';
 import Join from './pages/Join';
 import Lobby from './pages/Lobby';
 import Game from './pages/Game';
 import GameEnd from './pages/GameEnd';
 import TestHarness from './pages/TestHarness';
+import DevStates from './pages/DevStates';
 import AppHeader from './components/Layout/AppHeader';
-import ConnectionBanner from './components/ui/ConnectionBanner';
+import ReconnectBanner from './components/ui/ReconnectBanner';
+import StatusScreen from './components/ui/StatusScreen';
+import ConnectingScreen from './components/ui/ConnectingScreen';
 import { LobbyGuard, GameGuard, EndGuard } from './components/Routing/RouteGuards';
+import { checkBrowserSupport } from './utils/browserSupport';
 import { PAGE_TRANSITION } from './constants/layout';
+import errorSvg from './assets/states/error.svg';
+import unsupportedSvg from './assets/states/unsupported.svg';
 
 function App() {
   const location = useLocation();
   const shouldReduceMotion = useReducedMotion();
   const { state } = useGame();
+  const socket = useSocket();
+
+  // 1. Browser compatibility check (Canvas, WebRTC, Pointer Events)
+  const browserSupport = useMemo(() => checkBrowserSupport(), []);
+
+  // 2. Initial connection check (>300 ms debounce for connecting screen)
+  const [showInitialConnecting, setShowInitialConnecting] = useState(false);
+  const hasEverConnectedRef = useRef(socket ? socket.connected : false);
+
+  useEffect(() => {
+    if (hasEverConnectedRef.current) return;
+    if (socket?.connected) {
+      hasEverConnectedRef.current = true;
+      setShowInitialConnecting(false);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      if (!hasEverConnectedRef.current && (!socket || !socket.connected)) {
+        setShowInitialConnecting(true);
+      }
+    }, 300);
+
+    const handleConnect = () => {
+      hasEverConnectedRef.current = true;
+      setShowInitialConnecting(false);
+      clearTimeout(timer);
+    };
+
+    socket?.on('connect', handleConnect);
+
+    return () => {
+      clearTimeout(timer);
+      socket?.off('connect', handleConnect);
+    };
+  }, [socket]);
 
   // Top-level route keying: e.g. 'root' (landing), 'lobby', 'join', 'game', 'end'
   const topLevelRoute = useMemo(() => {
@@ -41,6 +84,8 @@ function App() {
       document.title = `Round ${round} of ${total} · Scribble`;
     } else if (topLevelRoute === 'end') {
       document.title = 'Game Over · Scribble';
+    } else if (topLevelRoute === 'dev') {
+      document.title = 'Failure States Showcase · Scribble';
     } else {
       document.title = 'Scribble';
     }
@@ -77,12 +122,35 @@ function App() {
     exit: {
       opacity: 0,
       y: shouldReduceMotion ? 0 : -PAGE_TRANSITION.OFFSET_Y,
-      transition: {
-        duration: PAGE_TRANSITION.EXIT_DURATION,
-        ease: [0.7, 0, 0.84, 0],
-      },
     },
   };
+
+  // If browser is missing core features: full screen listing what to update
+  if (!browserSupport.isSupported) {
+    return (
+      <StatusScreen
+        role="alert"
+        illustration={unsupportedSvg}
+        title="Unsupported browser"
+        sentence="Scribble requires modern browser capabilities for real-time drawing and audio. The following features are missing:"
+        primaryAction={{
+          label: 'Reload',
+          onClick: () => window.location.reload(),
+        }}
+      >
+        <ul className="text-left text-xs text-ink bg-paper p-3 rounded-[6px] border border-ink/30 flex flex-col gap-1.5 list-disc pl-5 my-2">
+          {browserSupport.missing.map((f) => (
+            <li key={f}>{f}</li>
+          ))}
+        </ul>
+      </StatusScreen>
+    );
+  }
+
+  // Connecting state on first load (>300 ms)
+  if (showInitialConnecting && (!socket || !socket.connected)) {
+    return <ConnectingScreen />;
+  }
 
   return (
     <MotionConfig reducedMotion="user">
@@ -95,8 +163,8 @@ function App() {
           Skip to content
         </a>
 
-        {/* Global Connection Status Banner */}
-        <ConnectionBanner />
+        {/* Global Reconnect / Connection Status Banner */}
+        <ReconnectBanner />
 
         {/* Shell Top Bar: Lobby, Game and GameEnd only (56px desktop / 48px phones) */}
         {showTopBar && (
@@ -146,7 +214,27 @@ function App() {
                   }
                 />
                 <Route path="/test-view/:view" element={<TestHarness />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
+                {import.meta.env.DEV && (
+                  <Route path="/dev/states" element={<DevStates />} />
+                )}
+                {/* 404 Route uses StatusScreen */}
+                <Route
+                  path="*"
+                  element={
+                    <StatusScreen
+                      role="alert"
+                      illustration={errorSvg}
+                      title="Something went wrong"
+                      sentence="We couldn't find the page you were looking for."
+                      primaryAction={{
+                        label: 'Reload',
+                        onClick: () => {
+                          window.location.href = '/';
+                        },
+                      }}
+                    />
+                  }
+                />
               </Routes>
             </motion.div>
           </AnimatePresence>

@@ -82,6 +82,8 @@ export const TopBar = ({
                     toggleDeafen={voiceState.toggleDeafen}
                     peersCount={voiceState.peersCount}
                     isVoiceAllowed={voiceState.isVoiceAllowed}
+                    voiceError={voiceState.voiceError}
+                    onClearVoiceError={voiceState.clearVoiceError}
                 />
 
                 {/* Host End Game Button */}

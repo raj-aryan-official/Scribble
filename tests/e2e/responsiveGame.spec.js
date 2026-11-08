@@ -143,4 +143,32 @@ test.describe('Responsive Game & Lobby Viewport Tests', () => {
       fullPage: false,
     });
   });
+
+  test('Dev states showcase (/dev/states) at 360x800 - reads clearly with no horizontal scroll', async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 800 });
+    await page.goto('/dev/states');
+    await page.waitForSelector('[data-testid="state-section-lost"]');
+
+    // Assert no horizontal scroll
+    const { scrollWidth, clientWidth } = await page.evaluate(() => ({
+      scrollWidth: document.documentElement.scrollWidth,
+      clientWidth: document.documentElement.clientWidth,
+    }));
+    expect(scrollWidth).toBeLessThanOrEqual(clientWidth + 1);
+
+    // Verify key calm copy is present
+    await expect(page.locator('text=This room has closed.').first()).toBeVisible();
+    await expect(page.locator('text=That room is full.').first()).toBeVisible();
+    await expect(page.locator('text=The host removed you from the room.').first()).toBeVisible();
+    await expect(page.locator('text=The host ended the game.').first()).toBeVisible();
+    await expect(page.locator('text=Everyone else left, so the game ended.').first()).toBeVisible();
+    await expect(page.locator('text=We lost you.').first()).toBeVisible();
+    await expect(page.locator('text=Maya left. Skipping to the next drawer.').first()).toBeVisible();
+    await expect(page.locator('text=Slow down a little.').first()).toBeVisible();
+
+    await page.screenshot({
+      path: 'tests/screenshots/dev-states-360px.png',
+      fullPage: false,
+    });
+  });
 });

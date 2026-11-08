@@ -30,6 +30,7 @@ const initialState = {
     autoPickedWord: null,
     myGainedPoints: 0,
     joinedMidRound: false,
+    endReason: null,
     error: null
 };
 
@@ -179,7 +180,8 @@ const gameReducer = (state, action) => {
                 gameState: GAME_STATES.GAME_END,
                 scores: action.payload.scores || state.scores,
                 matchDrawings: action.payload.matchDrawings || state.matchDrawings || [],
-                awards: action.payload.awards || action.payload.stats || state.awards || null
+                awards: action.payload.awards || action.payload.stats || state.awards || null,
+                endReason: action.payload.reason || null
             };
         case 'SET_ERROR':
             return { ...state, error: action.payload };
