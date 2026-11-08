@@ -211,3 +211,4 @@ export const DoodleCat = ({ className = '' }) => {
 };
 
 export default DoodleCat;
+

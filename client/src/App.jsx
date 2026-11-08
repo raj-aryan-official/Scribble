@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion, MotionConfig, useReducedMotion } from 'framer-motion';
 import { useGame } from './context/GameContext';
 import Landing from './pages/Landing';
+import Join from './pages/Join';
 import Lobby from './pages/Lobby';
 import Game from './pages/Game';
 import GameEnd from './pages/GameEnd';
@@ -31,6 +32,8 @@ function App() {
   useEffect(() => {
     if (topLevelRoute === 'lobby') {
       document.title = `Lobby ${currentRoomCode} · Scribble`;
+    } else if (topLevelRoute === 'join') {
+      document.title = 'Join a Scribble room · Scribble';
     } else if (topLevelRoute === 'game') {
       const round = state.currentRound || 1;
       const total = state.totalRounds || state.settings?.rounds || 3;
@@ -116,7 +119,7 @@ function App() {
             >
               <Routes location={location}>
                 <Route path="/" element={<Landing />} />
-                <Route path="/join/:code" element={<Landing />} />
+                <Route path="/join/:code" element={<Join />} />
                 <Route
                   path="/lobby/:code"
                   element={

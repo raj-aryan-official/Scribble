@@ -102,11 +102,13 @@ export const Lobby = () => {
 
     const handleShareOrCopyLink = async () => {
         const link = `${window.location.origin}/join/${code}`;
+        const shareText = `Come draw with me on Scribble: ${link}`;
+
         if (navigator.share) {
             try {
                 await navigator.share({
-                    title: 'Join my Scribble room!',
-                    text: `Draw and guess with me on Scribble! Use room code ${code}`,
+                    title: 'Scribble',
+                    text: shareText,
                     url: link,
                 });
                 return;
@@ -117,7 +119,7 @@ export const Lobby = () => {
 
         // Fallback to clipboard
         try {
-            await navigator.clipboard.writeText(link);
+            await navigator.clipboard.writeText(shareText);
             setCopiedLink(true);
             showToast('Invite link copied to clipboard!', 'success');
             setTimeout(() => setCopiedLink(false), 2000);

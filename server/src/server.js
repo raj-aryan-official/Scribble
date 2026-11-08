@@ -26,6 +26,70 @@ app.get('/healthz', (req, res) => {
     res.status(200).json({ rooms: roomManager.rooms.size });
 });
 
+// In-memory rate limiter: 20 requests per minute per IP
+const ipPreviewRateLimits = new Map();
+
+const previewRateLimiter = (req, res, next) => {
+    const ip = req.ip || req.connection?.remoteAddress || req.headers?.['x-forwarded-for'] || '127.0.0.1';
+    const now = Date.now();
+    const windowMs = 60 * 1000;
+    const maxRequests = 20;
+
+    let record = ipPreviewRateLimits.get(ip);
+    if (!record || now > record.resetTime) {
+        record = { count: 1, resetTime: now + windowMs };
+        ipPreviewRateLimits.set(ip, record);
+    } else {
+        record.count++;
+    }
+
+    if (record.count > maxRequests) {
+        return res.status(429).json({ error: 'Too many preview requests, please try again later.' });
+    }
+
+    if (ipPreviewRateLimits.size > 1000) {
+        for (const [key, value] of ipPreviewRateLimits.entries()) {
+            if (now > value.resetTime) {
+                ipPreviewRateLimits.delete(key);
+            }
+        }
+    }
+
+    next();
+};
+
+// Room Preview API: returns only public fields for invite link previews
+app.get('/api/rooms/:code/preview', previewRateLimiter, (req, res) => {
+    const roomCode = (req.params.code || '').trim().toUpperCase();
+    const room = roomManager.getRoom(roomCode);
+
+    if (!room) {
+        return res.status(200).json({
+            exists: false,
+            playerCount: 0,
+            maxPlayers: 0,
+            hostName: null,
+            hostAvatar: null,
+            state: null,
+            round: 0,
+            totalRounds: 0,
+        });
+    }
+
+    const host = room.players.find(p => p.isHost) || room.players[0];
+
+    return res.status(200).json({
+        exists: true,
+        playerCount: room.players.length,
+        maxPlayers: room.settings?.maxPlayers || 12,
+        hostName: host ? host.username : null,
+        hostAvatar: host ? host.avatar : null,
+        state: room.gameState,
+        round: room.currentRound || 1,
+        totalRounds: room.settings?.rounds || room.totalRounds || 3,
+    });
+});
+
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {

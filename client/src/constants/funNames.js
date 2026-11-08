@@ -48,3 +48,4 @@ export const getRandomFunName = () => {
     const idx = Math.floor(Math.random() * FUN_NAMES.length);
     return FUN_NAMES[idx];
 };
+

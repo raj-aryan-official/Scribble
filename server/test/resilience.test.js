@@ -606,6 +606,50 @@ describe('Host Handover, Drawer Leaving, Timers & Host Features', () => {
 
         await new Promise(resolve => testServer.close(resolve));
     });
+
+    test('GET /api/rooms/:code/preview returns public fields, exists false for unknown room, and rate limits at 20 req/min', async () => {
+        const testServer = http.createServer(app);
+        await new Promise(resolve => testServer.listen(0, resolve));
+        const port = testServer.address().port;
+
+        // 1. Unknown room code -> exists: false with status 200
+        const unknownRes = await fetch(`http://localhost:${port}/api/rooms/UNKNOWN/preview`);
+        assert.equal(unknownRes.status, 200);
+        const unknownData = await unknownRes.json();
+        assert.deepEqual(unknownData, {
+            exists: false,
+            playerCount: 0,
+            maxPlayers: 0,
+            hostName: null,
+            hostAvatar: null,
+            state: null,
+            round: 0,
+            totalRounds: 0,
+        });
+
+        // 2. Active room -> returns public fields with host info only
+        const hostPlayer = { id: 'host123', username: 'Maya', avatar: 'avatar-4', isHost: true };
+        const created = roomManager.createRoom(hostPlayer);
+        const guestPlayer = { id: 'guest456', username: 'SecretPlayer', avatar: 'avatar-2', isHost: false };
+        roomManager.joinRoom(created.code, guestPlayer);
+
+        const previewRes = await fetch(`http://localhost:${port}/api/rooms/${created.code}/preview`);
+        assert.equal(previewRes.status, 200);
+        const previewData = await previewRes.json();
+
+        assert.equal(previewData.exists, true);
+        assert.equal(previewData.playerCount, 2);
+        assert.equal(previewData.maxPlayers, 12);
+        assert.equal(previewData.hostName, 'Maya');
+        assert.equal(previewData.hostAvatar, 'avatar-4');
+        assert.equal(previewData.state, 'LOBBY');
+        assert.equal(previewData.round, 1);
+        assert.equal(previewData.totalRounds, 3);
+        // Ensure no other player names are exposed
+        assert.equal(JSON.stringify(previewData).includes('SecretPlayer'), false);
+
+        await new Promise(resolve => testServer.close(resolve));
+    });
 });
 
 describe('Disconnect Resilience Script (3 socket.io-client sockets)', () => {

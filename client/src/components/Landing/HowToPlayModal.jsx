@@ -94,3 +94,4 @@ export const HowToPlayModal = ({ isOpen, onClose }) => {
 };
 
 export default HowToPlayModal;
+
