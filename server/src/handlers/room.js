@@ -225,6 +225,27 @@ function registerRoomHandlers(io, socket, safeOn) {
         handlePlayerLeave(io, room, targetId, 'kicked');
     });
 
+    safeOn(EVENTS.EDIT_PROFILE, (payload) => {
+        if (!payload || typeof payload !== 'object') {
+            return rejectWithError(socket, 'Invalid payload');
+        }
+        const room = getMemberRoom(socket, payload.roomCode);
+        if (!room) {
+            return rejectWithError(socket, 'Not a member of this room');
+        }
+        const avatar = payload.avatar;
+        // Server validates the avatar id
+        if (typeof avatar !== 'string' || !/^avatar-(?:[1-9]|1[0-2])$/.test(avatar)) {
+            return rejectWithError(socket, 'Invalid avatar ID');
+        }
+        const player = room.players.find(p => p.id === socket.id);
+        if (!player) {
+            return rejectWithError(socket, 'Player not found in room');
+        }
+        player.avatar = avatar;
+        io.to(room.code).emit(EVENTS.ROOM_JOINED, toPublicRoom(room));
+    });
+
     const handlePlayAgain = (payload) => {
         if (!payload || typeof payload !== 'object') {
             return rejectWithError(socket, 'Invalid payload');

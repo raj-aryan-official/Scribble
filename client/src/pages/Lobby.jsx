@@ -1,27 +1,22 @@
-import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo, Suspense, lazy } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Copy, Check, Share2, ArrowLeft, Settings as SettingsIcon, Crown, Users } from 'lucide-react';
+import { AnimatePresence } from 'framer-motion';
+import { Users, ChevronDown, ChevronUp, Settings as SettingsIcon } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { useSocket } from '../hooks/useSocket';
+import { useSound } from '../hooks/useSound';
 import { EVENTS } from '../../../shared/types';
 import Button from '../components/ui/Button';
-import Card from '../components/ui/Card';
-import Chip from '../components/ui/Chip';
-import Avatar from '../components/ui/Avatar';
-import Spinner from '../components/ui/Spinner';
+import Modal from '../components/ui/Modal';
 import Toast from '../components/ui/Toast';
+import PlayerTag from '../components/Lobby/PlayerTag';
+import EmptyPlayerSlots from '../components/Lobby/EmptyPlayerSlots';
+import RoomCard from '../components/Lobby/RoomCard';
+import SettingsCard from '../components/Lobby/SettingsCard';
+import StartGameBar from '../components/Lobby/StartGameBar';
+import AvatarEditModal from '../components/Lobby/AvatarEditModal';
 
-const ROUND_OPTIONS = [2, 3, 5, 7, 10, 12];
-const DRAW_TIME_OPTIONS = [60, 80, 100, 120];
-const DIFFICULTY_OPTIONS = ['Easy', 'Medium', 'Hard', 'Mixed'];
-const AVAILABLE_PACKS = [
-    { id: 'animals', label: 'Animals' },
-    { id: 'food', label: 'Food' },
-    { id: 'places', label: 'Places' },
-    { id: 'objects', label: 'Objects' },
-    { id: 'actions', label: 'Actions' },
-];
+const LazyQRCodeDisplay = lazy(() => import('../components/Lobby/QRCodeDisplay'));
 
 const countValidCustomWords = (text) => {
     if (!text || typeof text !== 'string') return 0;
@@ -45,15 +40,28 @@ export const Lobby = () => {
     const { state, dispatch } = useGame();
     const navigate = useNavigate();
     const socket = useSocket();
+    const { play } = useSound();
 
     const [toastMessage, setToastMessage] = useState('');
     const [toastVariant, setToastVariant] = useState('info');
     const [copiedCode, setCopiedCode] = useState(false);
     const [copiedLink, setCopiedLink] = useState(false);
+    const [showQR, setShowQR] = useState(false);
+    const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
+    const [playerToKick, setPlayerToKick] = useState(null);
+    const [countdown, setCountdown] = useState(null);
+
+    // Live announcements for screen readers
+    const [playerAnnouncement, setPlayerAnnouncement] = useState('');
+    const [copyAnnouncement, setCopyAnnouncement] = useState('');
 
     const isHost = Boolean(state.currentUser?.isHost);
-    const connectedPlayers = state.players.filter(p => !p.isDisconnected);
+    const hostPlayer = state.players.find((p) => p.isHost) || { username: 'Host' };
+    const connectedPlayers = state.players.filter((p) => !p.isDisconnected);
     const canStart = connectedPlayers.length >= 2;
+
+    // Mobile collapsible settings: closed by default for non-hosts
+    const [isMobileSettingsOpen, setIsMobileSettingsOpen] = useState(false);
 
     const currentSettings = useMemo(() => state.settings || {
         rounds: 3,
@@ -77,6 +85,64 @@ export const Lobby = () => {
         }
     }, [currentSettings.customWords]);
 
+    // Announce player joins / leaves and play pop sound
+    const prevPlayerMapRef = useRef(new Map());
+    const isFirstMountRef = useRef(true);
+
+    useEffect(() => {
+        const currentMap = new Map(state.players.map((p) => [p.id, p.username]));
+
+        if (!isFirstMountRef.current) {
+            // New players joined
+            for (const [id, username] of currentMap.entries()) {
+                if (!prevPlayerMapRef.current.has(id)) {
+                    play('joinPop');
+                    setPlayerAnnouncement(`${username} joined`);
+                }
+            }
+            // Players left
+            for (const [id, username] of prevPlayerMapRef.current.entries()) {
+                if (!currentMap.has(id)) {
+                    setPlayerAnnouncement(`${username} left`);
+                }
+            }
+        } else {
+            isFirstMountRef.current = false;
+        }
+
+        prevPlayerMapRef.current = currentMap;
+    }, [state.players, play]);
+
+    // Cancel countdown if player count drops below 2
+    useEffect(() => {
+        if (countdown !== null && !canStart) {
+            setCountdown(null);
+            setToastMessage('Start cancelled: need at least 2 players');
+            setToastVariant('error');
+        }
+    }, [canStart, countdown]);
+
+    // Countdown tick timer
+    useEffect(() => {
+        if (countdown === null) return;
+
+        if (countdown > 1) {
+            const timer = setTimeout(() => {
+                setCountdown((prev) => (prev ? prev - 1 : null));
+                play('tick');
+            }, 1000);
+            return () => clearTimeout(timer);
+        }
+
+        if (countdown === 1) {
+            const timer = setTimeout(() => {
+                setCountdown(null);
+                socket.emit(EVENTS.START_GAME, { roomCode: code });
+            }, 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [countdown, code, socket, play]);
+
     // Navigate to game once started
     useEffect(() => {
         if (state.gameState === 'DRAWING' || state.gameState === 'WORD_SELECTION') {
@@ -93,18 +159,32 @@ export const Lobby = () => {
         try {
             await navigator.clipboard.writeText(code);
             setCopiedCode(true);
-            showToast(`Room code ${code} copied to clipboard!`, 'success');
-            setTimeout(() => setCopiedCode(false), 2000);
+            setCopyAnnouncement(`Room code ${code} copied to clipboard`);
+            showToast(`Room code ${code} copied!`, 'success');
+            setTimeout(() => setCopiedCode(false), 1500);
         } catch {
             showToast('Failed to copy room code', 'error');
         }
     };
 
-    const handleShareOrCopyLink = async () => {
+    const handleCopyLink = async () => {
+        const link = `${window.location.origin}/join/${code}`;
+        try {
+            await navigator.clipboard.writeText(link);
+            setCopiedLink(true);
+            setCopyAnnouncement('Invite link copied to clipboard');
+            showToast('Invite link copied to clipboard!', 'success');
+            setTimeout(() => setCopiedLink(false), 1500);
+        } catch {
+            showToast('Failed to copy link', 'error');
+        }
+    };
+
+    const handleShare = async () => {
         const link = `${window.location.origin}/join/${code}`;
         const shareText = `Come draw with me on Scribble: ${link}`;
 
-        if (navigator.share) {
+        if (typeof navigator !== 'undefined' && navigator.share) {
             try {
                 await navigator.share({
                     title: 'Scribble',
@@ -113,26 +193,44 @@ export const Lobby = () => {
                 });
                 return;
             } catch (err) {
-                if (err.name === 'AbortError') return;
+                if (err?.name === 'AbortError') return;
             }
         }
 
         // Fallback to clipboard
-        try {
-            await navigator.clipboard.writeText(shareText);
-            setCopiedLink(true);
-            showToast('Invite link copied to clipboard!', 'success');
-            setTimeout(() => setCopiedLink(false), 2000);
-        } catch {
-            showToast('Failed to copy link', 'error');
+        handleCopyLink();
+    };
+
+    const handleStartOrCancel = () => {
+        if (countdown !== null) {
+            // Cancel countdown
+            setCountdown(null);
+            showToast('Game start cancelled', 'info');
+        } else if (canStart) {
+            // Begin countdown
+            setCountdown(3);
+            play('tick');
         }
     };
 
-    const handleStartGame = () => {
-        socket.emit(EVENTS.START_GAME, { roomCode: code });
+    const handleConfirmKick = () => {
+        if (!playerToKick) return;
+        socket.emit(EVENTS.KICK_PLAYER, { roomCode: code, playerId: playerToKick.id });
+        showToast(`Kicked ${playerToKick.username}`, 'info');
+        setPlayerToKick(null);
+    };
+
+    const handleSaveAvatar = (newAvatar) => {
+        socket.emit(EVENTS.EDIT_PROFILE, { roomCode: code, avatar: newAvatar });
+        try {
+            localStorage.setItem('scribble_avatar', newAvatar);
+        } catch {
+            // Ignore storage errors
+        }
     };
 
     const emitUpdateSettings = useCallback((updated) => {
+        if (!isHost) return;
         socket.emit(EVENTS.UPDATE_SETTINGS, {
             roomCode: code,
             settings: {
@@ -140,25 +238,17 @@ export const Lobby = () => {
                 ...updated,
             },
         });
-    }, [socket, code, currentSettings]);
+    }, [isHost, socket, code, currentSettings]);
 
-    const handleRoundsChange = (rounds) => {
-        emitUpdateSettings({ rounds });
-    };
-
-    const handleDrawTimeChange = (drawTime) => {
-        emitUpdateSettings({ drawTime });
-    };
-
-    const handleDifficultyChange = (difficulty) => {
-        emitUpdateSettings({ difficulty });
-    };
+    const handleRoundsChange = (rounds) => emitUpdateSettings({ rounds });
+    const handleDrawTimeChange = (drawTime) => emitUpdateSettings({ drawTime });
+    const handleDifficultyChange = (difficulty) => emitUpdateSettings({ difficulty });
 
     const handleTogglePack = (packId) => {
         const active = currentSettings.packs || [];
         const isSelected = active.includes(packId);
         const nextPacks = isSelected
-            ? active.filter(p => p !== packId)
+            ? active.filter((p) => p !== packId)
             : [...active, packId];
         emitUpdateSettings({ packs: nextPacks });
     };
@@ -180,18 +270,25 @@ export const Lobby = () => {
     };
 
     const validCustomWordCount = countValidCustomWords(customWordsText);
+    const isAloneInRoom = state.players.length === 1;
 
     return (
-        <div className="flex-1 w-full max-w-[1000px] mx-auto flex flex-col items-center p-4 sm:p-6 md:p-8">
-            {/* Feedback Toast */}
+        <div className="flex-1 w-full max-w-[1000px] mx-auto flex flex-col p-4 sm:p-6 md:p-8 pb-32 md:pb-8">
+            {/* Live announcements */}
+            <div aria-live="polite" aria-atomic="true" className="sr-only">
+                {playerAnnouncement}
+            </div>
+            <div aria-live="polite" aria-atomic="true" className="sr-only">
+                {copyAnnouncement}
+            </div>
+
+            {/* Feedback & Error Toasts */}
             <Toast
                 isOpen={Boolean(toastMessage)}
                 onClose={() => setToastMessage('')}
                 message={toastMessage}
                 variant={toastVariant}
             />
-
-            {/* Error Toast */}
             <Toast
                 isOpen={Boolean(state.error)}
                 onClose={() => dispatch({ type: 'SET_ERROR', payload: null })}
@@ -199,327 +296,228 @@ export const Lobby = () => {
                 variant="error"
             />
 
-            <div className="w-full max-w-3xl flex flex-col gap-6">
-                {/* Top Nav & Room Code Tag Bar */}
-                <header className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-card border-2 border-ink shadow-hard rounded-[12px] p-4">
-                    <div className="flex items-center gap-3">
+            {/* Kick Player Confirm Modal */}
+            <Modal
+                isOpen={Boolean(playerToKick)}
+                onClose={() => setPlayerToKick(null)}
+                title={`Kick ${playerToKick?.username} from room?`}
+                description="They cannot rejoin this game."
+            >
+                <div className="flex flex-col gap-4">
+                    <p className="text-sm text-ink-soft">
+                        They cannot rejoin this game.
+                    </p>
+                    <div className="flex items-center justify-end gap-3 pt-2 border-t-2 border-ink/10">
                         <Button
                             variant="secondary"
-                            size="sm"
-                            onClick={() => navigate('/')}
-                            aria-label="Back to home"
-                            className="p-2 min-h-[40px] w-[40px]"
+                            size="md"
+                            onClick={() => setPlayerToKick(null)}
                         >
-                            <ArrowLeft className="w-5 h-5 text-ink" />
+                            Cancel
                         </Button>
-                        <div>
-                            <h1 tabIndex={-1} className="text-2xl font-black font-heading text-ink leading-tight">
-                                Game Lobby
-                            </h1>
-                            <p className="text-xs text-ink-soft">
-                                Waiting for players to join
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* Room Code Tag with Copy and Share */}
-                    <div className="flex items-center gap-2 self-end sm:self-center">
-                        <div
-                            className="flex items-center gap-2 bg-paper border-2 border-ink shadow-hard-sm px-3 py-1.5 rounded-[6px]"
-                            title="Room Code"
-                        >
-                            <span className="text-xs font-bold uppercase text-ink-soft">Room</span>
-                            <span className="font-mono font-black text-xl text-ink tracking-wider">
-                                {code}
-                            </span>
-                        </div>
-
-                        <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={handleCopyCode}
-                            aria-label="Copy room code"
-                            className="min-h-[40px] px-3 flex items-center gap-1.5 text-xs font-bold uppercase"
-                        >
-                            {copiedCode ? <Check className="w-4 h-4 text-leaf" /> : <Copy className="w-4 h-4 text-ink" />}
-                            <span>{copiedCode ? 'Copied' : 'Copy'}</span>
-                        </Button>
-
                         <Button
                             variant="primary"
-                            size="sm"
-                            onClick={handleShareOrCopyLink}
-                            aria-label="Share invite link"
-                            className="min-h-[40px] px-3 flex items-center gap-1.5 text-xs font-bold uppercase"
+                            size="md"
+                            className="bg-tomato hover:bg-tomato-deep text-white"
+                            onClick={handleConfirmKick}
                         >
-                            {copiedLink ? <Check className="w-4 h-4 text-white" /> : <Share2 className="w-4 h-4 text-white" />}
-                            <span>{copiedLink ? 'Copied' : 'Share'}</span>
+                            Kick {playerToKick?.username}
                         </Button>
                     </div>
-                </header>
+                </div>
+            </Modal>
 
-                {/* Players Section */}
-                <section aria-labelledby="players-heading">
-                    <div className="flex items-center justify-between mb-3 px-1">
+            {/* Avatar Edit Modal */}
+            <AvatarEditModal
+                isOpen={isAvatarModalOpen}
+                onClose={() => setIsAvatarModalOpen(false)}
+                currentAvatar={state.currentUser?.avatar || 'avatar-1'}
+                onSave={handleSaveAvatar}
+            />
+
+            {/* Mobile Top Room Tag & Share Row (<md) */}
+            <div className="block md:hidden mb-4">
+                <RoomCard
+                    code={code}
+                    copiedCode={copiedCode}
+                    copiedLink={copiedLink}
+                    onCopyCode={handleCopyCode}
+                    onCopyLink={handleCopyLink}
+                    onShare={handleShare}
+                    showQR={showQR}
+                    onToggleQR={() => setShowQR(!showQR)}
+                >
+                    {showQR && (
+                        <Suspense
+                            fallback={
+                                <div className="p-3 bg-paper border-2 border-ink rounded-[8px] text-xs font-bold text-center">
+                                    Loading QR...
+                                </div>
+                            }
+                        >
+                            <LazyQRCodeDisplay
+                                url={`${typeof window !== 'undefined' ? window.location.origin : ''}/join/${code}`}
+                                onClose={() => setShowQR(false)}
+                                onCopied={(msg) => showToast(msg, 'success')}
+                            />
+                        </Suspense>
+                    )}
+                </RoomCard>
+            </div>
+
+            {/* Main Desktop Two-Thirds / One-Third Layout */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+                {/* Left Two-Thirds: Paper Desk / Players */}
+                <section
+                    aria-labelledby="players-heading"
+                    className="md:col-span-7 lg:col-span-7 flex flex-col gap-4 bg-card/60 border-2 border-ink shadow-hard rounded-[16px] p-4 sm:p-6"
+                >
+                    {/* Players Header */}
+                    <div className="flex items-center justify-between border-b-2 border-ink/10 pb-3">
                         <div className="flex items-center gap-2">
                             <Users className="w-5 h-5 text-ink" />
-                            <h2 id="players-heading" className="text-lg font-bold font-heading text-ink">
+                            <h1
+                                id="players-heading"
+                                className="text-xl sm:text-2xl font-black font-heading text-ink leading-none"
+                            >
                                 Players ({state.players.length})
-                            </h2>
+                            </h1>
                         </div>
-                        <span className={`text-xs font-bold ${canStart ? 'text-leaf' : 'text-tomato'}`}>
-                            {canStart ? 'Ready to play' : 'Need at least 2 players'}
+                        <span
+                            className={`text-xs font-black uppercase px-2.5 py-1 rounded-[4px] border border-ink ${
+                                canStart ? 'bg-leaf/15 text-leaf-deep' : 'bg-tomato/15 text-tomato'
+                            }`}
+                        >
+                            {canStart ? 'Ready to play' : 'Need 2+ players'}
                         </span>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                    {/* Desk Name Tags Grid */}
+                    <ol
+                        aria-label={`Players (${state.players.length})`}
+                        className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+                    >
                         <AnimatePresence mode="popLayout">
-                            {state.players.map((p) => {
-                                const isDisconnected = Boolean(p.isDisconnected);
-                                return (
-                                    <motion.div
-                                        key={p.id}
-                                        layout
-                                        initial={{ opacity: 0, scale: 0.85, y: 15 }}
-                                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                                        exit={{ opacity: 0, scale: 0.85 }}
-                                        transition={{ type: 'spring', stiffness: 300, damping: 24 }}
-                                        className={`flex items-center gap-3 p-3 bg-card border-2 border-ink shadow-hard-sm rounded-[12px] relative transition-opacity ${
-                                            isDisconnected ? 'opacity-50 border-dashed bg-paper' : ''
-                                        }`}
-                                    >
-                                        <Avatar avatarId={p.avatar} size="sm" />
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-1.5">
-                                                <span className="font-bold text-ink truncate text-sm sm:text-base">
-                                                    {p.username}
-                                                </span>
-                                                {p.isHost && (
-                                                    <span title="Room Host" aria-label="Room Host">
-                                                        <Crown className="w-4 h-4 text-marigold fill-marigold shrink-0" />
-                                                    </span>
-                                                )}
-                                            </div>
-                                            {isDisconnected && (
-                                                <span className="text-[11px] font-bold text-tomato uppercase tracking-wide">
-                                                    Disconnected
-                                                </span>
-                                            )}
-                                        </div>
-                                    </motion.div>
-                                );
-                            })}
+                            {state.players.map((player) => (
+                                <PlayerTag
+                                    key={player.id}
+                                    player={player}
+                                    isCurrentUser={player.id === state.currentUser?.id}
+                                    canKick={isHost && player.id !== state.currentUser?.id}
+                                    onKick={() => setPlayerToKick(player)}
+                                    onChangeAvatar={() => setIsAvatarModalOpen(true)}
+                                />
+                            ))}
                         </AnimatePresence>
+                    </ol>
+
+                    {/* Alone In Room State */}
+                    {isAloneInRoom && <EmptyPlayerSlots />}
+
+                    {/* Mobile Settings Accordion (<md) */}
+                    <div className="block md:hidden mt-2 pt-3 border-t-2 border-ink/10">
+                        <button
+                            type="button"
+                            onClick={() => setIsMobileSettingsOpen(!isMobileSettingsOpen)}
+                            className="w-full flex items-center justify-between p-3 bg-paper border-2 border-ink rounded-[8px] shadow-hard-sm font-bold text-sm text-ink cursor-pointer select-none"
+                            aria-expanded={isMobileSettingsOpen}
+                        >
+                            <div className="flex items-center gap-2">
+                                <SettingsIcon className="w-4 h-4 text-ink" />
+                                <span>{isHost ? 'Game Rules & Settings' : 'Room Rules'}</span>
+                            </div>
+                            {isMobileSettingsOpen ? (
+                                <ChevronUp className="w-4 h-4 text-ink" />
+                            ) : (
+                                <ChevronDown className="w-4 h-4 text-ink" />
+                            )}
+                        </button>
+
+                        {isMobileSettingsOpen && (
+                            <div className="mt-3">
+                                <SettingsCard
+                                    isHost={isHost}
+                                    hostName={hostPlayer.username}
+                                    settings={currentSettings}
+                                    customWordsText={customWordsText}
+                                    onCustomWordsChange={handleCustomWordsChange}
+                                    onRoundsChange={handleRoundsChange}
+                                    onDrawTimeChange={handleDrawTimeChange}
+                                    onDifficultyChange={handleDifficultyChange}
+                                    onTogglePack={handleTogglePack}
+                                    validCustomWordCount={validCustomWordCount}
+                                />
+                            </div>
+                        )}
                     </div>
                 </section>
 
-                {/* Host Settings Card */}
-                <Card className="flex flex-col gap-5 shadow-hard bg-card">
-                    <div className="flex items-center justify-between border-b-2 border-ink/10 pb-3">
-                        <div className="flex items-center gap-2">
-                            <SettingsIcon className="w-5 h-5 text-ink" />
-                            <h2 className="text-lg font-bold font-heading text-ink">
-                                {isHost ? 'Game Settings' : 'Room Settings'}
-                            </h2>
-                        </div>
-                        {!isHost && (
-                            <Chip variant="default" className="text-[11px]">
-                                Host Controlled
-                            </Chip>
-                        )}
-                    </div>
-
-                    {isHost ? (
-                        <div className="flex flex-col gap-5">
-                            {/* Rounds Selector */}
-                            <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-ink mb-2">
-                                    Rounds
-                                </label>
-                                <div className="grid grid-cols-6 gap-1.5 bg-paper p-1.5 border-2 border-ink rounded-[6px]">
-                                    {ROUND_OPTIONS.map((num) => {
-                                        const isSelected = currentSettings.rounds === num;
-                                        return (
-                                            <button
-                                                key={num}
-                                                type="button"
-                                                onClick={() => handleRoundsChange(num)}
-                                                className={`py-1.5 text-xs sm:text-sm font-bold rounded-[4px] transition-all cursor-pointer select-none ${
-                                                    isSelected
-                                                        ? 'bg-tomato text-white border-2 border-ink shadow-hard-sm'
-                                                        : 'text-ink hover:bg-card border-2 border-transparent'
-                                                }`}
-                                            >
-                                                {num}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-
-                            {/* Draw Time Selector */}
-                            <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-ink mb-2">
-                                    Draw Time
-                                </label>
-                                <div className="grid grid-cols-4 gap-1.5 bg-paper p-1.5 border-2 border-ink rounded-[6px]">
-                                    {DRAW_TIME_OPTIONS.map((time) => {
-                                        const isSelected = currentSettings.drawTime === time;
-                                        return (
-                                            <button
-                                                key={time}
-                                                type="button"
-                                                onClick={() => handleDrawTimeChange(time)}
-                                                className={`py-1.5 text-xs sm:text-sm font-bold rounded-[4px] transition-all cursor-pointer select-none ${
-                                                    isSelected
-                                                        ? 'bg-tomato text-white border-2 border-ink shadow-hard-sm'
-                                                        : 'text-ink hover:bg-card border-2 border-transparent'
-                                                }`}
-                                            >
-                                                {time}s
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-
-                            {/* Word Difficulty Selector */}
-                            <div>
-                                <label className="block text-xs font-bold uppercase tracking-wider text-ink mb-2">
-                                    Difficulty
-                                </label>
-                                <div className="grid grid-cols-4 gap-1.5 bg-paper p-1.5 border-2 border-ink rounded-[6px]">
-                                    {DIFFICULTY_OPTIONS.map((diff) => {
-                                        const isSelected = currentSettings.difficulty === diff;
-                                        return (
-                                            <button
-                                                key={diff}
-                                                type="button"
-                                                onClick={() => handleDifficultyChange(diff)}
-                                                className={`py-1.5 text-xs sm:text-sm font-bold rounded-[4px] transition-all cursor-pointer select-none ${
-                                                    isSelected
-                                                        ? 'bg-tomato text-white border-2 border-ink shadow-hard-sm'
-                                                        : 'text-ink hover:bg-card border-2 border-transparent'
-                                                }`}
-                                            >
-                                                {diff}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-
-                            {/* Themed Word Packs */}
-                            <div>
-                                <div className="flex items-center justify-between mb-2">
-                                    <label className="text-xs font-bold uppercase tracking-wider text-ink">
-                                        Themed Word Packs
-                                    </label>
-                                    <span className="text-xs font-bold text-ink-soft">
-                                        {currentSettings.packs?.length > 0
-                                            ? `${currentSettings.packs.length} active`
-                                            : 'All packs'}
-                                    </span>
-                                </div>
-                                <div className="flex flex-wrap gap-2">
-                                    {AVAILABLE_PACKS.map((pack) => {
-                                        const isSelected = currentSettings.packs?.includes(pack.id);
-                                        return (
-                                            <Chip
-                                                key={pack.id}
-                                                variant={isSelected ? 'leaf' : 'default'}
-                                                onClick={() => handleTogglePack(pack.id)}
-                                                className="cursor-pointer text-xs py-1.5 px-3"
-                                            >
-                                                {isSelected ? '✓ ' : '+ '}
-                                                {pack.label}
-                                            </Chip>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-
-                            {/* Custom Words */}
-                            <div>
-                                <div className="flex items-center justify-between mb-1.5">
-                                    <label htmlFor="custom-words-input" className="text-xs font-bold uppercase tracking-wider text-ink">
-                                        Custom Words
-                                    </label>
-                                    <span className={`text-xs font-bold ${validCustomWordCount >= 50 ? 'text-tomato' : 'text-ink-soft'}`}>
-                                        {validCustomWordCount} / 50 words
-                                    </span>
-                                </div>
-                                <textarea
-                                    id="custom-words-input"
-                                    rows={2}
-                                    value={customWordsText}
-                                    onChange={handleCustomWordsChange}
-                                    placeholder="Add comma-separated words: spaceship, pancake, chameleon..."
-                                    className="w-full p-3 bg-paper text-ink border-2 border-ink rounded-[6px] text-sm font-body placeholder:text-ink-soft/60 focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none resize-none"
-                                />
-                                <p className="text-[11px] text-ink-soft mt-1">
-                                    Custom words have a ~30% chance of appearing. 3-20 characters each.
-                                </p>
-                            </div>
-                        </div>
-                    ) : (
-                        /* Read-only view for guests */
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-                            <div className="bg-paper border-2 border-ink p-3 rounded-[6px]">
-                                <span className="block text-[11px] font-bold uppercase text-ink-soft">Rounds</span>
-                                <span className="text-lg font-black text-ink">{currentSettings.rounds}</span>
-                            </div>
-                            <div className="bg-paper border-2 border-ink p-3 rounded-[6px]">
-                                <span className="block text-[11px] font-bold uppercase text-ink-soft">Draw Time</span>
-                                <span className="text-lg font-black text-ink">{currentSettings.drawTime}s</span>
-                            </div>
-                            <div className="bg-paper border-2 border-ink p-3 rounded-[6px]">
-                                <span className="block text-[11px] font-bold uppercase text-ink-soft">Difficulty</span>
-                                <span className="text-lg font-black text-ink">{currentSettings.difficulty}</span>
-                            </div>
-                            <div className="bg-paper border-2 border-ink p-3 rounded-[6px]">
-                                <span className="block text-[11px] font-bold uppercase text-ink-soft">Packs</span>
-                                <span className="text-sm font-bold text-ink truncate block mt-0.5">
-                                    {currentSettings.packs?.length > 0
-                                        ? currentSettings.packs.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(', ')
-                                        : 'All'}
-                                </span>
-                            </div>
-                            {currentSettings.customWords?.length > 0 && (
-                                <div className="col-span-2 sm:col-span-4 bg-paper border-2 border-ink p-2.5 rounded-[6px] text-xs font-bold text-ink text-left">
-                                    <span>Custom words enabled: </span>
-                                    <span className="text-ink-soft font-normal">{currentSettings.customWords.length} words added</span>
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </Card>
-
-                {/* Start Game Action / Waiting Status */}
-                <div className="flex flex-col gap-2">
-                    {isHost ? (
-                        <div className="flex flex-col sm:flex-row items-center gap-3">
-                            <Button
-                                variant="primary"
-                                size="lg"
-                                onClick={handleStartGame}
-                                disabled={!canStart}
-                                className="w-full sm:w-auto sm:min-w-[200px] text-lg uppercase tracking-wide"
+                {/* Right One-Third (Desktop): Room Card & Settings Card */}
+                <aside className="hidden md:flex md:col-span-5 lg:col-span-5 flex-col gap-6">
+                    {/* Room Card on Desktop */}
+                    <RoomCard
+                        code={code}
+                        copiedCode={copiedCode}
+                        copiedLink={copiedLink}
+                        onCopyCode={handleCopyCode}
+                        onCopyLink={handleCopyLink}
+                        onShare={handleShare}
+                        showQR={showQR}
+                        onToggleQR={() => setShowQR(!showQR)}
+                    >
+                        {showQR && (
+                            <Suspense
+                                fallback={
+                                    <div className="p-3 bg-paper border-2 border-ink rounded-[8px] text-xs font-bold text-center">
+                                        Loading QR...
+                                    </div>
+                                }
                             >
-                                Start Game
-                            </Button>
-                            <span className={`text-sm font-bold text-center sm:text-left ${canStart ? 'text-leaf' : 'text-tomato'}`}>
-                                {canStart
-                                    ? '✓ Ready to begin!'
-                                    : 'Need at least 2 players to start'}
-                            </span>
-                        </div>
-                    ) : (
-                        <div className="flex items-center justify-center gap-3 py-4 bg-card border-2 border-ink shadow-hard-sm rounded-[12px] text-ink font-bold">
-                            <Spinner size="sm" label="Waiting for host" />
-                            <span>Waiting for host to start the game...</span>
-                        </div>
-                    )}
+                                <LazyQRCodeDisplay
+                                    url={`${typeof window !== 'undefined' ? window.location.origin : ''}/join/${code}`}
+                                    onClose={() => setShowQR(false)}
+                                    onCopied={(msg) => showToast(msg, 'success')}
+                                />
+                            </Suspense>
+                        )}
+                    </RoomCard>
+
+                    {/* Settings Card on Desktop */}
+                    <SettingsCard
+                        isHost={isHost}
+                        hostName={hostPlayer.username}
+                        settings={currentSettings}
+                        customWordsText={customWordsText}
+                        onCustomWordsChange={handleCustomWordsChange}
+                        onRoundsChange={handleRoundsChange}
+                        onDrawTimeChange={handleDrawTimeChange}
+                        onDifficultyChange={handleDifficultyChange}
+                        onTogglePack={handleTogglePack}
+                        validCustomWordCount={validCustomWordCount}
+                    />
+
+                    {/* Desktop Start Game Bar */}
+                    <StartGameBar
+                        isHost={isHost}
+                        hostName={hostPlayer.username}
+                        canStart={canStart}
+                        countdown={countdown}
+                        onStartOrCancel={handleStartOrCancel}
+                    />
+                </aside>
+            </div>
+
+            {/* Mobile Sticky Bottom Bar (<md) */}
+            <div className="block md:hidden fixed bottom-0 left-0 right-0 z-30 bg-card border-t-2 border-ink p-3 shadow-hard pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+                <div className="max-w-md mx-auto">
+                    <StartGameBar
+                        isHost={isHost}
+                        hostName={hostPlayer.username}
+                        canStart={canStart}
+                        countdown={countdown}
+                        onStartOrCancel={handleStartOrCancel}
+                        className="border-0 shadow-none p-0 bg-transparent"
+                    />
                 </div>
             </div>
         </div>

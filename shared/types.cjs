@@ -16,6 +16,7 @@ const EVENTS = {
     CLEAR_CANVAS: 'clearCanvas',
     SEND_MESSAGE: 'sendMessage',
     KICK_PLAYER: 'kickPlayer',
+    EDIT_PROFILE: 'editProfile',
     END_GAME_EARLY: 'endGameEarly',
     PLAY_AGAIN: 'playAgain',
     UPDATE_SETTINGS: 'updateSettings',
