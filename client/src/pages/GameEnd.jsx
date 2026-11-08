@@ -1,12 +1,24 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
+import { useSocket } from '../context/SocketContext';
+import { EVENTS } from '../../../shared/types.js';
 import confetti from 'canvas-confetti';
 
 const GameEnd = () => {
     const { code } = useParams();
     const navigate = useNavigate();
     const { state } = useGame();
+    const { socket } = useSocket();
+
+    const isHost = state.currentUser?.isHost;
+
+    const handlePlayAgain = () => {
+        if (isHost && socket) {
+            socket.emit(EVENTS.PLAY_AGAIN, { roomCode: code });
+        }
+        navigate(`/lobby/${code}`);
+    };
 
     useEffect(() => {
         const duration = 3 * 1000;
@@ -67,10 +79,10 @@ const GameEnd = () => {
                             <span>Exit to Home</span>
                         </button>
                         <button
-                            onClick={() => navigate(`/lobby/${code}`)}
+                            onClick={handlePlayAgain}
                             className="bg-accent hover:bg-red-500 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-md hover:shadow-lg active:scale-95 flex items-center justify-center gap-2"
                         >
-                            <span>Play Again</span>
+                            <span>{isHost ? 'Play Again' : 'Return to Lobby'}</span>
                         </button>
                     </div>
                 </div>

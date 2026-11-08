@@ -1,25 +1,17 @@
 services:
-  # Backend API
   - type: web
-    name: scribble-backend
+    name: scribble
     env: node
-    rootDir: server
-    buildCommand: npm install
-    startCommand: node src/server.js
+    buildCommand: npm ci --prefix client && npm run build --prefix client && npm ci --prefix server
+    startCommand: node server/src/server.js
+    healthCheckPath: /healthz
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 10000
-
-  # Frontend Static Site
-  - type: web
-    name: scribble-frontend
-    env: static
-    rootDir: client
-    buildCommand: npm install && npm run build
-    staticPublishPath: dist
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
+      - key: CLIENT_URL
+        fromService:
+          type: web
+          name: scribble
+          property: host

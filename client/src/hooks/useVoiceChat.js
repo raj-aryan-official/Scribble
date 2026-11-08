@@ -1,197 +1,567 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useSocket } from './useSocket';
 import { EVENTS } from '../../../shared/types';
+import {
+    MAX_VOICE_PLAYERS,
+    DEFAULT_SPEAKING_THRESHOLD,
+    SPEAKING_HOLD_MS,
+    shouldInitiate,
+    isPolitePeer,
+    getIceServers,
+    calculateRMS,
+    updateSpeakingState,
+    getMediaErrorMessage
+} from '../utils/voiceUtils';
 
-export const useVoiceChat = (roomCode, username) => {
+export const useVoiceChat = (roomCode, username, playerCount = 1) => {
     const socket = useSocket();
+
     const [isMicOn, setIsMicOn] = useState(false);
     const [isDeafened, setIsDeafened] = useState(false);
-    const [peers, setPeers] = useState({}); // { socketId: RTCPeerConnection }
-    const localStreamRef = useRef(null);
-    const peersRef = useRef({}); // Refs for stability in callbacks
+    const [remoteStreams, setRemoteStreams] = useState({}); // { socketId: MediaStream }
+    const [speakingPeers, setSpeakingPeers] = useState({}); // { socketId: boolean }
+    const [voiceError, setVoiceError] = useState(null);
+    const [isAutoplayBlocked, setIsAutoplayBlocked] = useState(false);
 
+    const isVoiceAllowed = (playerCount || 1) <= MAX_VOICE_PLAYERS;
+
+    // Refs for stable callback access without re-binding effects
+    const localStreamRef = useRef(null);
+    const peersRef = useRef({}); // { socketId: RTCPeerConnection }
+    const candidateQueueRef = useRef({}); // { socketId: Array<RTCIceCandidateInit> }
+    const makingOfferRef = useRef({}); // { socketId: boolean }
+    const audioContextRef = useRef(null);
+    const analysersRef = useRef(new Map()); // socketId -> { sourceNode, analyser, buffer, lastSpokeAt, isSpeaking }
+    const animFrameRef = useRef(null);
+
+    const clearVoiceError = useCallback(() => {
+        setVoiceError(null);
+    }, []);
+
+    // Lazy AudioContext initialization
+    const getOrCreateAudioContext = useCallback(() => {
+        if (!audioContextRef.current || audioContextRef.current.state === 'closed') {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (AudioCtx) {
+                audioContextRef.current = new AudioCtx();
+            }
+        }
+        if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+            audioContextRef.current.resume().catch(() => {});
+        }
+        return audioContextRef.current;
+    }, []);
+
+    // Attach stream to speaking detector
+    const attachSpeakingDetector = useCallback((id, stream) => {
+        try {
+            const ctx = getOrCreateAudioContext();
+            if (!ctx || !stream || stream.getAudioTracks().length === 0) return;
+
+            // Remove existing if any
+            if (analysersRef.current.has(id)) {
+                const prev = analysersRef.current.get(id);
+                try { prev.sourceNode.disconnect(); } catch (e) {}
+                analysersRef.current.delete(id);
+            }
+
+            const sourceNode = ctx.createMediaStreamSource(stream);
+            const analyser = ctx.createAnalyser();
+            analyser.fftSize = 512;
+            analyser.smoothingTimeConstant = 0.2;
+            sourceNode.connect(analyser);
+
+            analysersRef.current.set(id, {
+                sourceNode,
+                analyser,
+                buffer: new Float32Array(analyser.fftSize),
+                lastSpokeAt: 0,
+                isSpeaking: false
+            });
+        } catch (e) {
+            console.warn('Could not attach speaking detector for', id, e);
+        }
+    }, [getOrCreateAudioContext]);
+
+    // Detach speaking detector
+    const detachSpeakingDetector = useCallback((id) => {
+        if (analysersRef.current.has(id)) {
+            const item = analysersRef.current.get(id);
+            try { item.sourceNode.disconnect(); } catch (e) {}
+            analysersRef.current.delete(id);
+        }
+        setSpeakingPeers(prev => {
+            if (!prev[id]) return prev;
+            const next = { ...prev };
+            delete next[id];
+            return next;
+        });
+    }, []);
+
+    // Continuous speaking analysis loop
+    useEffect(() => {
+        let isRunning = true;
+
+        const checkSpeaking = () => {
+            if (!isRunning) return;
+
+            const now = Date.now();
+            let hasChanges = false;
+            const updates = {};
+
+            analysersRef.current.forEach((item, id) => {
+                // If local mic is muted, local user cannot be speaking
+                if (id === socket?.id && !isMicOn) {
+                    if (item.isSpeaking) {
+                        item.isSpeaking = false;
+                        item.lastSpokeAt = 0;
+                        updates[id] = false;
+                        hasChanges = true;
+                    }
+                    return;
+                }
+
+                item.analyser.getFloatTimeDomainData(item.buffer);
+                const rms = calculateRMS(item.buffer);
+
+                const nextState = updateSpeakingState({
+                    currentRMS: rms,
+                    threshold: DEFAULT_SPEAKING_THRESHOLD,
+                    now,
+                    lastSpokeAt: item.lastSpokeAt,
+                    holdDurationMs: SPEAKING_HOLD_MS
+                });
+
+                item.lastSpokeAt = nextState.lastSpokeAt;
+
+                if (nextState.isSpeaking !== item.isSpeaking) {
+                    item.isSpeaking = nextState.isSpeaking;
+                    updates[id] = nextState.isSpeaking;
+                    hasChanges = true;
+                }
+            });
+
+            if (hasChanges) {
+                setSpeakingPeers(prev => ({
+                    ...prev,
+                    ...updates
+                }));
+            }
+
+            animFrameRef.current = requestAnimationFrame(checkSpeaking);
+        };
+
+        animFrameRef.current = requestAnimationFrame(checkSpeaking);
+
+        return () => {
+            isRunning = false;
+            if (animFrameRef.current) {
+                cancelAnimationFrame(animFrameRef.current);
+                animFrameRef.current = null;
+            }
+        };
+    }, [socket?.id, isMicOn]);
+
+    // Full cleanup on unmount or room leave
     const cleanup = useCallback(() => {
-        // Stop local tracks
+        // Stop local media tracks
         if (localStreamRef.current) {
-            localStreamRef.current.getTracks().forEach(track => track.stop());
+            localStreamRef.current.getTracks().forEach(track => {
+                try { track.stop(); } catch (e) {}
+            });
             localStreamRef.current = null;
         }
 
-        // Close all peer connections
-        Object.values(peersRef.current).forEach(pc => pc.close());
+        // Close peer connections
+        Object.values(peersRef.current).forEach((pc) => {
+            try { pc.close(); } catch (e) {}
+        });
         peersRef.current = {};
-        setPeers({});
+        candidateQueueRef.current = {};
+        makingOfferRef.current = {};
 
-        // Notify server
-        socket.emit(EVENTS.VOICE_LEAVE, { roomCode });
+        // Stop all audio analysers & close AudioContext
+        analysersRef.current.forEach((item) => {
+            try { item.sourceNode.disconnect(); } catch (e) {}
+        });
+        analysersRef.current.clear();
+
+        if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+            try { audioContextRef.current.close(); } catch (e) {}
+            audioContextRef.current = null;
+        }
+
+        setRemoteStreams({});
+        setSpeakingPeers({});
+        setIsMicOn(false);
+
+        if (socket && roomCode) {
+            socket.emit(EVENTS.VOICE_LEAVE, { roomCode });
+        }
     }, [socket, roomCode]);
 
-
-    // Initialize Local Stream
-    const startLocalStream = async () => {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-            localStreamRef.current = stream;
-
-            // If mic is specifically toggled off in UI state, disable tracks initially
-            stream.getAudioTracks().forEach(track => track.enabled = isMicOn);
-
-            return stream;
-        } catch (err) {
-            console.error("Failed to get local stream", err);
-            return null;
+    // Peer Connection Factory with recvonly default and candidate queueing
+    const getOrCreatePeerConnection = useCallback((targetSocketId) => {
+        if (peersRef.current[targetSocketId]) {
+            return peersRef.current[targetSocketId];
         }
-    };
 
-    const createPeerConnection = (targetSocketId, stream) => {
-        const pc = new RTCPeerConnection({
-            iceServers: [
-                { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:global.stun.twilio.com:3478' }
-            ]
-        });
+        const iceServers = getIceServers();
+        const pc = new RTCPeerConnection({ iceServers });
+
+        candidateQueueRef.current[targetSocketId] = candidateQueueRef.current[targetSocketId] || [];
 
         pc.onicecandidate = (event) => {
-            if (event.candidate) {
-                socket.emit(EVENTS.ICE_CANDIDATE, { target: targetSocketId, candidate: event.candidate });
+            if (event.candidate && socket) {
+                socket.emit(EVENTS.ICE_CANDIDATE, {
+                    roomCode,
+                    target: targetSocketId,
+                    candidate: event.candidate
+                });
             }
         };
 
         pc.ontrack = (event) => {
-            const remoteAudio = document.getElementById(`audio-${targetSocketId}`);
-            if (remoteAudio) {
-                remoteAudio.srcObject = event.streams[0];
-            } else {
-                // Audio element creation handled in React component rendering, 
-                // but we can ensure stream is ready/attached if we pass it out
-                // For now, we'll expose a map of streams or rely on DOM elements existing
-                const existingAudio = document.getElementById(`audio-${targetSocketId}`);
-                if (existingAudio) existingAudio.srcObject = event.streams[0];
-            }
+            const stream = event.streams[0] || new MediaStream([event.track]);
+            setRemoteStreams(prev => ({
+                ...prev,
+                [targetSocketId]: stream
+            }));
+            attachSpeakingDetector(targetSocketId, stream);
         };
 
-        if (stream) {
-            stream.getTracks().forEach(track => pc.addTrack(track, stream));
+        // Attach local track if mic was already granted; otherwise add recvonly transceiver
+        const localAudioTrack = localStreamRef.current?.getAudioTracks()?.[0];
+        if (localAudioTrack) {
+            pc.addTrack(localAudioTrack, localStreamRef.current);
+        } else {
+            pc.addTransceiver('audio', { direction: 'recvonly' });
         }
 
-        peersRef.current = { ...peersRef.current, [targetSocketId]: pc };
-        setPeers(prev => ({ ...prev, [targetSocketId]: pc }));
-
+        peersRef.current[targetSocketId] = pc;
         return pc;
-    };
+    }, [socket, roomCode, attachSpeakingDetector]);
 
+    // Flush queued ICE candidates after remote description is set
+    const flushCandidateQueue = useCallback(async (targetSocketId, pc) => {
+        const queue = candidateQueueRef.current[targetSocketId] || [];
+        if (queue.length > 0) {
+            for (const cand of queue) {
+                try {
+                    await pc.addIceCandidate(new RTCIceCandidate(cand));
+                } catch (err) {
+                    console.warn('Error adding queued ICE candidate for', targetSocketId, err);
+                }
+            }
+            candidateQueueRef.current[targetSocketId] = [];
+        }
+    }, []);
+
+    // Upgrade all peer connections when mic is turned on for the first time
+    const upgradePeerConnectionsWithLocalTrack = useCallback(async (stream) => {
+        const audioTrack = stream.getAudioTracks()[0];
+        if (!audioTrack) return;
+
+        const myId = socket?.id;
+
+        for (const [peerId, pc] of Object.entries(peersRef.current)) {
+            try {
+                const transceivers = pc.getTransceivers();
+                const audioTransceiver = transceivers.find(t =>
+                    t.receiver?.track?.kind === 'audio' || t.sender?.track?.kind === 'audio'
+                );
+
+                if (audioTransceiver) {
+                    audioTransceiver.direction = 'sendrecv';
+                    await audioTransceiver.sender.replaceTrack(audioTrack);
+                } else {
+                    pc.addTrack(audioTrack, stream);
+                }
+
+                // If renegotiation is needed and we are initiator, send new offer
+                if (shouldInitiate(myId, peerId) && pc.signalingState === 'stable') {
+                    makingOfferRef.current[peerId] = true;
+                    try {
+                        const offer = await pc.createOffer();
+                        await pc.setLocalDescription(offer);
+                        socket.emit(EVENTS.VOICE_OFFER, {
+                            roomCode,
+                            target: peerId,
+                            offer
+                        });
+                    } finally {
+                        makingOfferRef.current[peerId] = false;
+                    }
+                }
+            } catch (err) {
+                console.warn('Failed upgrading peer connection for', peerId, err);
+            }
+        }
+    }, [socket, roomCode]);
+
+    // Handle Mic Toggle: Request mic on first tap (Opt-In), or toggle track enabled
+    const toggleMic = useCallback(async () => {
+        if (!isVoiceAllowed) {
+            setVoiceError(`Voice chat is limited to rooms of up to ${MAX_VOICE_PLAYERS} players.`);
+            return;
+        }
+
+        // Case A: Mic stream already acquired previously
+        if (localStreamRef.current) {
+            const audioTrack = localStreamRef.current.getAudioTracks()[0];
+            if (audioTrack) {
+                const nextState = !audioTrack.enabled;
+                audioTrack.enabled = nextState;
+                setIsMicOn(nextState);
+
+                // If muted, clear local speaking ring immediately
+                if (!nextState && socket?.id) {
+                    setSpeakingPeers(prev => ({ ...prev, [socket.id]: false }));
+                }
+            }
+            return;
+        }
+
+        // Case B: First tap -> Request microphone permission (Opt-in)
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+            localStreamRef.current = stream;
+
+            const audioTrack = stream.getAudioTracks()[0];
+            if (audioTrack) {
+                audioTrack.enabled = true;
+            }
+
+            setIsMicOn(true);
+            setVoiceError(null);
+
+            // Hook local stream to speaking detection
+            if (socket?.id) {
+                attachSpeakingDetector(socket.id, stream);
+            }
+
+            // Upgrade all existing peer connections
+            await upgradePeerConnectionsWithLocalTrack(stream);
+        } catch (err) {
+            console.error('Failed to get microphone stream:', err);
+            const msg = getMediaErrorMessage(err);
+            setVoiceError(msg);
+            setIsMicOn(false);
+        }
+    }, [isVoiceAllowed, socket?.id, attachSpeakingDetector, upgradePeerConnectionsWithLocalTrack]);
+
+    const toggleDeafen = useCallback(() => {
+        setIsDeafened(prev => !prev);
+    }, []);
+
+    // Unlock blocked autoplay on user gesture
+    const handleEnableSound = useCallback(() => {
+        setIsAutoplayBlocked(false);
+        if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+            audioContextRef.current.resume().catch(() => {});
+        }
+    }, []);
+
+    // Socket Event Listeners for Voice Signaling (Mesh)
     useEffect(() => {
-        if (!socket) return;
+        if (!socket || !isVoiceAllowed) return;
 
+        const myId = socket.id;
+
+        // When another user joins voice channel
         const handleVoiceJoin = async ({ socketId }) => {
-            // New user joined, I initiate call
-            if (!localStreamRef.current) await startLocalStream();
+            if (!socketId || socketId === myId) return;
 
-            const pc = createPeerConnection(socketId, localStreamRef.current);
-            const offer = await pc.createOffer();
-            await pc.setLocalDescription(offer);
+            // Only the player with the smaller socket ID initiates (sends offer)
+            if (shouldInitiate(myId, socketId)) {
+                try {
+                    const pc = getOrCreatePeerConnection(socketId);
+                    makingOfferRef.current[socketId] = true;
+                    const offer = await pc.createOffer();
+                    await pc.setLocalDescription(offer);
 
-            socket.emit(EVENTS.VOICE_OFFER, { target: socketId, offer });
+                    socket.emit(EVENTS.VOICE_OFFER, {
+                        roomCode,
+                        target: socketId,
+                        offer
+                    });
+                } catch (err) {
+                    console.error('Error initiating voice offer to', socketId, err);
+                } finally {
+                    makingOfferRef.current[socketId] = false;
+                }
+            } else {
+                // We are receiver: create PC in recvonly state waiting for remote offer
+                getOrCreatePeerConnection(socketId);
+            }
         };
 
+        // When we join, server sends list of existing voice users
         const handleExistingUsers = async (users) => {
-            // I joined, wait for offers, but I need to set up my stream and PCs for them if they don't initiate?
-            // Actually, usually existing users initiate to me (as per handleVoiceJoin logic above running on their side)
-            // Or I initiate to them. Mesh usually works better if "new joiner calls everyone" or "everyone calls new joiner".
-            // Let's go with: Existing users call the new joiner. 
-            // So this handler might just be for UI lists or prep, but actually `handleVoiceJoin` handles the "im old, you're new" case.
-            // What if I am the new joiner? I don't need to do anything but wait for offers?
-            // Wait, if I'm new, I need to know who is there to render audio elements?
-            // Yes, user list is useful.
-            if (!localStreamRef.current) await startLocalStream();
+            if (!Array.isArray(users)) return;
+
+            for (const peerId of users) {
+                if (peerId === myId) continue;
+
+                // Initiate only if our socket ID is smaller
+                if (shouldInitiate(myId, peerId)) {
+                    try {
+                        const pc = getOrCreatePeerConnection(peerId);
+                        makingOfferRef.current[peerId] = true;
+                        const offer = await pc.createOffer();
+                        await pc.setLocalDescription(offer);
+
+                        socket.emit(EVENTS.VOICE_OFFER, {
+                            roomCode,
+                            target: peerId,
+                            offer
+                        });
+                    } catch (err) {
+                        console.error('Error creating offer for existing user', peerId, err);
+                    } finally {
+                        makingOfferRef.current[peerId] = false;
+                    }
+                } else {
+                    // Receiver: prepare PC
+                    getOrCreatePeerConnection(peerId);
+                }
+            }
         };
 
+        // Handle incoming Offer with Perfect Negotiation (Polite peer handling)
         const handleVoiceOffer = async ({ sender, offer }) => {
-            if (!localStreamRef.current) await startLocalStream();
+            if (!sender || sender === myId || !offer) return;
 
-            const pc = createPeerConnection(sender, localStreamRef.current);
-            await pc.setRemoteDescription(new RTCSessionDescription(offer));
+            try {
+                const pc = getOrCreatePeerConnection(sender);
+                const isPolite = isPolitePeer(myId, sender);
+                const isMakingOffer = Boolean(makingOfferRef.current[sender]);
+                const offerCollision = isMakingOffer || pc.signalingState !== 'stable';
 
-            const answer = await pc.createAnswer();
-            await pc.setLocalDescription(answer);
+                if (offerCollision) {
+                    if (!isPolite) {
+                        // Impolite peer ignores colliding offer
+                        return;
+                    }
+                    // Polite peer rolls back local description
+                    await pc.setLocalDescription({ type: 'rollback' });
+                }
 
-            socket.emit(EVENTS.VOICE_ANSWER, { target: sender, answer });
+                await pc.setRemoteDescription(new RTCSessionDescription(offer));
+                await flushCandidateQueue(sender, pc);
+
+                const answer = await pc.createAnswer();
+                await pc.setLocalDescription(answer);
+
+                socket.emit(EVENTS.VOICE_ANSWER, {
+                    roomCode,
+                    target: sender,
+                    answer
+                });
+            } catch (err) {
+                console.error('Error handling voice offer from', sender, err);
+            }
         };
 
+        // Handle incoming Answer
         const handleVoiceAnswer = async ({ sender, answer }) => {
+            if (!sender || !answer) return;
             const pc = peersRef.current[sender];
             if (pc) {
-                await pc.setRemoteDescription(new RTCSessionDescription(answer));
+                try {
+                    await pc.setRemoteDescription(new RTCSessionDescription(answer));
+                    await flushCandidateQueue(sender, pc);
+                } catch (err) {
+                    console.error('Error setting remote answer from', sender, err);
+                }
             }
         };
 
+        // Handle incoming ICE Candidate (with pre-setRemoteDescription queueing)
         const handleIceCandidate = async ({ sender, candidate }) => {
+            if (!sender || !candidate) return;
             const pc = peersRef.current[sender];
-            if (pc) {
-                await pc.addIceCandidate(new RTCIceCandidate(candidate));
+
+            if (pc && pc.remoteDescription && pc.remoteDescription.type) {
+                try {
+                    await pc.addIceCandidate(new RTCIceCandidate(candidate));
+                } catch (err) {
+                    console.warn('Error adding ICE candidate from', sender, err);
+                }
+            } else {
+                // Queue until setRemoteDescription completes
+                if (!candidateQueueRef.current[sender]) {
+                    candidateQueueRef.current[sender] = [];
+                }
+                candidateQueueRef.current[sender].push(candidate);
             }
         };
 
+        // Handle peer leaving
         const handleVoiceLeave = ({ socketId }) => {
+            if (!socketId) return;
+
+            detachSpeakingDetector(socketId);
+
             if (peersRef.current[socketId]) {
-                peersRef.current[socketId].close();
-                const newPeers = { ...peersRef.current };
-                delete newPeers[socketId];
-                peersRef.current = newPeers;
-                setPeers(newPeers);
+                try {
+                    peersRef.current[socketId].close();
+                } catch (e) {}
+                delete peersRef.current[socketId];
             }
+            delete candidateQueueRef.current[socketId];
+            delete makingOfferRef.current[socketId];
+
+            setRemoteStreams(prev => {
+                if (!prev[socketId]) return prev;
+                const next = { ...prev };
+                delete next[socketId];
+                return next;
+            });
         };
 
         socket.on(EVENTS.VOICE_JOIN, handleVoiceJoin);
-        socket.on('EXISTING_VOICE_USERS', handleExistingUsers);
+        socket.on(EVENTS.EXISTING_VOICE_USERS, handleExistingUsers);
         socket.on(EVENTS.VOICE_OFFER, handleVoiceOffer);
         socket.on(EVENTS.VOICE_ANSWER, handleVoiceAnswer);
         socket.on(EVENTS.ICE_CANDIDATE, handleIceCandidate);
         socket.on(EVENTS.VOICE_LEAVE, handleVoiceLeave);
 
-        // Join voice channel on mount
+        // Join voice room on server as receiver
         socket.emit(EVENTS.VOICE_JOIN, { roomCode });
 
         return () => {
             socket.off(EVENTS.VOICE_JOIN, handleVoiceJoin);
-            socket.off('EXISTING_VOICE_USERS', handleExistingUsers);
+            socket.off(EVENTS.EXISTING_VOICE_USERS, handleExistingUsers);
             socket.off(EVENTS.VOICE_OFFER, handleVoiceOffer);
             socket.off(EVENTS.VOICE_ANSWER, handleVoiceAnswer);
             socket.off(EVENTS.ICE_CANDIDATE, handleIceCandidate);
             socket.off(EVENTS.VOICE_LEAVE, handleVoiceLeave);
             cleanup();
         };
-    }, [socket, roomCode, cleanup]);
-
-    // Handle Mic Toggle
-    const toggleMic = () => {
-        if (localStreamRef.current) {
-            const audioTrack = localStreamRef.current.getAudioTracks()[0];
-            if (audioTrack) {
-                audioTrack.enabled = !audioTrack.enabled;
-                setIsMicOn(audioTrack.enabled);
-            }
-        } else {
-            // Attempt to start if not started
-            startLocalStream().then(stream => {
-                if (stream) {
-                    setIsMicOn(true); // default enabled when explicitly starting
-                }
-            });
-        }
-    };
-
-    // Handle Deafened (Speaker off)
-    // In Web Audio API / HTML Audio, we can just mute the audio elements
-    const toggleDeafen = () => {
-        setIsDeafened(prev => !prev);
-    };
+    }, [
+        socket,
+        roomCode,
+        isVoiceAllowed,
+        getOrCreatePeerConnection,
+        flushCandidateQueue,
+        detachSpeakingDetector,
+        cleanup
+    ]);
 
     return {
         isMicOn,
         toggleMic,
         isDeafened,
         toggleDeafen,
-        peers: Object.keys(peers) // Return list of socketIds to render audio elements
+        remoteStreams,
+        peersCount: Object.keys(remoteStreams).length,
+        speakingPeers,
+        isVoiceAllowed,
+        voiceError,
+        clearVoiceError,
+        isAutoplayBlocked,
+        setIsAutoplayBlocked,
+        handleEnableSound
     };
 };

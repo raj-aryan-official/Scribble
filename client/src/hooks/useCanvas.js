@@ -2,237 +2,593 @@ import { useRef, useState, useEffect, useCallback } from 'react';
 import { useSocket } from './useSocket';
 import { EVENTS } from '../../../shared/types';
 import { v4 as uuidv4 } from 'uuid';
+import {
+    createPointBatcher,
+    buildMidpointCurve,
+    MIN_POINT_DISTANCE,
+    MAX_POINTS_PER_STROKE,
+    HIGH_POINT_THRESHOLD
+} from '../utils/canvasMath';
+
+// Backing store dimensions for fixed 4:3 aspect ratio
+const BASE_WIDTH = 1600;
+const BASE_HEIGHT = 1200;
 
 export const useCanvas = (roomCode, isDrawer) => {
     const canvasRef = useRef(null);
     const ctxRef = useRef(null);
-    const [isDrawing, setIsDrawing] = useState(false);
-    const [color, setColor] = useState('#000000');
-    const [lineWidth, setLineWidth] = useState(5);
-    const [tool, setTool] = useState('pencil'); // pencil, eraser
+    const offscreenCanvasRef = useRef(null);
+    const offscreenCtxRef = useRef(null);
     const socket = useSocket();
 
-    const strokes = useRef([]); // Local mirror of strokes
-    const currentStroke = useRef([]);
+    const [color, setColorState] = useState('#000000');
+    const [lineWidth, setLineWidthState] = useState(5);
+    const [tool, setToolState] = useState('pencil'); // 'pencil' | 'eraser'
+    const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
+    const [isCursorInside, setIsCursorInside] = useState(false);
 
+    // Keep active settings in refs to avoid stale closures in event handlers
+    const isDrawerRef = useRef(isDrawer);
+    const roomCodeRef = useRef(roomCode);
+    const colorRef = useRef(color);
+    const lineWidthRef = useRef(lineWidth);
+    const toolRef = useRef(tool);
+
+    useEffect(() => { isDrawerRef.current = isDrawer; }, [isDrawer]);
+    useEffect(() => { roomCodeRef.current = roomCode; }, [roomCode]);
+    useEffect(() => { colorRef.current = color; }, [color]);
+    useEffect(() => { lineWidthRef.current = lineWidth; }, [lineWidth]);
+    useEffect(() => { toolRef.current = tool; }, [tool]);
+
+    // Stroke stores
+    const strokesRef = useRef([]); // Completed strokes
+    const inProgressStrokesRef = useRef(new Map()); // id -> in-progress stroke
+    const isDrawingRef = useRef(false);
+    const currentStrokeIdRef = useRef(null);
+    const batcherRef = useRef(null);
+
+    const setColor = useCallback((newColor) => {
+        setColorState(newColor);
+        colorRef.current = newColor;
+    }, []);
+
+    const setLineWidth = useCallback((newWidth) => {
+        setLineWidthState(newWidth);
+        lineWidthRef.current = newWidth;
+    }, []);
+
+    const setTool = useCallback((newTool) => {
+        setToolState(newTool);
+        toolRef.current = newTool;
+    }, []);
+
+    // Stroke width helper relative to fixed 4:3 coordinate space
+    const getStrokeWidth = useCallback((size, backingWidth) => {
+        return Math.max(1, size * (backingWidth / 800));
+    }, []);
+
+    // Render path commands onto a target 2D context
+    const renderCommands = useCallback((targetCtx, commands, backingWidth, backingHeight, size, strokeTool, strokeColor) => {
+        if (!commands || commands.length === 0) return;
+        targetCtx.save();
+        const strokeWidth = getStrokeWidth(size, backingWidth);
+        targetCtx.lineWidth = strokeWidth;
+        targetCtx.lineCap = 'round';
+        targetCtx.lineJoin = 'round';
+
+        if (strokeTool === 'eraser') {
+            targetCtx.globalCompositeOperation = 'destination-out';
+            targetCtx.strokeStyle = 'rgba(0,0,0,1)';
+            targetCtx.fillStyle = 'rgba(0,0,0,1)';
+        } else {
+            targetCtx.globalCompositeOperation = 'source-over';
+            targetCtx.strokeStyle = strokeColor;
+            targetCtx.fillStyle = strokeColor;
+        }
+
+        targetCtx.beginPath();
+        for (const cmd of commands) {
+            if (cmd.type === 'dot') {
+                const radius = Math.max(1, strokeWidth / 2);
+                targetCtx.arc(cmd.x * backingWidth, cmd.y * backingHeight, radius, 0, Math.PI * 2);
+                targetCtx.fill();
+                targetCtx.restore();
+                return;
+            } else if (cmd.type === 'move') {
+                targetCtx.moveTo(cmd.x * backingWidth, cmd.y * backingHeight);
+            } else if (cmd.type === 'line') {
+                targetCtx.lineTo(cmd.x * backingWidth, cmd.y * backingHeight);
+            } else if (cmd.type === 'quadratic') {
+                targetCtx.quadraticCurveTo(
+                    cmd.cpX * backingWidth,
+                    cmd.cpY * backingHeight,
+                    cmd.x * backingWidth,
+                    cmd.y * backingHeight
+                );
+            }
+        }
+        targetCtx.stroke();
+        targetCtx.restore();
+    }, [getStrokeWidth]);
+
+    // Blit offscreen buffer over a white paper background onto visible canvas
+    const blitToMainCanvas = useCallback(() => {
+        const canvas = canvasRef.current;
+        const ctx = ctxRef.current;
+        const offscreen = offscreenCanvasRef.current;
+        if (!canvas || !ctx || !offscreen) return;
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(offscreen, 0, 0);
+    }, []);
+
+    // Initialize or resize canvas backing store
     const initCanvas = useCallback(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return false;
+
+        const dpr = window.devicePixelRatio || 1;
+        const targetWidth = Math.round(BASE_WIDTH * dpr);
+        const targetHeight = Math.round(BASE_HEIGHT * dpr);
+
+        if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
+
+            let offscreen = offscreenCanvasRef.current;
+            if (!offscreen) {
+                offscreen = document.createElement('canvas');
+                offscreenCanvasRef.current = offscreen;
+            }
+            offscreen.width = targetWidth;
+            offscreen.height = targetHeight;
+
+            const ctx = canvas.getContext('2d');
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctxRef.current = ctx;
+
+            const offCtx = offscreen.getContext('2d');
+            offCtx.lineCap = 'round';
+            offCtx.lineJoin = 'round';
+            offscreenCtxRef.current = offCtx;
+
+            return true;
+        }
+
+        if (!ctxRef.current) ctxRef.current = canvas.getContext('2d');
+        if (!offscreenCanvasRef.current) {
+            const offscreen = document.createElement('canvas');
+            offscreen.width = targetWidth;
+            offscreen.height = targetHeight;
+            offscreenCanvasRef.current = offscreen;
+            offscreenCtxRef.current = offscreen.getContext('2d');
+        }
+
+        return false;
+    }, []);
+
+    // Full redraw of all committed and in-progress strokes
+    const redraw = useCallback(() => {
+        const offscreen = offscreenCanvasRef.current;
+        const offCtx = offscreenCtxRef.current;
+        if (!offscreen || !offCtx) return;
+
+        // Clear offscreen layer
+        offCtx.clearRect(0, 0, offscreen.width, offscreen.height);
+
+        // Draw finished strokes
+        for (const stroke of strokesRef.current) {
+            const cmds = buildMidpointCurve(stroke.points);
+            renderCommands(offCtx, cmds, offscreen.width, offscreen.height, stroke.size, stroke.tool, stroke.color);
+        }
+
+        // Draw any in-progress strokes
+        for (const stroke of inProgressStrokesRef.current.values()) {
+            const cmds = buildMidpointCurve(stroke.points);
+            renderCommands(offCtx, cmds, offscreen.width, offscreen.height, stroke.size, stroke.tool, stroke.color);
+        }
+
+        blitToMainCanvas();
+    }, [renderCommands, blitToMainCanvas]);
+
+    // Draw an incremental point segment to the offscreen canvas
+    const drawIncrementalPoint = useCallback((stroke, newPoint) => {
+        const offscreen = offscreenCanvasRef.current;
+        const offCtx = offscreenCtxRef.current;
+        if (!offscreen || !offCtx || !stroke) return;
+
+        const points = stroke.points;
+        const prevPoint = points[points.length - 1];
+        points.push(newPoint);
+
+        const currentCount = points.length;
+        const cmds = [];
+
+        if (currentCount === 2) {
+            // First segment: line from P0 to midpoint M1
+            const m1 = {
+                x: (prevPoint.x + newPoint.x) / 2,
+                y: (prevPoint.y + newPoint.y) / 2
+            };
+            cmds.push({ type: 'move', x: prevPoint.x, y: prevPoint.y });
+            cmds.push({ type: 'line', x: m1.x, y: m1.y });
+            stroke.lastMidpoint = m1;
+        } else if (currentCount > HIGH_POINT_THRESHOLD) {
+            // High point count guardrail: plain line
+            cmds.push({ type: 'move', x: prevPoint.x, y: prevPoint.y });
+            cmds.push({ type: 'line', x: newPoint.x, y: newPoint.y });
+            stroke.lastMidpoint = null;
+        } else if (stroke.lastMidpoint) {
+            // Midpoint quadratic curve segment
+            const nextMid = {
+                x: (prevPoint.x + newPoint.x) / 2,
+                y: (prevPoint.y + newPoint.y) / 2
+            };
+            cmds.push({ type: 'move', x: stroke.lastMidpoint.x, y: stroke.lastMidpoint.y });
+            cmds.push({
+                type: 'quadratic',
+                cpX: prevPoint.x,
+                cpY: prevPoint.y,
+                x: nextMid.x,
+                y: nextMid.y
+            });
+            stroke.lastMidpoint = nextMid;
+        } else {
+            cmds.push({ type: 'move', x: prevPoint.x, y: prevPoint.y });
+            cmds.push({ type: 'line', x: newPoint.x, y: newPoint.y });
+        }
+
+        renderCommands(offCtx, cmds, offscreen.width, offscreen.height, stroke.size, stroke.tool, stroke.color);
+        blitToMainCanvas();
+    }, [renderCommands, blitToMainCanvas]);
+
+    // Finalize an in-progress stroke
+    const finishStroke = useCallback((id) => {
+        const offscreen = offscreenCanvasRef.current;
+        const offCtx = offscreenCtxRef.current;
+        const stroke = inProgressStrokesRef.current.get(id);
+        if (!stroke) return;
+
+        // Draw segment from last midpoint to the final point
+        if (offscreen && offCtx && stroke.lastMidpoint && stroke.points.length >= 2) {
+            const last = stroke.points[stroke.points.length - 1];
+            const cmds = [
+                { type: 'move', x: stroke.lastMidpoint.x, y: stroke.lastMidpoint.y },
+                { type: 'line', x: last.x, y: last.y }
+            ];
+            renderCommands(offCtx, cmds, offscreen.width, offscreen.height, stroke.size, stroke.tool, stroke.color);
+            blitToMainCanvas();
+        }
+
+        inProgressStrokesRef.current.delete(id);
+        strokesRef.current.push(stroke);
+    }, [renderCommands, blitToMainCanvas]);
+
+    // Coordinate conversion: screen CSS coords to normalized 0-1 4:3 sheet coordinates
+    const getNormalizedPoint = useCallback((e) => {
+        const canvas = canvasRef.current;
+        if (!canvas) return { x: 0, y: 0 };
+        const rect = canvas.getBoundingClientRect();
+        const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        const y = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
+        return { x, y };
+    }, []);
+
+    // Pointer events implementation
+    const onPointerDown = useCallback((e) => {
+        if (!isDrawerRef.current) return;
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+        e.preventDefault();
+
+        try {
+            e.currentTarget.setPointerCapture(e.pointerId);
+        } catch (_) {}
+
+        isDrawingRef.current = true;
+        const { x, y } = getNormalizedPoint(e);
+
+        // Pen pressure sensitivity support
+        let size = lineWidthRef.current;
+        if (e.pointerType === 'pen' && typeof e.pressure === 'number' && e.pressure > 0) {
+            size = Math.max(1, Math.round(size * e.pressure * 2));
+        }
+
+        const id = uuidv4();
+        currentStrokeIdRef.current = id;
+
+        const stroke = {
+            id,
+            tool: toolRef.current,
+            color: colorRef.current,
+            size,
+            points: [{ x, y }],
+            lastMidpoint: null
+        };
+        inProgressStrokesRef.current.set(id, stroke);
+
+        // Draw initial dot to offscreen canvas
+        const offscreen = offscreenCanvasRef.current;
+        const offCtx = offscreenCtxRef.current;
+        if (offscreen && offCtx) {
+            renderCommands(offCtx, [{ type: 'dot', x, y }], offscreen.width, offscreen.height, size, stroke.tool, stroke.color);
+            blitToMainCanvas();
+        }
+
+        // Emit STROKE_START
+        if (socket) {
+            socket.emit(EVENTS.STROKE_START, {
+                roomCode: roomCodeRef.current,
+                id,
+                tool: stroke.tool,
+                color: stroke.color,
+                size: stroke.size,
+                x,
+                y
+            });
+        }
+
+        // Initialize point batcher for this stroke
+        batcherRef.current = createPointBatcher({
+            onBatch: (batchedPoints) => {
+                if (socket && batchedPoints.length > 0) {
+                    socket.emit(EVENTS.STROKE_POINTS, {
+                        roomCode: roomCodeRef.current,
+                        id,
+                        points: batchedPoints
+                    });
+                }
+            }
+        });
+    }, [getNormalizedPoint, renderCommands, blitToMainCanvas, socket]);
+
+    const onPointerMove = useCallback((e) => {
+        const canvas = canvasRef.current;
+        if (canvas) {
+            const rect = canvas.getBoundingClientRect();
+            setCursorPos({
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            });
+        }
+
+        if (!isDrawingRef.current || !isDrawerRef.current) return;
+        e.preventDefault();
+
+        const strokeId = currentStrokeIdRef.current;
+        const stroke = inProgressStrokesRef.current.get(strokeId);
+        if (!stroke || !batcherRef.current) return;
+
+        // Use getCoalescedEvents when available for high-precision pointer tracking
+        const events = (typeof e.getCoalescedEvents === 'function' ? e.getCoalescedEvents() : null) || [e];
+        for (const ev of events) {
+            const { x, y } = getNormalizedPoint(ev);
+            const accepted = batcherRef.current.addPoint(x, y);
+            if (accepted) {
+                drawIncrementalPoint(stroke, { x, y });
+            }
+        }
+    }, [getNormalizedPoint, drawIncrementalPoint]);
+
+    const onPointerUp = useCallback((e) => {
+        if (!isDrawingRef.current || !isDrawerRef.current) return;
+        isDrawingRef.current = false;
+
+        try {
+            e.currentTarget.releasePointerCapture(e.pointerId);
+        } catch (_) {}
+
+        const strokeId = currentStrokeIdRef.current;
+        if (strokeId) {
+            if (batcherRef.current) {
+                batcherRef.current.flush();
+                batcherRef.current.reset();
+            }
+            finishStroke(strokeId);
+
+            if (socket) {
+                socket.emit(EVENTS.STROKE_END, {
+                    roomCode: roomCodeRef.current,
+                    id: strokeId
+                });
+            }
+            currentStrokeIdRef.current = null;
+        }
+    }, [finishStroke, socket]);
+
+    const onPointerCancel = onPointerUp;
+
+    const onPointerEnter = useCallback(() => {
+        setIsCursorInside(true);
+    }, []);
+
+    const onPointerLeave = useCallback(() => {
+        setIsCursorInside(false);
+    }, []);
+
+    // Actions
+    const clearCanvas = useCallback(() => {
+        if (socket) {
+            socket.emit(EVENTS.CLEAR_CANVAS, { roomCode: roomCodeRef.current });
+        }
+    }, [socket]);
+
+    const undo = useCallback(() => {
+        if (socket) {
+            socket.emit(EVENTS.UNDO_STROKE, { roomCode: roomCodeRef.current });
+        }
+    }, [socket]);
+
+    // Keyboard shortcut for drawer: Ctrl/Cmd + Z
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (!isDrawer) return;
+            const isCtrlOrCmd = e.ctrlKey || e.metaKey;
+            if (isCtrlOrCmd && e.key.toLowerCase() === 'z' && !e.shiftKey) {
+                e.preventDefault();
+                undo();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isDrawer, undo]);
+
+    // ResizeObserver debounced to one animation frame
+    useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
 
-        // High DPI support
-        const dpr = window.devicePixelRatio || 1;
-        const rect = canvas.getBoundingClientRect();
+        initCanvas();
+        redraw();
 
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
+        let rafId = null;
+        const ro = new ResizeObserver(() => {
+            if (rafId) cancelAnimationFrame(rafId);
+            rafId = requestAnimationFrame(() => {
+                const changed = initCanvas();
+                if (changed) {
+                    redraw();
+                }
+            });
+        });
 
-        const ctx = canvas.getContext('2d');
-        // ctx.scale(dpr, dpr); // Removed to avoid double scaling with normalized coordinates
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
+        ro.observe(canvas);
 
-        ctxRef.current = ctx;
-    }, []);
+        return () => {
+            if (rafId) cancelAnimationFrame(rafId);
+            ro.disconnect();
+        };
+    }, [initCanvas, redraw]);
 
-    const drawLine = ({ points, color, size, tool }) => {
-        const canvas = canvasRef.current;
-        const ctx = ctxRef.current;
-        if (!ctx || !canvas || points.length < 2) return;
-
-        ctx.strokeStyle = tool === 'eraser' ? '#FFFFFF' : color;
-        ctx.strokeStyle = tool === 'eraser' ? '#FFFFFF' : color;
-        // Scale line width by DPR to maintain consistent CSS pixel size
-        const dpr = window.devicePixelRatio || 1;
-        ctx.lineWidth = size * dpr;
-
-        ctx.beginPath();
-
-        // Denormalize points
-        const startX = points[0].x * canvas.width;
-        const startY = points[0].y * canvas.height;
-        ctx.moveTo(startX, startY);
-
-        for (let i = 1; i < points.length; i++) {
-            const x = points[i].x * canvas.width;
-            const y = points[i].y * canvas.height;
-            ctx.lineTo(x, y);
-        }
-
-        ctx.stroke();
-    };
-
-    // Replay all strokes (for clear/undo/init)
-    const redraw = () => {
-        const canvas = canvasRef.current;
-        const ctx = ctxRef.current;
-        if (!canvas || !ctx) return;
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear entire canvas (unscaled)
-
-        strokes.current.forEach(stroke => drawLine(stroke));
-
-        // Also redraw the current stroke being drawn (vital for resize events during drawing)
-        if (currentStroke.current.length > 0) {
-            // Create temporary stroke object for the current path
-            const tempStroke = {
-                points: currentStroke.current,
-                color,
-                size: lineWidth,
-                tool
-            };
-            drawLine(tempStroke);
-        }
-    };
-
+    // Socket listeners for real-time strokes, history, snapshots, undo, clear
     useEffect(() => {
         if (!socket) return;
 
-        socket.on('STROKE_HISTORY', (history) => {
-            strokes.current = history;
-            redraw();
-        });
+        const handleStrokeStart = (data) => {
+            if (!data || !data.id) return;
+            if (inProgressStrokesRef.current.has(data.id)) return;
 
-        socket.on(EVENTS.STROKE_RECEIVED, (stroke) => {
-            // Deduplicate: Don't add if we already have this stroke ID (e.g. from local drawing)
-            const exists = strokes.current.some(s => s.id === stroke.id);
-            if (!exists) {
-                strokes.current.push(stroke);
-                drawLine(stroke);
+            const stroke = {
+                id: data.id,
+                tool: data.tool || 'pencil',
+                color: data.color || '#000000',
+                size: data.size || 5,
+                points: [{ x: data.x, y: data.y }],
+                lastMidpoint: null
+            };
+            inProgressStrokesRef.current.set(data.id, stroke);
+
+            const offscreen = offscreenCanvasRef.current;
+            const offCtx = offscreenCtxRef.current;
+            if (offscreen && offCtx) {
+                renderCommands(offCtx, [{ type: 'dot', x: data.x, y: data.y }], offscreen.width, offscreen.height, stroke.size, stroke.tool, stroke.color);
+                blitToMainCanvas();
             }
-        });
+        };
 
-        socket.on(EVENTS.CANVAS_CLEARED, () => {
-            strokes.current = [];
-            redraw();
-        });
+        const handleStrokePoints = (data) => {
+            if (!data || !data.id || !Array.isArray(data.points)) return;
+            const stroke = inProgressStrokesRef.current.get(data.id);
+            if (!stroke) return;
 
-        socket.on(EVENTS.STROKE_UNDONE, ({ strokeId }) => {
-            strokes.current = strokes.current.filter(s => s.id !== strokeId);
+            for (const pt of data.points) {
+                drawIncrementalPoint(stroke, pt);
+            }
+        };
+
+        const handleStrokeEnd = (data) => {
+            if (!data || !data.id) return;
+            finishStroke(data.id);
+        };
+
+        const handleLegacyStroke = (stroke) => {
+            if (!stroke || !stroke.id) return;
+            const exists = strokesRef.current.some(s => s.id === stroke.id);
+            if (!exists) {
+                strokesRef.current.push(stroke);
+                const offscreen = offscreenCanvasRef.current;
+                const offCtx = offscreenCtxRef.current;
+                if (offscreen && offCtx) {
+                    const cmds = buildMidpointCurve(stroke.points);
+                    renderCommands(offCtx, cmds, offscreen.width, offscreen.height, stroke.size, stroke.tool, stroke.color);
+                    blitToMainCanvas();
+                }
+            }
+        };
+
+        const handleHistory = (history) => {
+            if (Array.isArray(history)) {
+                strokesRef.current = history;
+                inProgressStrokesRef.current.clear();
+                redraw();
+            }
+        };
+
+        const handleSnapshot = (snapshot) => {
+            if (snapshot?.strokes && Array.isArray(snapshot.strokes)) {
+                strokesRef.current = snapshot.strokes;
+                inProgressStrokesRef.current.clear();
+                redraw();
+            }
+        };
+
+        const handleCleared = () => {
+            strokesRef.current = [];
+            inProgressStrokesRef.current.clear();
             redraw();
-        });
+        };
+
+        const handleUndone = ({ strokeId }) => {
+            if (strokeId) {
+                strokesRef.current = strokesRef.current.filter(s => s.id !== strokeId);
+            } else if (strokesRef.current.length > 0) {
+                strokesRef.current.pop();
+            }
+            redraw();
+        };
+
+        socket.on(EVENTS.STROKE_START, handleStrokeStart);
+        socket.on(EVENTS.STROKE_POINTS, handleStrokePoints);
+        socket.on(EVENTS.STROKE_END, handleStrokeEnd);
+        socket.on(EVENTS.STROKE_RECEIVED, handleLegacyStroke);
+        socket.on(EVENTS.STROKE_HISTORY, handleHistory);
+        socket.on(EVENTS.STATE_SNAPSHOT, handleSnapshot);
+        socket.on(EVENTS.CANVAS_CLEARED, handleCleared);
+        socket.on(EVENTS.STROKE_UNDONE, handleUndone);
 
         return () => {
-            socket.off(EVENTS.STROKE_RECEIVED);
-            socket.off(EVENTS.CANVAS_CLEARED);
-            socket.off(EVENTS.STROKE_UNDONE);
+            socket.off(EVENTS.STROKE_START, handleStrokeStart);
+            socket.off(EVENTS.STROKE_POINTS, handleStrokePoints);
+            socket.off(EVENTS.STROKE_END, handleStrokeEnd);
+            socket.off(EVENTS.STROKE_RECEIVED, handleLegacyStroke);
+            socket.off(EVENTS.STROKE_HISTORY, handleHistory);
+            socket.off(EVENTS.STATE_SNAPSHOT, handleSnapshot);
+            socket.off(EVENTS.CANVAS_CLEARED, handleCleared);
+            socket.off(EVENTS.STROKE_UNDONE, handleUndone);
         };
-    }, [socket]);
-
-    const getPoint = (e) => {
-        const canvas = canvasRef.current;
-        if (!canvas) return { x: 0, y: 0 };
-
-        const rect = canvas.getBoundingClientRect();
-        let clientX, clientY;
-
-        // Check if touch event
-        if (e.touches && e.touches.length > 0) {
-            clientX = e.touches[0].clientX;
-            clientY = e.touches[0].clientY;
-        } else if (e.changedTouches && e.changedTouches.length > 0) {
-            clientX = e.changedTouches[0].clientX;
-            clientY = e.changedTouches[0].clientY;
-        } else {
-            clientX = e.clientX;
-            clientY = e.clientY;
-        }
-
-        // Normalize coordinates (0 to 1)
-        const x = (clientX - rect.left) / rect.width;
-        const y = (clientY - rect.top) / rect.height;
-
-        return { x, y };
-    };
-
-    const startDrawing = (e) => {
-        if (!isDrawer) return;
-        // if (e.cancelable) e.preventDefault(); // Prevent default to stop scrolling/ghost clicks
-
-        setIsDrawing(true);
-        const { x, y } = getPoint(e);
-        currentStroke.current = [{ x, y }];
-    };
-
-    const draw = (e) => {
-        if (!isDrawing || !isDrawer) return;
-        if (e.cancelable) e.preventDefault(); // Vital for touch to prevent scrolling
-
-        const { x, y } = getPoint(e);
-        const newPoint = { x, y };
-        currentStroke.current.push(newPoint);
-
-        const points = currentStroke.current;
-        if (points.length >= 2) {
-            const lastPoint = points[points.length - 2];
-            drawLine({
-                points: [lastPoint, newPoint],
-                color,
-                size: lineWidth,
-                tool
-            });
-        }
-    };
-
-    const endDrawing = (e) => {
-        if (!isDrawing || !isDrawer) return;
-        if (e.cancelable) e.preventDefault();
-
-        setIsDrawing(false);
-
-        if (currentStroke.current.length > 0) {
-            const stroke = {
-                id: uuidv4(),
-                tool,
-                color,
-                size: lineWidth,
-                points: currentStroke.current
-            };
-
-            strokes.current.push(stroke);
-            socket.emit(EVENTS.DRAW_STROKE, { roomCode, stroke });
-        }
-        currentStroke.current = [];
-    };
-
-    // Unified Handlers
-    const onMouseDown = startDrawing;
-    const onMouseMove = draw;
-    const onMouseUp = endDrawing;
-
-    // Touch Handlers
-    const onTouchStart = startDrawing;
-    const onTouchMove = draw;
-    const onTouchEnd = endDrawing;
-
-    const clearCanvas = () => {
-        socket.emit(EVENTS.CLEAR_CANVAS, { roomCode });
-    };
-
-    const undo = () => {
-        const myStrokes = strokes.current; // Simple undo, server handles logic usually?
-        // Actually undo checks server side or just removes last? 
-        // Sending UNDO_STROKE implies server handles it.
-        socket.emit(EVENTS.UNDO_STROKE, { roomCode });
-    };
+    }, [socket, renderCommands, blitToMainCanvas, drawIncrementalPoint, finishStroke, redraw]);
 
     return {
         canvasRef,
         initCanvas,
-        onMouseDown,
-        onMouseMove,
-        onMouseUp,
-        onMouseLeave: onMouseUp,
-        onTouchStart,
-        onTouchMove,
-        onTouchEnd,
+        redraw,
+        onPointerDown,
+        onPointerMove,
+        onPointerUp,
+        onPointerCancel,
+        onPointerEnter,
+        onPointerLeave,
         setColor,
         setLineWidth,
         setTool,
         clearCanvas,
         undo,
-        redraw,
         color,
         lineWidth,
-        tool
+        tool,
+        cursorPos,
+        isCursorInside
     };
 };

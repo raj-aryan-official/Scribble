@@ -4,13 +4,12 @@ import Landing from './pages/Landing';
 import Lobby from './pages/Lobby';
 import Game from './pages/Game';
 import GameEnd from './pages/GameEnd';
-
-
+import ConnectionBanner from './components/UI/ConnectionBanner';
 
 function App() {
   return (
     <div className="h-[100dvh] bg-background text-primary font-body flex flex-col overflow-hidden">
-
+      <ConnectionBanner />
       <div className="flex-1 overflow-hidden relative">
         <Routes>
           <Route path="/" element={<Landing />} />

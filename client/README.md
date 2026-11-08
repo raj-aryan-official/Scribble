@@ -1,16 +1,24 @@
-# React + Vite
+# Scribble Client (React + Vite)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is the front-end client for Scribble, built with React 19, Vite, and Tailwind CSS.
 
-Currently, two official plugins are available:
+## WebRTC Voice Chat Configuration
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Scribble supports custom STUN and TURN servers for reliable voice chat across firewalls and symmetric NATs.
 
-## React Compiler
+Set the `VITE_ICE_SERVERS` environment variable in your `.env` file as a JSON array of `RTCIceServer` configurations:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```env
+VITE_ICE_SERVERS='[{"urls":["stun:stun.l.google.com:19302"]},{"urls":["turn:turn.example.com:3478"],"username":"user","credential":"pass"}]'
+```
 
-## Expanding the ESLint configuration
+If not provided, Scribble falls back to public Google and Twilio STUN servers:
+- `stun:stun.l.google.com:19302`
+- `stun:global.stun.twilio.com:3478`
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Development
+```bash
+npm install
+npm run dev
+npm run build
+```
