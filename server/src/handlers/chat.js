@@ -103,6 +103,20 @@ function registerChatHandlers(io, socket, safeOn) {
                 }
                 const gained = calculateGuessScore(timeLeft, totalTime, isFirstGuesser);
 
+                const guessDuration = Math.max(0.5, (Date.now() - (room.roundStartTime || Date.now())) / 1000);
+                if (!room.playerGuessTimes) room.playerGuessTimes = {};
+                if (!room.playerGuessTimes[socket.id]) room.playerGuessTimes[socket.id] = [];
+                room.playerGuessTimes[socket.id].push(guessDuration);
+
+                if (room.roundFirstGuessTime === null || room.roundFirstGuessTime === undefined) {
+                    room.roundFirstGuessTime = guessDuration;
+                    if (drawerId) {
+                        if (!room.drawerFirstGuessTimes) room.drawerFirstGuessTimes = {};
+                        if (!room.drawerFirstGuessTimes[drawerId]) room.drawerFirstGuessTimes[drawerId] = [];
+                        room.drawerFirstGuessTimes[drawerId].push(guessDuration);
+                    }
+                }
+
                 room.scores[socket.id] += gained;
                 const total = room.scores[socket.id];
 

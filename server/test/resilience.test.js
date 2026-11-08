@@ -747,6 +747,45 @@ describe('Host Handover, Drawer Leaving, Timers & Host Features', () => {
         assert.equal(room.gameState, GAME_STATES.WORD_SELECTION);
         assert.equal(room.currentDrawerIndex, 1, 'Next drawer is guest');
     });
+
+    test('GAME_ENDED payload includes awards for Best artist and Fastest guesser', () => {
+        const { addSocket, io } = createMockServer();
+        const p1 = addSocket('p1');
+        const p2 = addSocket('p2');
+
+        p1.receiveFromClient(EVENTS.CREATE_ROOM, { username: 'Maya' });
+        const roomCode = p1.emittedEvents.find(e => e.event === EVENTS.ROOM_JOINED).args[0].code;
+        const room = roomManager.getRoom(roomCode);
+
+        p2.receiveFromClient(EVENTS.JOIN_ROOM, { roomCode, username: 'Raj' });
+
+        // Simulate guess times
+        room.drawerFirstGuessTimes = {
+            p1: [12.4, 10.2],
+            p2: [18.0]
+        };
+        room.playerGuessTimes = {
+            p1: [15.0],
+            p2: [5.2, 6.4]
+        };
+
+        const { cleanEndGame } = require('../src/game/loop');
+        p2.emittedEvents = [];
+        cleanEndGame(io, room);
+
+        const gameEndedEvent = p2.emittedEvents.find(e => e.event === EVENTS.GAME_ENDED);
+        assert.ok(gameEndedEvent, 'GAME_ENDED event must be emitted');
+        const payload = gameEndedEvent.args[0];
+
+        assert.ok(payload.awards);
+        assert.equal(payload.awards.bestArtist.id, 'p1');
+        assert.equal(payload.awards.bestArtist.username, 'Maya');
+        assert.equal(payload.awards.bestArtist.avgTime, 11.3);
+
+        assert.equal(payload.awards.fastestGuesser.id, 'p2');
+        assert.equal(payload.awards.fastestGuesser.username, 'Raj');
+        assert.equal(payload.awards.fastestGuesser.avgTime, 5.8);
+    });
 });
 
 describe('Disconnect Resilience Script (3 socket.io-client sockets)', () => {

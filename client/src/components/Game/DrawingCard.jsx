@@ -8,6 +8,7 @@ const BASE_HEIGHT = 600;
 
 export const DrawingCard = ({
     drawing,
+    onSelect,
     onToast,
     className = '',
 }) => {
@@ -60,7 +61,8 @@ export const DrawingCard = ({
         }
     }, [drawing]);
 
-    const handleDownload = () => {
+    const handleDownload = (e) => {
+        e?.stopPropagation?.();
         const canvas = canvasRef.current;
         if (!canvas) return;
 
@@ -76,7 +78,8 @@ export const DrawingCard = ({
         }, 'image/png');
     };
 
-    const handleShare = async () => {
+    const handleShare = async (e) => {
+        e?.stopPropagation?.();
         const canvas = canvasRef.current;
         if (!canvas) return;
 
@@ -95,7 +98,7 @@ export const DrawingCard = ({
                 try {
                     await navigator.share({
                         title: `Drawing of "${drawing.word}" on Scribble`,
-                        text: `Check out this drawing of "${drawing.word}" on Scribble!`,
+                        text: `Check out ${drawing.drawerName}'s drawing of "${drawing.word}" on Scribble!`,
                         files: [file],
                     });
                     return;
@@ -109,9 +112,22 @@ export const DrawingCard = ({
         }, 'image/png');
     };
 
+    const altText = `${drawing.drawerName || 'Player'}'s drawing of ${drawing.word || 'word'}`;
+
     return (
         <div
-            className={`flex flex-col bg-card border-2 border-ink rounded-[12px] shadow-hard p-3 w-64 sm:w-72 shrink-0 select-none ${className}`}
+            data-testid="drawing-card"
+            role="button"
+            tabIndex={0}
+            onClick={() => onSelect?.(drawing)}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onSelect?.(drawing);
+                }
+            }}
+            aria-label={`View ${altText} full size`}
+            className={`flex flex-col bg-card border-2 border-ink rounded-[12px] shadow-hard p-3 w-64 sm:w-72 shrink-0 select-none cursor-pointer hover:-translate-y-0.5 transition-transform outline-none focus-visible:ring-2 focus-visible:ring-cobalt ${className}`}
         >
             <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2 min-w-0">
@@ -126,8 +142,15 @@ export const DrawingCard = ({
             </div>
 
             {/* Canvas Preview Paper */}
-            <div className="relative w-full aspect-[4/3] bg-paper border-2 border-ink rounded-[6px] overflow-hidden shadow-hard-sm">
-                <canvas ref={canvasRef} className="w-full h-full block" />
+            <div
+                className="relative w-full aspect-[4/3] bg-paper border-2 border-ink rounded-[6px] overflow-hidden shadow-hard-sm"
+                aria-label={altText}
+            >
+                <canvas
+                    ref={canvasRef}
+                    className="w-full h-full block"
+                    aria-label={altText}
+                />
             </div>
 
             <div className="flex items-center justify-between mt-2.5">
@@ -135,7 +158,7 @@ export const DrawingCard = ({
                     {drawing.word}
                 </span>
 
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
                     <Button
                         variant="secondary"
                         size="sm"
@@ -164,4 +187,3 @@ export const DrawingCard = ({
 };
 
 export default DrawingCard;
-

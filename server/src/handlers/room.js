@@ -273,6 +273,9 @@ function registerRoomHandlers(io, socket, safeOn) {
         room.usedWords = new Set();
         room.matchDrawings = [];
         room.roundGained = {};
+        room.drawerFirstGuessTimes = {};
+        room.playerGuessTimes = {};
+        room.awards = null;
         room.gameState = GAME_STATES.LOBBY;
 
         io.to(room.code).emit(EVENTS.ROOM_JOINED, toPublicRoom(room));

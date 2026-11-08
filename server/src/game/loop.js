@@ -28,7 +28,9 @@ const makeSnapshot = (room, playerSocketId) => {
         recentChat: (room.chatMessages || []).slice(-100),
         startsAt: room.startsAt || null,
         selectionEndsAt: room.selectionEndsAt || null,
-        roundEndsAt: room.roundEndsAt || null
+        roundEndsAt: room.roundEndsAt || null,
+        awards: room.awards || null,
+        stats: room.awards || null
     };
 };
 
@@ -39,6 +41,67 @@ const recordChatMessage = (room, msg) => {
     if (room.chatMessages.length > 100) {
         room.chatMessages.shift();
     }
+};
+
+const calculateAwards = (room) => {
+    let bestArtist = null;
+    let fastestGuesser = null;
+
+    if (room.drawerFirstGuessTimes) {
+        let lowestDrawerAvg = Infinity;
+        let bestDrawerId = null;
+
+        for (const [drawerId, times] of Object.entries(room.drawerFirstGuessTimes)) {
+            if (Array.isArray(times) && times.length > 0) {
+                const avg = times.reduce((a, b) => a + b, 0) / times.length;
+                if (avg < lowestDrawerAvg) {
+                    lowestDrawerAvg = avg;
+                    bestDrawerId = drawerId;
+                }
+            }
+        }
+
+        if (bestDrawerId) {
+            const drawerPlayer = (room.players || []).find(p => p.id === bestDrawerId);
+            if (drawerPlayer) {
+                bestArtist = {
+                    id: drawerPlayer.id,
+                    username: drawerPlayer.username,
+                    avatar: drawerPlayer.avatar,
+                    avgTime: Math.round(lowestDrawerAvg * 10) / 10
+                };
+            }
+        }
+    }
+
+    if (room.playerGuessTimes) {
+        let lowestGuesserAvg = Infinity;
+        let bestGuesserId = null;
+
+        for (const [guesserId, times] of Object.entries(room.playerGuessTimes)) {
+            if (Array.isArray(times) && times.length > 0) {
+                const avg = times.reduce((a, b) => a + b, 0) / times.length;
+                if (avg < lowestGuesserAvg) {
+                    lowestGuesserAvg = avg;
+                    bestGuesserId = guesserId;
+                }
+            }
+        }
+
+        if (bestGuesserId) {
+            const guesserPlayer = (room.players || []).find(p => p.id === bestGuesserId);
+            if (guesserPlayer) {
+                fastestGuesser = {
+                    id: guesserPlayer.id,
+                    username: guesserPlayer.username,
+                    avatar: guesserPlayer.avatar,
+                    avgTime: Math.round(lowestGuesserAvg * 10) / 10
+                };
+            }
+        }
+    }
+
+    return { bestArtist, fastestGuesser };
 };
 
 const cleanEndGame = (io, room) => {
@@ -60,9 +123,14 @@ const cleanEndGame = (io, room) => {
         }
     }
 
+    const awards = calculateAwards(room);
+    room.awards = awards;
+
     io.to(room.code).emit(EVENTS.GAME_ENDED, {
         scores: room.scores || {},
-        matchDrawings: room.matchDrawings || []
+        matchDrawings: room.matchDrawings || [],
+        awards,
+        stats: awards
     });
 };
 
@@ -75,6 +143,9 @@ const startGameLoop = (io, roomCode) => {
     room.currentDrawerIndex = 0;
     room.scores = room.players.reduce((acc, player) => ({ ...acc, [player.id]: 0 }), {});
     room.matchDrawings = [];
+    room.drawerFirstGuessTimes = {};
+    room.playerGuessTimes = {};
+    room.awards = null;
 
     const now = Date.now();
     room.startsAt = now + 3000;
@@ -148,6 +219,7 @@ const startRound = (io, room, word, autoPicked = false) => {
     room.roundGained = {};
     room.fastestGuesserId = null;
     room.drawerBonus = 0;
+    room.roundFirstGuessTime = null;
     room.roundStartTime = Date.now();
     room.revealedIndices = new Set();
     room.startsAt = null;

@@ -23,6 +23,7 @@ const initialState = {
     matchDrawings: [],
     roundGained: {},
     roundEndData: null,
+    awards: null,
     startsAt: null,
     selectionEndsAt: null,
     roundEndsAt: null,
@@ -153,6 +154,7 @@ const gameReducer = (state, action) => {
                 selectionEndsAt: action.payload.selectionEndsAt || null,
                 roundEndsAt: action.payload.roundEndsAt || null,
                 roundEndData: null,
+                awards: null,
                 guessedPlayers: [],
                 autoPickedWord: null,
                 myGainedPoints: 0,
@@ -176,7 +178,8 @@ const gameReducer = (state, action) => {
                 ...state,
                 gameState: GAME_STATES.GAME_END,
                 scores: action.payload.scores || state.scores,
-                matchDrawings: action.payload.matchDrawings || state.matchDrawings || []
+                matchDrawings: action.payload.matchDrawings || state.matchDrawings || [],
+                awards: action.payload.awards || action.payload.stats || state.awards || null
             };
         case 'SET_ERROR':
             return { ...state, error: action.payload };
