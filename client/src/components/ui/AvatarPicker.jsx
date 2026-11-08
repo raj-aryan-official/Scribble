@@ -75,3 +75,4 @@ export const AvatarPicker = ({
 };
 
 export default AvatarPicker;
+

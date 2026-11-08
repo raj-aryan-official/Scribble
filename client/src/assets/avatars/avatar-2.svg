@@ -11,3 +11,4 @@
   <circle cx="35" cy="30" r="3" fill="#E4472B" opacity="0.6" />
   <path d="M 16,28 Q 24,36 32,28" stroke="#1C1B18" stroke-width="2" stroke-linecap="round" fill="none" />
 </svg>
+

@@ -55,7 +55,10 @@ const cleanEndGame = (io, room) => {
         }
     }
 
-    io.to(room.code).emit(EVENTS.GAME_ENDED, { scores: room.scores || {} });
+    io.to(room.code).emit(EVENTS.GAME_ENDED, {
+        scores: room.scores || {},
+        matchDrawings: room.matchDrawings || []
+    });
 };
 
 const startGameLoop = (io, roomCode) => {
@@ -66,6 +69,7 @@ const startGameLoop = (io, roomCode) => {
     room.gameState = GAME_STATES.WORD_SELECTION;
     room.currentDrawerIndex = 0;
     room.scores = room.players.reduce((acc, player) => ({ ...acc, [player.id]: 0 }), {});
+    room.matchDrawings = [];
 
     startTurn(io, room);
 };
@@ -122,6 +126,7 @@ const startRound = (io, room, word) => {
     }
     room.gameState = GAME_STATES.DRAWING;
     room.strokes = [];
+    room.roundGained = {};
     room.roundStartTime = Date.now();
     room.revealedIndices = new Set();
 
@@ -230,9 +235,26 @@ const endRound = (io, room) => {
         }
     }
 
+    // Save round drawing for match showcase (capped at 30 rounds)
+    if (!room.matchDrawings) room.matchDrawings = [];
+    if (room.strokes && room.strokes.length > 0 && room.wordToGuess) {
+        const drawer = room.players.find(p => p.id === room.drawerId);
+        room.matchDrawings.push({
+            word: room.wordToGuess,
+            drawerName: drawer ? drawer.username : 'Unknown',
+            drawerAvatar: drawer ? drawer.avatar : 'avatar-1',
+            round: room.currentRound,
+            strokes: JSON.parse(JSON.stringify(room.strokes.slice(0, 1000)))
+        });
+        if (room.matchDrawings.length > 30) {
+            room.matchDrawings.shift();
+        }
+    }
+
     io.to(room.code).emit(EVENTS.ROUND_ENDED, {
         word: room.wordToGuess,
-        scores: room.scores
+        scores: room.scores,
+        gained: room.roundGained || {}
     });
 
     const roundEndMsg = {

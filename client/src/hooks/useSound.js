@@ -1,31 +1,135 @@
-import { useRef, useEffect } from 'react';
-import { Howl } from 'howler';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
-const SOUNDS = {
-    pop: 'https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3', // Placeholder URL
-    correct: 'https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3',
-    tick: 'https://assets.mixkit.co/active_storage/sfx/2578/2578-preview.mp3',
-    end: 'https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3'
+const SOUND_FILES = {
+    pencilTap: '/sounds/pencil-tap.wav',
+    joinPop: '/sounds/join-pop.wav',
+    tick: '/sounds/tick.wav',
+    correct: '/sounds/correct-guess.wav',
+    roundEnd: '/sounds/round-end.wav',
+    win: '/sounds/win.wav',
+};
+
+// Aliases for compatibility
+const ALIASES = {
+    pop: 'joinPop',
+    end: 'roundEnd',
+    'pencil-tap': 'pencilTap',
+    'join-pop': 'joinPop',
+    'correct-guess': 'correct',
+    'round-end': 'roundEnd',
+};
+
+const DEFAULT_VOLUME = 0.4;
+
+const getInitialMute = () => {
+    try {
+        const stored = localStorage.getItem('scribble_muted');
+        return stored === 'true';
+    } catch {
+        return false;
+    }
 };
 
 export const useSound = () => {
-    const soundsRef = useRef({});
+    const [isMuted, setIsMuted] = useState(getInitialMute);
+    const audioCacheRef = useRef({});
+    const hasInteractedRef = useRef(false);
 
-    useEffect(() => {
-        // Preload sounds
-        Object.keys(SOUNDS).forEach(key => {
-            soundsRef.current[key] = new Howl({
-                src: [SOUNDS[key]],
-                volume: 0.5
-            });
+    // Save mute state to localStorage
+    const toggleMute = useCallback(() => {
+        setIsMuted((prev) => {
+            const next = !prev;
+            try {
+                localStorage.setItem('scribble_muted', String(next));
+            } catch {
+                // Ignore storage errors (incognito quota, etc.)
+            }
+            return next;
         });
     }, []);
 
-    const play = (name) => {
-        if (soundsRef.current[name]) {
-            soundsRef.current[name].play();
-        }
-    };
+    // Lazy preloading after first user interaction
+    const preloadSounds = useCallback(() => {
+        if (hasInteractedRef.current) return;
+        hasInteractedRef.current = true;
 
-    return { play };
+        Object.entries(SOUND_FILES).forEach(([key, url]) => {
+            try {
+                const audio = new Audio();
+                audio.src = url;
+                audio.preload = 'auto';
+                audio.volume = DEFAULT_VOLUME;
+                audioCacheRef.current[key] = audio;
+            } catch {
+                // Ignore audio init errors
+            }
+        });
+    }, []);
+
+    useEffect(() => {
+        const handleInteraction = () => {
+            preloadSounds();
+            window.removeEventListener('pointerdown', handleInteraction);
+            window.removeEventListener('keydown', handleInteraction);
+        };
+
+        window.addEventListener('pointerdown', handleInteraction, { once: true });
+        window.addEventListener('keydown', handleInteraction, { once: true });
+
+        return () => {
+            window.removeEventListener('pointerdown', handleInteraction);
+            window.removeEventListener('keydown', handleInteraction);
+        };
+    }, [preloadSounds]);
+
+    const play = useCallback((name) => {
+        if (isMuted) return;
+
+        const resolvedName = ALIASES[name] || name;
+        const fileUrl = SOUND_FILES[resolvedName];
+        if (!fileUrl) return;
+
+        // Trigger vibration when supported
+        if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+            try {
+                if (resolvedName === 'correct') {
+                    navigator.vibrate(50);
+                } else if (resolvedName === 'roundEnd') {
+                    navigator.vibrate([80, 50, 80]);
+                }
+            } catch {
+                // Ignore vibration errors
+            }
+        }
+
+        try {
+            // Use cached audio or instantiate
+            let audio = audioCacheRef.current[resolvedName];
+            if (!audio) {
+                audio = new Audio(fileUrl);
+                audio.volume = DEFAULT_VOLUME;
+                audioCacheRef.current[resolvedName] = audio;
+            }
+
+            // Reset and play
+            audio.currentTime = 0;
+            audio.volume = DEFAULT_VOLUME;
+            const playPromise = audio.play();
+            if (playPromise && typeof playPromise.catch === 'function') {
+                playPromise.catch(() => {
+                    // Autoplay prevented; ignore silently
+                });
+            }
+        } catch {
+            // Ignore audio play errors
+        }
+    }, [isMuted]);
+
+    return {
+        isMuted,
+        toggleMute,
+        play,
+    };
 };
+
+export default useSound;

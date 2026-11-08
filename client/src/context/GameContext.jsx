@@ -20,6 +20,8 @@ const initialState = {
     wordToGuess: null,
     drawerId: null,
     settings: { rounds: 3, drawTime: 60, difficulty: 'Medium', maxPlayers: 12, packs: [], customWords: [] },
+    matchDrawings: [],
+    roundGained: {},
     error: null
 };
 
@@ -124,11 +126,17 @@ const gameReducer = (state, action) => {
                 gameState: GAME_STATES.ROUND_END,
                 wordToGuess: action.payload.word,
                 scores: action.payload.scores || state.scores,
+                roundGained: action.payload.gained || {},
                 currentRound: action.payload.currentRound || state.currentRound,
                 guessedPlayers: []
             };
         case 'GAME_ENDED':
-            return { ...state, gameState: GAME_STATES.GAME_END, scores: action.payload.scores };
+            return {
+                ...state,
+                gameState: GAME_STATES.GAME_END,
+                scores: action.payload.scores || state.scores,
+                matchDrawings: action.payload.matchDrawings || state.matchDrawings || []
+            };
         case 'SET_ERROR':
             return { ...state, error: action.payload };
         default:

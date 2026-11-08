@@ -103,10 +103,14 @@ function registerChatHandlers(io, socket, safeOn) {
                 room.scores[socket.id] += gained;
                 const total = room.scores[socket.id];
 
+                if (!room.roundGained) room.roundGained = {};
+                room.roundGained[socket.id] = (room.roundGained[socket.id] || 0) + gained;
+
                 // Drawer bonus at 10% of each guess
                 if (drawerId) {
                     const drawerBonus = calculateDrawerBonus(gained);
                     room.scores[drawerId] += drawerBonus;
+                    room.roundGained[drawerId] = (room.roundGained[drawerId] || 0) + drawerBonus;
                 }
 
                 // Send the word ONLY to the player who guessed it

@@ -250,6 +250,8 @@ function registerRoomHandlers(io, socket, safeOn) {
         room.roundEndsAt = null;
         room.guessedPlayers = new Set();
         room.usedWords = new Set();
+        room.matchDrawings = [];
+        room.roundGained = {};
         room.gameState = GAME_STATES.LOBBY;
 
         io.to(room.code).emit(EVENTS.ROOM_JOINED, toPublicRoom(room));

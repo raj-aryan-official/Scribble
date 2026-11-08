@@ -1,23 +1,28 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGame } from '../../context/GameContext';
 import { useSocket } from '../../hooks/useSocket';
 import { EVENTS } from '../../../../shared/types';
 import { getWordDifficulty } from '../../utils/wordDifficulty';
+import Avatar from '../ui/Avatar';
+import Card from '../ui/Card';
 
 export const WordChoice = ({ roomCode }) => {
     const { state } = useGame();
     const socket = useSocket();
-    const [timeLeft, setTimeLeft] = React.useState(10);
+
+    const [timeLeft, setTimeLeft] = useState(10);
 
     const isWordSelection = state.gameState === 'WORD_SELECTION';
     const isDrawer = state.currentUser?.id === state.drawerId;
+    const drawer = state.players.find((p) => p.id === state.drawerId);
 
-    React.useEffect(() => {
-        if (!isWordSelection || !isDrawer) return;
+    // 10s Countdown Timer (hook kept unconditionally at the top)
+    useEffect(() => {
+        if (!isWordSelection) return;
 
         setTimeLeft(10);
         const timer = setInterval(() => {
-            setTimeLeft(prev => {
+            setTimeLeft((prev) => {
                 if (prev <= 1) {
                     clearInterval(timer);
                     return 0;
@@ -27,7 +32,7 @@ export const WordChoice = ({ roomCode }) => {
         }, 1000);
 
         return () => clearInterval(timer);
-    }, [isWordSelection, isDrawer]);
+    }, [isWordSelection, state.drawerId]);
 
     const handleChoose = (word) => {
         socket.emit(EVENTS.CHOOSE_WORD, { roomCode, word });
@@ -35,55 +40,119 @@ export const WordChoice = ({ roomCode }) => {
 
     if (!isWordSelection) return null;
 
-    if (!isDrawer) return (
-        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="text-white text-2xl font-bold animate-pulse">Drawer is choosing a word...</div>
-        </div>
-    );
+    const progressPercent = Math.max(0, Math.min(100, (timeLeft / 10) * 100));
+
+    // Non-drawers see drawer avatar and "NAME is choosing a word" on dim paper
+    if (!isDrawer) {
+        return (
+            <div className="fixed inset-0 z-40 bg-paper/85 flex items-center justify-center p-4 backdrop-blur-none">
+                <Card className="flex flex-col items-center justify-center p-6 sm:p-8 max-w-sm w-full text-center shadow-hard-lg bg-card gap-4">
+                    <Avatar avatarId={drawer?.avatar || 'avatar-1'} size="xl" />
+                    <div>
+                        <h2 className="text-xl sm:text-2xl font-bold font-heading text-ink">
+                            {drawer?.username || 'Artist'} is choosing a word...
+                        </h2>
+                        <p className="text-xs sm:text-sm text-ink-soft mt-1">
+                            Get your guesses ready!
+                        </p>
+                    </div>
+
+                    {/* Draining 10s ink line */}
+                    <div className="w-full h-2 bg-paper border-2 border-ink rounded-full overflow-hidden mt-2">
+                        <div
+                            className="h-full bg-ink transition-all duration-1000 ease-linear"
+                            style={{ width: `${progressPercent}%` }}
+                        />
+                    </div>
+                </Card>
+            </div>
+        );
+    }
+
+    // Drawer view: 3 fanned index cards at -4, 0, +4 degrees
+    const rotations = ['rotate-[-4deg]', 'rotate-0', 'rotate-[4deg]'];
 
     return (
-        <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-            <div className="bg-white p-6 md:p-8 rounded-xl max-w-2xl w-full text-center shadow-2xl mx-4 animate-bounce-in">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl md:text-3xl font-heading text-primary">Choose a Word!</h2>
-                    <span className="text-xl font-bold text-red-500 border border-red-500 rounded-full w-10 h-10 flex items-center justify-center">
-                        {timeLeft}
-                    </span>
+        <div className="fixed inset-0 z-40 bg-paper/85 flex items-center justify-center p-4 backdrop-blur-none">
+            <div className="max-w-2xl w-full flex flex-col items-center gap-6">
+                <div className="text-center">
+                    <h2 className="text-2xl sm:text-3xl font-black font-heading text-ink">
+                        Pick Your Word
+                    </h2>
+                    <p className="text-xs sm:text-sm text-ink-soft mt-1">
+                        Select one of three cards to start drawing
+                    </p>
                 </div>
-                <div className="flex flex-wrap gap-3 md:gap-4 justify-center">
-                    {state.wordChoices && state.wordChoices.map((item, idx) => {
-                        const wordText = typeof item === 'string' ? item : (item?.word || '');
-                        const meta = typeof item === 'object' && item?.level ? item : getWordDifficulty(wordText);
-                        const level = meta?.level || 2;
-                        const difficulty = meta?.difficulty || (level === 1 ? 'Easy' : level === 3 ? 'Hard' : 'Medium');
 
-                        return (
-                            <button
-                                key={idx}
-                                onClick={() => handleChoose(wordText)}
-                                className="bg-secondary hover:bg-teal-600 text-white py-3 px-6 md:py-4 md:px-8 rounded-xl transition transform hover:scale-105 flex-grow md:flex-grow-0 basis-full md:basis-auto flex flex-col items-center justify-center shadow-md cursor-pointer group"
-                            >
-                                <span className="text-lg md:text-xl font-bold capitalize">{wordText}</span>
-                                <div
-                                    className="flex gap-1.5 justify-center mt-2 items-center"
-                                    title={`Difficulty: ${difficulty}`}
+                {/* Draining Ink Line across the cards header */}
+                <div className="w-full max-w-md h-2.5 bg-paper border-2 border-ink rounded-full overflow-hidden shadow-hard-sm">
+                    <div
+                        className={`h-full transition-all duration-1000 ease-linear ${
+                            timeLeft <= 3 ? 'bg-tomato' : 'bg-ink'
+                        }`}
+                        style={{ width: `${progressPercent}%` }}
+                    />
+                </div>
+
+                {/* Fanned 3 Cards */}
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mt-4">
+                    {state.wordChoices &&
+                        state.wordChoices.map((item, idx) => {
+                            const wordText = typeof item === 'string' ? item : item?.word || '';
+                            const meta =
+                                typeof item === 'object' && item?.level
+                                    ? item
+                                    : getWordDifficulty(wordText);
+                            const level = meta?.level || 2;
+                            const difficulty =
+                                meta?.difficulty || (level === 1 ? 'Easy' : level === 3 ? 'Hard' : 'Medium');
+
+                            const dotColors = {
+                                1: 'bg-leaf',
+                                2: 'bg-marigold',
+                                3: 'bg-tomato',
+                            };
+
+                            const rotationClass = rotations[idx] || 'rotate-0';
+
+                            return (
+                                <button
+                                    key={idx}
+                                    type="button"
+                                    onClick={() => handleChoose(wordText)}
+                                    className={`group transform ${rotationClass} hover:rotate-0 hover:scale-105 hover:z-20 transition-all duration-150 cursor-pointer text-center bg-card border-2 border-ink shadow-hard rounded-[12px] p-5 w-48 sm:w-52 min-h-[140px] flex flex-col justify-between items-center focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none focus-visible:ring-offset-2`}
                                 >
-                                    {[1, 2, 3].map(dot => (
-                                        <span
-                                            key={dot}
-                                            className={`w-2.5 h-2.5 rounded-full transition-all ${
-                                                dot <= level
-                                                    ? (level === 1 ? 'bg-green-300' : level === 3 ? 'bg-red-400' : 'bg-yellow-300')
-                                                    : 'bg-white/30'
-                                            }`}
-                                        />
-                                    ))}
-                                </div>
-                            </button>
-                        );
-                    })}
+                                    <span className="text-lg sm:text-xl font-heading font-black text-ink capitalize tracking-wide group-hover:text-tomato transition-colors">
+                                        {wordText}
+                                    </span>
+
+                                    <div className="flex flex-col items-center gap-1 mt-4">
+                                        <div
+                                            className="flex items-center gap-1.5"
+                                            title={`Difficulty: ${difficulty}`}
+                                        >
+                                            {[1, 2, 3].map((dot) => (
+                                                <span
+                                                    key={dot}
+                                                    className={`w-2.5 h-2.5 rounded-full border border-ink ${
+                                                        dot <= level
+                                                            ? dotColors[level] || 'bg-marigold'
+                                                            : 'bg-paper'
+                                                    }`}
+                                                />
+                                            ))}
+                                        </div>
+                                        <span className="text-[11px] font-bold uppercase tracking-wider text-ink-soft">
+                                            {difficulty}
+                                        </span>
+                                    </div>
+                                </button>
+                            );
+                        })}
                 </div>
             </div>
         </div>
     );
 };
+
+export default WordChoice;
