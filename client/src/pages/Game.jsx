@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
 import { useSocket } from '../hooks/useSocket';
@@ -42,7 +42,14 @@ export const Game = () => {
     // Current player roles
     const myId = state.currentUser?.id;
     const isDrawer = Boolean(myId && myId === state.drawerId);
+    const isHost = Boolean(state.currentUser?.isHost);
     const drawer = state.players.find((p) => p.id === state.drawerId);
+
+    const handleSkipRoundEnd = useCallback(() => {
+        if (isHost && socket) {
+            socket.emit(EVENTS.SKIP_ROUND_END, { roomCode: code });
+        }
+    }, [isHost, socket, code]);
 
     // Sync countdown when startsAt is set
     useEffect(() => {
@@ -85,6 +92,7 @@ export const Game = () => {
     // Canvas management
     const {
         canvasRef,
+        getStrokes,
         onPointerDown,
         onPointerMove,
         onPointerUp,
@@ -172,7 +180,6 @@ export const Game = () => {
         };
 
         const handleRoundEnded = (payload) => {
-            play('roundEnd');
             dispatch({ type: 'ROUND_ENDED', payload });
         };
 
@@ -393,8 +400,18 @@ export const Game = () => {
                                         word={state.wordToGuess}
                                         scores={state.scores}
                                         gained={state.roundGained || {}}
+                                        gains={state.roundEndData?.gains}
+                                        fastestGuesserId={state.roundEndData?.fastestGuesserId}
+                                        drawerBonus={state.roundEndData?.drawerBonus || 0}
+                                        drawerId={state.drawerId}
+                                        nextDrawerId={state.roundEndData?.nextDrawerId}
+                                        nextDrawerName={state.roundEndData?.nextDrawerName}
+                                        nextDrawerAvatar={state.roundEndData?.nextDrawerAvatar}
+                                        strokes={state.roundEndData?.strokes?.length ? state.roundEndData.strokes : (getStrokes?.() || [])}
                                         players={state.players}
                                         duration={5}
+                                        isHost={isHost}
+                                        onSkip={handleSkipRoundEnd}
                                     />
                                 )}
                             </div>

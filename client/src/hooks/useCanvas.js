@@ -653,10 +653,13 @@ export const useCanvas = (roomCode, isDrawer) => {
         };
     }, [socket, renderCommands, blitToMainCanvas, drawIncrementalPoint, finishStroke, redraw]);
 
+    const getStrokes = useCallback(() => strokesRef.current || [], []);
+
     return {
         canvasRef,
         initCanvas,
         redraw,
+        getStrokes,
         onPointerDown,
         onPointerMove,
         onPointerUp,

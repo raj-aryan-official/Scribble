@@ -650,6 +650,103 @@ describe('Host Handover, Drawer Leaving, Timers & Host Features', () => {
 
         await new Promise(resolve => testServer.close(resolve));
     });
+
+    test('ROUND_ENDED payload includes word, gains array, fastestGuesserId, drawerBonus, nextDrawerId, and strokes', () => {
+        const { addSocket, io } = createMockServer();
+        const p1 = addSocket('p1');
+        const p2 = addSocket('p2');
+        const p3 = addSocket('p3');
+
+        p1.receiveFromClient(EVENTS.CREATE_ROOM, { username: 'Maya' });
+        const roomCode = p1.emittedEvents.find(e => e.event === EVENTS.ROOM_JOINED).args[0].code;
+        const room = roomManager.getRoom(roomCode);
+
+        p2.receiveFromClient(EVENTS.JOIN_ROOM, { roomCode, username: 'Raj' });
+        p3.receiveFromClient(EVENTS.JOIN_ROOM, { roomCode, username: 'Alex' });
+
+        // Start game -> p1 is drawer
+        p1.receiveFromClient(EVENTS.START_GAME, { roomCode });
+        assert.ok(Array.isArray(room.wordChoices) && room.wordChoices.length > 0);
+        const chosenChoice = room.wordChoices[0];
+        const chosenWord = typeof chosenChoice === 'string' ? chosenChoice : chosenChoice.word;
+        p1.receiveFromClient(EVENTS.CHOOSE_WORD, { roomCode, word: chosenWord });
+
+        assert.equal(room.gameState, GAME_STATES.DRAWING);
+        assert.equal(room.drawerId, 'p1');
+
+        // Drawer draws a stroke
+        p1.receiveFromClient(EVENTS.DRAW_STROKE, {
+            roomCode,
+            stroke: {
+                points: [{ x: 0.1, y: 0.2 }, { x: 0.3, y: 0.4 }],
+                color: '#1C1B18',
+                size: 5,
+                tool: 'pencil'
+            }
+        });
+
+        // P2 guesses correctly (first/fastest guesser)
+        p2.receiveFromClient(EVENTS.SEND_MESSAGE, { roomCode, text: chosenWord });
+        assert.equal(room.fastestGuesserId, 'p2');
+        assert.ok(room.scores.p2 > 0);
+        assert.ok(room.scores.p1 > 0, 'Drawer gets bonus');
+        assert.ok(room.drawerBonus > 0);
+
+        // End round manually via endRound(io, room)
+        const { endRound } = require('../src/game/loop');
+        p2.emittedEvents = [];
+        endRound(io, room);
+
+        const roundEndEvent = p2.emittedEvents.find(e => e.event === EVENTS.ROUND_ENDED);
+        assert.ok(roundEndEvent, 'ROUND_ENDED event must be emitted');
+        const payload = roundEndEvent.args[0];
+
+        assert.equal(payload.word, chosenWord);
+        assert.ok(Array.isArray(payload.gains), 'gains must be an array');
+        assert.equal(payload.gains.length, 3);
+        const p2Gain = payload.gains.find(g => g.id === 'p2');
+        assert.ok(p2Gain.gained > 0);
+        assert.equal(payload.fastestGuesserId, 'p2');
+        assert.equal(payload.drawerBonus, room.drawerBonus);
+        assert.equal(payload.nextDrawerId, 'p2', 'Next drawer after p1 is p2');
+        assert.equal(payload.nextDrawerName, 'Raj');
+        assert.ok(Array.isArray(payload.strokes));
+        assert.equal(payload.strokes.length, 1);
+    });
+
+    test('SKIP_ROUND_END: host can skip intermission early, non-host receives error', () => {
+        const { addSocket, io } = createMockServer();
+        const host = addSocket('host');
+        const guest = addSocket('guest');
+
+        host.receiveFromClient(EVENTS.CREATE_ROOM, { username: 'Host' });
+        const roomCode = host.emittedEvents.find(e => e.event === EVENTS.ROOM_JOINED).args[0].code;
+        const room = roomManager.getRoom(roomCode);
+
+        guest.receiveFromClient(EVENTS.JOIN_ROOM, { roomCode, username: 'Guest' });
+
+        // Start game and transition to ROUND_END
+        host.receiveFromClient(EVENTS.START_GAME, { roomCode });
+        host.receiveFromClient(EVENTS.CHOOSE_WORD, { roomCode, word: 'apple' });
+
+        const { endRound } = require('../src/game/loop');
+        endRound(io, room);
+        assert.equal(room.gameState, GAME_STATES.ROUND_END);
+        assert.ok(room.timers.intermission, 'Intermission timer active');
+
+        // Non-host attempts skip -> ERROR
+        guest.emittedEvents = [];
+        guest.receiveFromClient(EVENTS.SKIP_ROUND_END, { roomCode });
+        const guestErr = guest.emittedEvents.find(e => e.event === EVENTS.ERROR);
+        assert.ok(guestErr, 'Non-host must receive error on skip');
+        assert.equal(guestErr.args[0].message, 'Only the host can skip');
+
+        // Host attempts skip -> advances turn to WORD_SELECTION
+        host.emittedEvents = [];
+        host.receiveFromClient(EVENTS.SKIP_ROUND_END, { roomCode });
+        assert.equal(room.gameState, GAME_STATES.WORD_SELECTION);
+        assert.equal(room.currentDrawerIndex, 1, 'Next drawer is guest');
+    });
 });
 
 describe('Disconnect Resilience Script (3 socket.io-client sockets)', () => {

@@ -98,6 +98,9 @@ function registerChatHandlers(io, socket, safeOn) {
                 const totalTime = room.settings?.drawTime || 60;
                 const timeLeft = getTimeLeft(room);
                 const isFirstGuesser = room.guessedPlayers.size === 1;
+                if (isFirstGuesser) {
+                    room.fastestGuesserId = socket.id;
+                }
                 const gained = calculateGuessScore(timeLeft, totalTime, isFirstGuesser);
 
                 room.scores[socket.id] += gained;
@@ -111,6 +114,7 @@ function registerChatHandlers(io, socket, safeOn) {
                     const drawerBonus = calculateDrawerBonus(gained);
                     room.scores[drawerId] += drawerBonus;
                     room.roundGained[drawerId] = (room.roundGained[drawerId] || 0) + drawerBonus;
+                    room.drawerBonus = (room.drawerBonus || 0) + drawerBonus;
                 }
 
                 // Send the word ONLY to the player who guessed it

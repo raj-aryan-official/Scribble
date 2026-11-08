@@ -20,6 +20,7 @@ const EVENTS = {
     END_GAME_EARLY: 'endGameEarly',
     PLAY_AGAIN: 'playAgain',
     UPDATE_SETTINGS: 'updateSettings',
+    SKIP_ROUND_END: 'skipRoundEnd',
 
     // Voice Chat
     VOICE_JOIN: 'voiceJoin',

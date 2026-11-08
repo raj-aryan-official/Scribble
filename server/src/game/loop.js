@@ -146,6 +146,8 @@ const startRound = (io, room, word, autoPicked = false) => {
     room.gameState = GAME_STATES.DRAWING;
     room.strokes = [];
     room.roundGained = {};
+    room.fastestGuesserId = null;
+    room.drawerBonus = 0;
     room.roundStartTime = Date.now();
     room.revealedIndices = new Set();
     room.startsAt = null;
@@ -276,10 +278,39 @@ const endRound = (io, room) => {
         }
     }
 
+    const gains = (room.players || []).map(p => ({
+        id: p.id,
+        gained: room.roundGained?.[p.id] || 0,
+        total: room.scores?.[p.id] || 0
+    }));
+
+    let nextDrawerId = null;
+    let nextDrawerName = null;
+    let nextDrawerAvatar = null;
+    if (Array.isArray(room.players) && room.players.length > 0) {
+        const willGameEnd = (room.currentDrawerIndex + 1 >= room.players.length) && (room.currentRound >= (room.settings?.rounds || 3));
+        if (!willGameEnd) {
+            const nextDrawerIndex = (room.currentDrawerIndex + 1) % room.players.length;
+            const nextDrawer = room.players[nextDrawerIndex];
+            if (nextDrawer) {
+                nextDrawerId = nextDrawer.id;
+                nextDrawerName = nextDrawer.username;
+                nextDrawerAvatar = nextDrawer.avatar;
+            }
+        }
+    }
+
     io.to(room.code).emit(EVENTS.ROUND_ENDED, {
         word: room.wordToGuess,
-        scores: room.scores,
-        gained: room.roundGained || {}
+        scores: room.scores || {},
+        gained: room.roundGained || {},
+        gains,
+        fastestGuesserId: room.fastestGuesserId || null,
+        drawerBonus: room.drawerBonus || 0,
+        nextDrawerId,
+        nextDrawerName,
+        nextDrawerAvatar,
+        strokes: room.strokes || []
     });
 
     const roundEndMsg = {
@@ -291,30 +322,43 @@ const endRound = (io, room) => {
     io.to(room.code).emit(EVENTS.MESSAGE_RECEIVED, roundEndMsg);
 
     room.timers.intermission = setTimeout(() => {
-        try {
-            const currentRoom = roomManager.getRoom(room.code);
-            if (!currentRoom || currentRoom !== room) {
-                clearRoomTimers(room);
-                return;
-            }
-            currentRoom.currentDrawerIndex++;
-            if (currentRoom.currentDrawerIndex >= currentRoom.players.length) {
-                currentRoom.currentDrawerIndex = 0;
-                currentRoom.currentRound++;
+        advanceIntermission(io, room);
+    }, 5000);
+};
 
-                if (currentRoom.currentRound > (currentRoom.settings?.rounds || 3)) {
-                    cleanEndGame(io, currentRoom);
-                } else {
-                    startTurn(io, currentRoom);
-                }
+const advanceIntermission = (io, room) => {
+    try {
+        const currentRoom = roomManager.getRoom(room.code);
+        if (!currentRoom || currentRoom !== room) {
+            clearRoomTimers(room);
+            return;
+        }
+        if (currentRoom.timers?.intermission) {
+            clearTimeout(currentRoom.timers.intermission);
+            currentRoom.timers.intermission = null;
+        }
+        currentRoom.currentDrawerIndex++;
+        if (currentRoom.currentDrawerIndex >= currentRoom.players.length) {
+            currentRoom.currentDrawerIndex = 0;
+            currentRoom.currentRound++;
+
+            if (currentRoom.currentRound > (currentRoom.settings?.rounds || 3)) {
+                cleanEndGame(io, currentRoom);
             } else {
                 startTurn(io, currentRoom);
             }
-        } catch (err) {
-            logger.error('Error in intermission timer:', err);
-            cleanEndGame(io, room);
+        } else {
+            startTurn(io, currentRoom);
         }
-    }, 5000);
+    } catch (err) {
+        logger.error('Error in intermission timer:', err);
+        cleanEndGame(io, room);
+    }
+};
+
+const skipIntermission = (io, room) => {
+    if (!room || room.gameState !== GAME_STATES.ROUND_END) return;
+    advanceIntermission(io, room);
 };
 
 const handlePlayerLeave = (io, room, leavingPlayerId, _reason = null) => {
@@ -355,10 +399,22 @@ const handlePlayerLeave = (io, room, leavingPlayerId, _reason = null) => {
         updatedRoom.roundEndsAt = null;
         updatedRoom.hint = null;
 
+        const gains = (updatedRoom.players || []).map(p => ({
+            id: p.id,
+            gained: updatedRoom.roundGained?.[p.id] || 0,
+            total: updatedRoom.scores?.[p.id] || 0
+        }));
+
         io.to(updatedRoom.code).emit(EVENTS.ROUND_ENDED, {
             word: updatedRoom.wordToGuess,
-            scores: updatedRoom.scores,
-            reason: 'drawer-left'
+            scores: updatedRoom.scores || {},
+            gained: updatedRoom.roundGained || {},
+            gains,
+            fastestGuesserId: updatedRoom.fastestGuesserId || null,
+            drawerBonus: updatedRoom.drawerBonus || 0,
+            nextDrawerId: null,
+            reason: 'drawer-left',
+            strokes: updatedRoom.strokes || []
         });
 
         const msg = {
@@ -391,5 +447,7 @@ module.exports = {
     startTurn,
     startRound,
     endRound,
+    advanceIntermission,
+    skipIntermission,
     handlePlayerLeave
 };
