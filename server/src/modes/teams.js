@@ -127,7 +127,7 @@ function randomizeTeams(room, teamCount = 2) {
     initTeams(room, teamCount);
 
     const eligible = Array.from(room.records.values())
-        .filter(r => r.status === 'connected' || r.status === 'away')
+        .filter(r => !r.status || r.status === 'connected' || r.status === 'away')
         .map(r => r.playerId);
 
     // Fisher-Yates shuffle
@@ -159,3 +159,4 @@ module.exports = {
     getSmallerTeam,
     randomizeTeams
 };
+

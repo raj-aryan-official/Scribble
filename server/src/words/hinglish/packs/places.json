@@ -1,0 +1,1148 @@
+[
+  {
+    "word": "taj mahal",
+    "aliases": [
+      "taj mahal",
+      "ताजमहल",
+      "agra taj",
+      "symbol of love"
+    ]
+  },
+  {
+    "word": "qutub minar",
+    "aliases": [
+      "qutub minar",
+      "कुतुब मीनार",
+      "delhi tower"
+    ]
+  },
+  {
+    "word": "laal quila",
+    "aliases": [
+      "laal quila",
+      "लाल किला",
+      "red fort",
+      "lal qila"
+    ]
+  },
+  {
+    "word": "india gate",
+    "aliases": [
+      "india gate",
+      "इंडिया गेट",
+      "delhi monument"
+    ]
+  },
+  {
+    "word": "gateway of india",
+    "aliases": [
+      "gateway of india",
+      "गेटवे ऑफ इंडिया",
+      "mumbai monument"
+    ]
+  },
+  {
+    "word": "charminar",
+    "aliases": [
+      "charminar",
+      "चारमीनार",
+      "hyderabad monument"
+    ]
+  },
+  {
+    "word": "hawa mahal",
+    "aliases": [
+      "hawa mahal",
+      "हवा महल",
+      "jaipur palace"
+    ]
+  },
+  {
+    "word": "golden temple",
+    "aliases": [
+      "golden temple",
+      "स्वर्ण मंदिर",
+      "harmandir sahib",
+      "amritsar"
+    ]
+  },
+  {
+    "word": "sun temple",
+    "aliases": [
+      "sun temple",
+      "सूर्य मंदिर",
+      "konark temple",
+      "black pagoda"
+    ]
+  },
+  {
+    "word": "victoria memorial",
+    "aliases": [
+      "victoria memorial",
+      "विक्टोरिया मेमोरियल",
+      "kolkata palace"
+    ]
+  },
+  {
+    "word": "meenakshi mandir",
+    "aliases": [
+      "meenakshi mandir",
+      "मीनाक्षी मंदिर",
+      "madurai temple"
+    ]
+  },
+  {
+    "word": "ajanta gufa",
+    "aliases": [
+      "ajanta gufa",
+      "अजंता गुफाएं",
+      "ajanta caves"
+    ]
+  },
+  {
+    "word": "ellora gufa",
+    "aliases": [
+      "ellora gufa",
+      "एलोरा गुफाएं",
+      "ellora caves"
+    ]
+  },
+  {
+    "word": "fatehpur sikri",
+    "aliases": [
+      "fatehpur sikri",
+      "फतेहपुर सीकरी",
+      "akbar capital"
+    ]
+  },
+  {
+    "word": "sanchi stupa",
+    "aliases": [
+      "sanchi stupa",
+      "सांची स्तूप",
+      "ashoka stupa"
+    ]
+  },
+  {
+    "word": "khajuraho",
+    "aliases": [
+      "khajuraho",
+      "खजुराहो",
+      "khajuraho temples"
+    ]
+  },
+  {
+    "word": "jantar mantar",
+    "aliases": [
+      "jantar mantar",
+      "जंतर मंतर",
+      "astronomy observatory"
+    ]
+  },
+  {
+    "word": "golconda quila",
+    "aliases": [
+      "golconda quila",
+      "गोलकुंडा किला",
+      "hyderabad fort"
+    ]
+  },
+  {
+    "word": "amer quila",
+    "aliases": [
+      "amer quila",
+      "आमेर किला",
+      "amber fort"
+    ]
+  },
+  {
+    "word": "mehrangarh",
+    "aliases": [
+      "mehrangarh",
+      "मेहरानगढ़",
+      "jodhpur fort"
+    ]
+  },
+  {
+    "word": "jaigarh",
+    "aliases": [
+      "jaigarh",
+      "जयगढ़",
+      "cannon fort"
+    ]
+  },
+  {
+    "word": "chittorgarh",
+    "aliases": [
+      "chittorgarh",
+      "चित्तौड़गढ़",
+      "vijay stambha"
+    ]
+  },
+  {
+    "word": "gwalior quila",
+    "aliases": [
+      "gwalior quila",
+      "ग्वालियर किला",
+      "gwalior fort"
+    ]
+  },
+  {
+    "word": "jaisalmer quila",
+    "aliases": [
+      "jaisalmer quila",
+      "जैसलमेर किला",
+      "golden fort",
+      "sonar kella"
+    ]
+  },
+  {
+    "word": "mysore palace",
+    "aliases": [
+      "mysore palace",
+      "मैसूर पैलेस",
+      "ambavilas palace"
+    ]
+  },
+  {
+    "word": "bangalore palace",
+    "aliases": [
+      "bangalore palace",
+      "बैंगलोर पैलेस",
+      "bengaluru palace"
+    ]
+  },
+  {
+    "word": "rashtrapati bhavan",
+    "aliases": [
+      "rashtrapati bhavan",
+      "राष्ट्रपति भवन",
+      "presidential palace"
+    ]
+  },
+  {
+    "word": "sansad bhavan",
+    "aliases": [
+      "sansad bhavan",
+      "संसद भवन",
+      "parliament house"
+    ]
+  },
+  {
+    "word": "howrah bridge",
+    "aliases": [
+      "howrah bridge",
+      "हावड़ा ब्रिज",
+      "rabindra setu"
+    ]
+  },
+  {
+    "word": "sealink",
+    "aliases": [
+      "sealink",
+      "सी लिंक",
+      "bandra worli sea link"
+    ]
+  },
+  {
+    "word": "lotus temple",
+    "aliases": [
+      "lotus temple",
+      "लोटस टेम्पल",
+      "kamal mandir",
+      "bahai temple"
+    ]
+  },
+  {
+    "word": "akshardham",
+    "aliases": [
+      "akshardham",
+      "अक्षरधाम",
+      "swaminarayan temple"
+    ]
+  },
+  {
+    "word": "birla mandir",
+    "aliases": [
+      "birla mandir",
+      "बिरला मंदिर",
+      "laxminarayan temple"
+    ]
+  },
+  {
+    "word": "kashi vishwanath",
+    "aliases": [
+      "kashi vishwanath",
+      "काशी विश्वनाथ",
+      "banaras temple"
+    ]
+  },
+  {
+    "word": "kedarnath",
+    "aliases": [
+      "kedarnath",
+      "केदारनाथ",
+      "shiva temple"
+    ]
+  },
+  {
+    "word": "badrinath",
+    "aliases": [
+      "badrinath",
+      "बद्रीनाथ",
+      "vishnu temple"
+    ]
+  },
+  {
+    "word": "rameshwaram",
+    "aliases": [
+      "rameshwaram",
+      "रामेश्वरम",
+      "dham"
+    ]
+  },
+  {
+    "word": "jagannath puri",
+    "aliases": [
+      "jagannath puri",
+      "जगन्नाथ पूरी",
+      "puri dham"
+    ]
+  },
+  {
+    "word": "somnath",
+    "aliases": [
+      "somnath",
+      "सोमनाथ",
+      "jyotirlinga"
+    ]
+  },
+  {
+    "word": "vaishno devi",
+    "aliases": [
+      "vaishno devi",
+      "वैष्णो देवी",
+      "katra shrine"
+    ]
+  },
+  {
+    "word": "tirupati",
+    "aliases": [
+      "tirupati",
+      "तिरुपति",
+      "balaji",
+      "venkateswara"
+    ]
+  },
+  {
+    "word": "shirdi",
+    "aliases": [
+      "shirdi",
+      "शिर्डी",
+      "sai baba temple"
+    ]
+  },
+  {
+    "word": "bodh gaya",
+    "aliases": [
+      "bodh gaya",
+      "बोधगया",
+      "mahabodhi temple"
+    ]
+  },
+  {
+    "word": "rishikesh",
+    "aliases": [
+      "rishikesh",
+      "ऋषिकेश",
+      "yoga capital",
+      "lakshman jhula"
+    ]
+  },
+  {
+    "word": "haridwar",
+    "aliases": [
+      "haridwar",
+      "हरिद्वार",
+      "har ki pauri"
+    ]
+  },
+  {
+    "word": "varanasi",
+    "aliases": [
+      "varanasi",
+      "वाराणसी",
+      "banaras",
+      "kashi"
+    ]
+  },
+  {
+    "word": "prayagraj",
+    "aliases": [
+      "prayagraj",
+      "प्रयागराज",
+      "allahabad",
+      "sangam"
+    ]
+  },
+  {
+    "word": "ayodhya",
+    "aliases": [
+      "ayodhya",
+      "अयोध्या",
+      "ram janmabhoomi"
+    ]
+  },
+  {
+    "word": "mathura",
+    "aliases": [
+      "mathura",
+      "मथुरा",
+      "krishna janmabhoomi"
+    ]
+  },
+  {
+    "word": "vrindavan",
+    "aliases": [
+      "vrindavan",
+      "वृंदावन",
+      "banke bihari"
+    ]
+  },
+  {
+    "word": "amritsar",
+    "aliases": [
+      "amritsar",
+      "अमृतसर",
+      "punjab city"
+    ]
+  },
+  {
+    "word": "shimla",
+    "aliases": [
+      "shimla",
+      "शिमला",
+      "mall road"
+    ]
+  },
+  {
+    "word": "manali",
+    "aliases": [
+      "manali",
+      "मनाली",
+      "solang valley"
+    ]
+  },
+  {
+    "word": "dharamshala",
+    "aliases": [
+      "dharamshala",
+      "धर्मशाला",
+      "mcleodganj"
+    ]
+  },
+  {
+    "word": "mussoorie",
+    "aliases": [
+      "mussoorie",
+      "मसूरी",
+      "kempty falls"
+    ]
+  },
+  {
+    "word": "nainital",
+    "aliases": [
+      "nainital",
+      "नैनीताल",
+      "naini lake"
+    ]
+  },
+  {
+    "word": "srinagar",
+    "aliases": [
+      "srinagar",
+      "श्रीनगर",
+      "kashmir valley",
+      "dal lake"
+    ]
+  },
+  {
+    "word": "gulmarg",
+    "aliases": [
+      "gulmarg",
+      "गुलमर्ग",
+      "snow valley"
+    ]
+  },
+  {
+    "word": "leh",
+    "aliases": [
+      "leh",
+      "लेह",
+      "leh ladakh"
+    ]
+  },
+  {
+    "word": "ladakh",
+    "aliases": [
+      "ladakh",
+      "लद्दाख",
+      "pangong lake"
+    ]
+  },
+  {
+    "word": "ooty",
+    "aliases": [
+      "ooty",
+      "ऊटी",
+      "nilgiri hills"
+    ]
+  },
+  {
+    "word": "kodaikanal",
+    "aliases": [
+      "kodaikanal",
+      "कोडाइकनाल",
+      "princess of hills"
+    ]
+  },
+  {
+    "word": "munnar",
+    "aliases": [
+      "munnar",
+      "मुन्नार",
+      "tea gardens"
+    ]
+  },
+  {
+    "word": "coorg",
+    "aliases": [
+      "coorg",
+      "कूर्ग",
+      "coffee hills",
+      "kodagu"
+    ]
+  },
+  {
+    "word": "darjeeling",
+    "aliases": [
+      "darjeeling",
+      "दार्जिलिंग",
+      "toy train",
+      "tea hills"
+    ]
+  },
+  {
+    "word": "gangtok",
+    "aliases": [
+      "gangtok",
+      "गंगटोक",
+      "sikkim capital"
+    ]
+  },
+  {
+    "word": "shillong",
+    "aliases": [
+      "shillong",
+      "शिलांग",
+      "meghalaya capital"
+    ]
+  },
+  {
+    "word": "cherrapunji",
+    "aliases": [
+      "cherrapunji",
+      "चेरापूंजी",
+      "sohra",
+      "rainy place"
+    ]
+  },
+  {
+    "word": "andaman",
+    "aliases": [
+      "andaman",
+      "अंडमान",
+      "havelock island",
+      "radhanagar"
+    ]
+  },
+  {
+    "word": "goa",
+    "aliases": [
+      "goa",
+      "गोवा",
+      "calangute",
+      "baga beach"
+    ]
+  },
+  {
+    "word": "pondicherry",
+    "aliases": [
+      "pondicherry",
+      "पांडिचेरी",
+      "puducherry",
+      "auroville"
+    ]
+  },
+  {
+    "word": "delhi",
+    "aliases": [
+      "delhi",
+      "दिल्ली",
+      "capital of india"
+    ]
+  },
+  {
+    "word": "mumbai",
+    "aliases": [
+      "mumbai",
+      "मुंबई",
+      "bombay",
+      "financial capital"
+    ]
+  },
+  {
+    "word": "kolkata",
+    "aliases": [
+      "kolkata",
+      "कोलकाता",
+      "calcutta",
+      "city of joy"
+    ]
+  },
+  {
+    "word": "chennai",
+    "aliases": [
+      "chennai",
+      "चेन्नई",
+      "madras",
+      "tamil nadu capital"
+    ]
+  },
+  {
+    "word": "bengaluru",
+    "aliases": [
+      "bengaluru",
+      "बेंगलुरु",
+      "bangalore",
+      "silicon valley"
+    ]
+  },
+  {
+    "word": "hyderabad",
+    "aliases": [
+      "hyderabad",
+      "हैदराबाद",
+      "city of pearls"
+    ]
+  },
+  {
+    "word": "ahmedabad",
+    "aliases": [
+      "ahmedabad",
+      "अहमदाबाद",
+      "sabarmati"
+    ]
+  },
+  {
+    "word": "pune",
+    "aliases": [
+      "pune",
+      "पुणे",
+      "poona",
+      "oxford of east"
+    ]
+  },
+  {
+    "word": "jaipur",
+    "aliases": [
+      "jaipur",
+      "जयपुर",
+      "pink city"
+    ]
+  },
+  {
+    "word": "lucknow",
+    "aliases": [
+      "lucknow",
+      "लखनऊ",
+      "city of nawabs"
+    ]
+  },
+  {
+    "word": "kanpur",
+    "aliases": [
+      "kanpur",
+      "कानपुर",
+      "industrial city"
+    ]
+  },
+  {
+    "word": "indore",
+    "aliases": [
+      "indore",
+      "इंदौर",
+      "cleanest city"
+    ]
+  },
+  {
+    "word": "bhopal",
+    "aliases": [
+      "bhopal",
+      "भोपाल",
+      "city of lakes"
+    ]
+  },
+  {
+    "word": "patna",
+    "aliases": [
+      "patna",
+      "पटना",
+      "patliputra"
+    ]
+  },
+  {
+    "word": "ranchi",
+    "aliases": [
+      "ranchi",
+      "रांची",
+      "jharkhand capital"
+    ]
+  },
+  {
+    "word": "chandigarh",
+    "aliases": [
+      "chandigarh",
+      "चंडीगढ़",
+      "planned city"
+    ]
+  },
+  {
+    "word": "dehradun",
+    "aliases": [
+      "dehradun",
+      "देहरादून",
+      "doon valley"
+    ]
+  },
+  {
+    "word": "agra",
+    "aliases": [
+      "agra",
+      "आगरा",
+      "petha city"
+    ]
+  },
+  {
+    "word": "vadodara",
+    "aliases": [
+      "vadodara",
+      "वडोदरा",
+      "baroda"
+    ]
+  },
+  {
+    "word": "surat",
+    "aliases": [
+      "surat",
+      "सूरत",
+      "diamond city"
+    ]
+  },
+  {
+    "word": "nagpur",
+    "aliases": [
+      "nagpur",
+      "नागपुर",
+      "orange city"
+    ]
+  },
+  {
+    "word": "nashik",
+    "aliases": [
+      "nashik",
+      "नासिक",
+      "wine capital"
+    ]
+  },
+  {
+    "word": "visakhapatnam",
+    "aliases": [
+      "visakhapatnam",
+      "विशाखापत्तनम",
+      "vizag"
+    ]
+  },
+  {
+    "word": "kochi",
+    "aliases": [
+      "kochi",
+      "कोच्चि",
+      "cochin",
+      "queen of arabian sea"
+    ]
+  },
+  {
+    "word": "trivandrum",
+    "aliases": [
+      "trivandrum",
+      "त्रिवेंद्रम",
+      "thiruvananthapuram"
+    ]
+  },
+  {
+    "word": "guwahati",
+    "aliases": [
+      "guwahati",
+      "गुवाहाटी",
+      "assam gateway"
+    ]
+  },
+  {
+    "word": "bhubaneswar",
+    "aliases": [
+      "bhubaneswar",
+      "भुवनेश्वर",
+      "temple city"
+    ]
+  },
+  {
+    "word": "cuttack",
+    "aliases": [
+      "cuttack",
+      "कटक",
+      "silver city"
+    ]
+  },
+  {
+    "word": "raipur",
+    "aliases": [
+      "raipur",
+      "रायपुर",
+      "chhattisgarh capital"
+    ]
+  },
+  {
+    "word": "jabalpur",
+    "aliases": [
+      "jabalpur",
+      "जबलपुर",
+      "bhedaghat marble"
+    ]
+  },
+  {
+    "word": "jodhpur",
+    "aliases": [
+      "jodhpur",
+      "जोधपुर",
+      "blue city"
+    ]
+  },
+  {
+    "word": "udaipur",
+    "aliases": [
+      "udaipur",
+      "उदयपुर",
+      "white city",
+      "lake city"
+    ]
+  },
+  {
+    "word": "bikaner",
+    "aliases": [
+      "bikaner",
+      "बीकानेर",
+      "bhujia city"
+    ]
+  },
+  {
+    "word": "ajmer",
+    "aliases": [
+      "ajmer",
+      "अजमेर",
+      "dargah sharif"
+    ]
+  },
+  {
+    "word": "kota",
+    "aliases": [
+      "kota",
+      "कोटा",
+      "chambal city"
+    ]
+  },
+  {
+    "word": "aligarh",
+    "aliases": [
+      "aligarh",
+      "अलीगढ़",
+      "lock city"
+    ]
+  },
+  {
+    "word": "meerut",
+    "aliases": [
+      "meerut",
+      "मेरठ",
+      "sports city"
+    ]
+  },
+  {
+    "word": "bareilly",
+    "aliases": [
+      "bareilly",
+      "बरेली",
+      "jhumka city"
+    ]
+  },
+  {
+    "word": "gorakhpur",
+    "aliases": [
+      "gorakhpur",
+      "गोरखपुर",
+      "terai city"
+    ]
+  },
+  {
+    "word": "jhansi",
+    "aliases": [
+      "jhansi",
+      "झांसी",
+      "rani lakshmibai city"
+    ]
+  },
+  {
+    "word": "ujjain",
+    "aliases": [
+      "ujjain",
+      "उज्जैन",
+      "mahakal temple"
+    ]
+  },
+  {
+    "word": "ganga nadi",
+    "aliases": [
+      "ganga nadi",
+      "गंगा नदी",
+      "holy ganga",
+      "ganges"
+    ]
+  },
+  {
+    "word": "yamuna nadi",
+    "aliases": [
+      "yamuna nadi",
+      "यमुना नदी",
+      "yamuna river"
+    ]
+  },
+  {
+    "word": "brahmaputra",
+    "aliases": [
+      "brahmaputra",
+      "ब्रह्मपुत्र नदी",
+      "big river"
+    ]
+  },
+  {
+    "word": "narmada",
+    "aliases": [
+      "narmada",
+      "नर्मदा नदी",
+      "holy narmada"
+    ]
+  },
+  {
+    "word": "godavari",
+    "aliases": [
+      "godavari",
+      "गोदावरी नदी",
+      "dakshin ganga"
+    ]
+  },
+  {
+    "word": "krishna nadi",
+    "aliases": [
+      "krishna nadi",
+      "कृष्णा नदी",
+      "krishna river"
+    ]
+  },
+  {
+    "word": "kaveri",
+    "aliases": [
+      "kaveri",
+      "कावेरी नदी",
+      "cauvery river"
+    ]
+  },
+  {
+    "word": "sindhu nadi",
+    "aliases": [
+      "sindhu nadi",
+      "सिंधु नदी",
+      "indus river"
+    ]
+  },
+  {
+    "word": "himalaya",
+    "aliases": [
+      "himalaya",
+      "हिमालय",
+      "himalayas",
+      "mountains"
+    ]
+  },
+  {
+    "word": "thar registan",
+    "aliases": [
+      "thar registan",
+      "थार रेगिस्तान",
+      "great indian desert"
+    ]
+  },
+  {
+    "word": "sundarban",
+    "aliases": [
+      "sundarban",
+      "सुंदरवन",
+      "mangrove forest"
+    ]
+  },
+  {
+    "word": "kutch rann",
+    "aliases": [
+      "kutch rann",
+      "कच्छ का रण",
+      "white desert"
+    ]
+  },
+  {
+    "word": "western ghats",
+    "aliases": [
+      "western ghats",
+      "पश्चिमी घाट",
+      "sahyadri"
+    ]
+  },
+  {
+    "word": "dal jheel",
+    "aliases": [
+      "dal jheel",
+      "डल झील",
+      "shikara lake"
+    ]
+  },
+  {
+    "word": "chilika jheel",
+    "aliases": [
+      "chilika jheel",
+      "चिलिका झील",
+      "lagoon lake"
+    ]
+  },
+  {
+    "word": "wular jheel",
+    "aliases": [
+      "wular jheel",
+      "वुलर झील",
+      "freshwater lake"
+    ]
+  },
+  {
+    "word": "sambhar jheel",
+    "aliases": [
+      "sambhar jheel",
+      "सांभर झील",
+      "salt lake"
+    ]
+  },
+  {
+    "word": "jog falls",
+    "aliases": [
+      "jog falls",
+      "जोग प्रपात",
+      "karnataka waterfall"
+    ]
+  },
+  {
+    "word": "dhuandhar",
+    "aliases": [
+      "dhuandhar",
+      "धुआंधार प्रपात",
+      "narmada falls"
+    ]
+  },
+  {
+    "word": "marina beach",
+    "aliases": [
+      "marina beach",
+      "मरीना बीच",
+      "chennai beach"
+    ]
+  },
+  {
+    "word": "juhu beach",
+    "aliases": [
+      "juhu beach",
+      "जुहू बीच",
+      "mumbai beach"
+    ]
+  },
+  {
+    "word": "marine drive",
+    "aliases": [
+      "marine drive",
+      "मरीन ड्राइव",
+      "queens necklace"
+    ]
+  },
+  {
+    "word": "buland darwaza",
+    "aliases": [
+      "buland darwaza",
+      "बुलंद दरवाज़ा",
+      "huge gate"
+    ]
+  },
+  {
+    "word": "rumi darwaza",
+    "aliases": [
+      "rumi darwaza",
+      "रूमी दरवाज़ा",
+      "lucknow gate"
+    ]
+  },
+  {
+    "word": "bara imambara",
+    "aliases": [
+      "bara imambara",
+      "बड़ा इमामबाड़ा",
+      "bhulbhulaiya"
+    ]
+  },
+  {
+    "word": "cellular jail",
+    "aliases": [
+      "cellular jail",
+      "सेल्यूलर जेल",
+      "kala pani jail"
+    ]
+  },
+  {
+    "word": "vivekananda rock",
+    "aliases": [
+      "vivekananda rock",
+      "विवेकानंद रॉक",
+      "kanyakumari memorial"
+    ]
+  },
+  {
+    "word": "kanyakumari",
+    "aliases": [
+      "kanyakumari",
+      "कन्याकुमारी",
+      "southern tip"
+    ]
+  }
+]

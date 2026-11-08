@@ -1,0 +1,3306 @@
+[
+  {
+    "word": "ऑटो-रिक्शा",
+    "aliases": [
+      "auto-rickshaw",
+      "ऑटो-रिक्शा",
+      "auto",
+      "autorickshaw",
+      "tuk tuk",
+      "rickshaw"
+    ]
+  },
+  {
+    "word": "चारपाई",
+    "aliases": [
+      "charpai",
+      "चारपाई",
+      "khatia",
+      "khat",
+      "cot"
+    ]
+  },
+  {
+    "word": "अगरबत्ती",
+    "aliases": [
+      "agarbatti",
+      "अगरबत्ती",
+      "incense",
+      "dhoopbatti"
+    ]
+  },
+  {
+    "word": "कढ़ाई",
+    "aliases": [
+      "kadhai",
+      "कढ़ाई",
+      "wok",
+      "pan"
+    ]
+  },
+  {
+    "word": "गमला",
+    "aliases": [
+      "gamla",
+      "गमला",
+      "flower pot",
+      "pot"
+    ]
+  },
+  {
+    "word": "रंगोली",
+    "aliases": [
+      "rangoli",
+      "रंगोली",
+      "kolam",
+      "floor art"
+    ]
+  },
+  {
+    "word": "पतंग",
+    "aliases": [
+      "patang",
+      "पतंग",
+      "kite"
+    ]
+  },
+  {
+    "word": "तबला",
+    "aliases": [
+      "tabla",
+      "तबला",
+      "drum",
+      "tablas"
+    ]
+  },
+  {
+    "word": "बांसुरी",
+    "aliases": [
+      "bansuri",
+      "बांसुरी",
+      "flute",
+      "bansi"
+    ]
+  },
+  {
+    "word": "चूड़ी",
+    "aliases": [
+      "churi",
+      "चूड़ी",
+      "bangles",
+      "chudi",
+      "choodi"
+    ]
+  },
+  {
+    "word": "कंघी",
+    "aliases": [
+      "kanghi",
+      "कंघी",
+      "comb"
+    ]
+  },
+  {
+    "word": "हुक्का",
+    "aliases": [
+      "hookah",
+      "हुक्का",
+      "hubble bubble",
+      "pipe"
+    ]
+  },
+  {
+    "word": "ताला",
+    "aliases": [
+      "tala",
+      "ताला",
+      "lock"
+    ]
+  },
+  {
+    "word": "तिजोरी",
+    "aliases": [
+      "tijori",
+      "तिजोरी",
+      "safe",
+      "vault"
+    ]
+  },
+  {
+    "word": "छतरी",
+    "aliases": [
+      "chhatri",
+      "छतरी",
+      "chata",
+      "umbrella"
+    ]
+  },
+  {
+    "word": "धोती",
+    "aliases": [
+      "dhoti",
+      "धोती",
+      "dhoti kurta"
+    ]
+  },
+  {
+    "word": "रूमाल",
+    "aliases": [
+      "rumaal",
+      "रूमाल",
+      "handkerchief",
+      "rumal"
+    ]
+  },
+  {
+    "word": "साइकिल",
+    "aliases": [
+      "cycle",
+      "साइकिल",
+      "bicycle",
+      "saikil"
+    ]
+  },
+  {
+    "word": "बैलगाड़ी",
+    "aliases": [
+      "bailgadi",
+      "बैलगाड़ी",
+      "bullock cart"
+    ]
+  },
+  {
+    "word": "ट्रक",
+    "aliases": [
+      "truck",
+      "ट्रक",
+      "lorry"
+    ]
+  },
+  {
+    "word": "हैंडपंप",
+    "aliases": [
+      "handpump",
+      "हैंडपंप",
+      "water pump"
+    ]
+  },
+  {
+    "word": "कंबल",
+    "aliases": [
+      "kambal",
+      "कंबल",
+      "blanket"
+    ]
+  },
+  {
+    "word": "गद्दा",
+    "aliases": [
+      "gadda",
+      "गद्दा",
+      "mattress"
+    ]
+  },
+  {
+    "word": "हीटर",
+    "aliases": [
+      "heater",
+      "हीटर",
+      "room heater"
+    ]
+  },
+  {
+    "word": "कांटा",
+    "aliases": [
+      "kanta",
+      "कांटा",
+      "fork"
+    ]
+  },
+  {
+    "word": "तवा",
+    "aliases": [
+      "tawa",
+      "तवा",
+      "pan",
+      "griddle"
+    ]
+  },
+  {
+    "word": "शंख",
+    "aliases": [
+      "shankh",
+      "शंख",
+      "conch",
+      "shell"
+    ]
+  },
+  {
+    "word": "बटुआ",
+    "aliases": [
+      "batua",
+      "बटुआ",
+      "purse",
+      "wallet"
+    ]
+  },
+  {
+    "word": "कलम",
+    "aliases": [
+      "kalam",
+      "कलम",
+      "pen"
+    ]
+  },
+  {
+    "word": "बस्ता",
+    "aliases": [
+      "basta",
+      "बस्ता",
+      "school bag"
+    ]
+  },
+  {
+    "word": "टॉर्च",
+    "aliases": [
+      "torch",
+      "टॉर्च",
+      "flashlight"
+    ]
+  },
+  {
+    "word": "दरवाज़ा",
+    "aliases": [
+      "darwaza",
+      "दरवाज़ा",
+      "door",
+      "gate"
+    ]
+  },
+  {
+    "word": "गुलदस्ता",
+    "aliases": [
+      "guldasta",
+      "गुलदस्ता",
+      "bouquet",
+      "vase"
+    ]
+  },
+  {
+    "word": "घड़ी",
+    "aliases": [
+      "ghadi",
+      "घड़ी",
+      "clock",
+      "watch"
+    ]
+  },
+  {
+    "word": "एंटीना",
+    "aliases": [
+      "antenna",
+      "एंटीना",
+      "dish antenna"
+    ]
+  },
+  {
+    "word": "ट्यूबलाइट",
+    "aliases": [
+      "tubelight",
+      "ट्यूबलाइट",
+      "tube light"
+    ]
+  },
+  {
+    "word": "बाल्टी",
+    "aliases": [
+      "balti",
+      "बाल्टी",
+      "bucket"
+    ]
+  },
+  {
+    "word": "तेल",
+    "aliases": [
+      "tel",
+      "तेल",
+      "hair oil",
+      "oil"
+    ]
+  },
+  {
+    "word": "चिमता",
+    "aliases": [
+      "chimta",
+      "चिमता",
+      "tongs"
+    ]
+  },
+  {
+    "word": "झरोखा",
+    "aliases": [
+      "jharokha",
+      "झरोखा",
+      "balcony",
+      "small window"
+    ]
+  },
+  {
+    "word": "सड़क",
+    "aliases": [
+      "sadak",
+      "सड़क",
+      "road",
+      "street"
+    ]
+  },
+  {
+    "word": "झूला",
+    "aliases": [
+      "jhula",
+      "झूला",
+      "swing"
+    ]
+  },
+  {
+    "word": "अंगीठी",
+    "aliases": [
+      "angithi",
+      "अंगीठी",
+      "brazier",
+      "coal stove"
+    ]
+  },
+  {
+    "word": "मोटर",
+    "aliases": [
+      "motor",
+      "मोटर",
+      "water motor"
+    ]
+  },
+  {
+    "word": "कुर्सी",
+    "aliases": [
+      "kursi",
+      "कुर्सी",
+      "chair"
+    ]
+  },
+  {
+    "word": "मोढ़ा",
+    "aliases": [
+      "modha",
+      "मोढ़ा",
+      "cane stool"
+    ]
+  },
+  {
+    "word": "चश्मा",
+    "aliases": [
+      "chashma",
+      "चश्मा",
+      "spectacles",
+      "glasses"
+    ]
+  },
+  {
+    "word": "नथ",
+    "aliases": [
+      "nath",
+      "नथ",
+      "nose ring"
+    ]
+  },
+  {
+    "word": "सुराही",
+    "aliases": [
+      "surahi",
+      "सुराही",
+      "clay jug"
+    ]
+  },
+  {
+    "word": "सूटकेस",
+    "aliases": [
+      "suitcase",
+      "सूटकेस",
+      "attache",
+      "baggage"
+    ]
+  },
+  {
+    "word": "पत्तल",
+    "aliases": [
+      "pattal",
+      "पत्तल",
+      "leaf plate"
+    ]
+  },
+  {
+    "word": "गुलेल",
+    "aliases": [
+      "gulel",
+      "गुलेल",
+      "slingshot"
+    ]
+  },
+  {
+    "word": "जलेबी",
+    "aliases": [
+      "jalebi",
+      "जलेबी",
+      "jalebee",
+      "sweet spiral"
+    ]
+  },
+  {
+    "word": "डोसा",
+    "aliases": [
+      "dosa",
+      "डोसा",
+      "masala dosa",
+      "plain dosa"
+    ]
+  },
+  {
+    "word": "लस्सी",
+    "aliases": [
+      "lassi",
+      "लस्सी",
+      "sweet lassi",
+      "curd drink"
+    ]
+  },
+  {
+    "word": "पराठा",
+    "aliases": [
+      "paratha",
+      "पराठा",
+      "aloo paratha",
+      "parantha"
+    ]
+  },
+  {
+    "word": "वड़ा पाव",
+    "aliases": [
+      "vada pav",
+      "वड़ा पाव",
+      "vadapav",
+      "bombay burger"
+    ]
+  },
+  {
+    "word": "काजू कतली",
+    "aliases": [
+      "kaju katli",
+      "काजू कतली",
+      "kaju barfi"
+    ]
+  },
+  {
+    "word": "हलवा",
+    "aliases": [
+      "halwa",
+      "हलवा",
+      "sooji halwa",
+      "gajar halwa"
+    ]
+  },
+  {
+    "word": "कुलचा",
+    "aliases": [
+      "kulcha",
+      "कुलचा",
+      "amritsari kulcha"
+    ]
+  },
+  {
+    "word": "ढोकला",
+    "aliases": [
+      "dhokla",
+      "ढोकला",
+      "khaman"
+    ]
+  },
+  {
+    "word": "पोहा",
+    "aliases": [
+      "poha",
+      "पोहा",
+      "pohe",
+      "flattened rice"
+    ]
+  },
+  {
+    "word": "मेदू वड़ा",
+    "aliases": [
+      "medu vada",
+      "मेदू वड़ा",
+      "vada",
+      "dal vada"
+    ]
+  },
+  {
+    "word": "दाल मखनी",
+    "aliases": [
+      "dal makhani",
+      "दाल मखनी",
+      "maa ki dal"
+    ]
+  },
+  {
+    "word": "पनीर",
+    "aliases": [
+      "paneer",
+      "पनीर",
+      "cottage cheese"
+    ]
+  },
+  {
+    "word": "आलू गोभी",
+    "aliases": [
+      "aloo gobi",
+      "आलू गोभी",
+      "potato cauliflower"
+    ]
+  },
+  {
+    "word": "कढ़ी",
+    "aliases": [
+      "kadhi",
+      "कढ़ी",
+      "kadhi pakora"
+    ]
+  },
+  {
+    "word": "पुलाव",
+    "aliases": [
+      "pulao",
+      "पुलाव",
+      "veg pulao",
+      "pilaf"
+    ]
+  },
+  {
+    "word": "चटनी",
+    "aliases": [
+      "chutney",
+      "चटनी",
+      "green chutney",
+      "pudina chutney"
+    ]
+  },
+  {
+    "word": "चाट",
+    "aliases": [
+      "chaat",
+      "चाट",
+      "street chaat"
+    ]
+  },
+  {
+    "word": "सेव पूरी",
+    "aliases": [
+      "sev puri",
+      "सेव पूरी",
+      "sev batata puri"
+    ]
+  },
+  {
+    "word": "समोसा चाट",
+    "aliases": [
+      "samosa chaat",
+      "समोसा चाट",
+      "crushed samosa"
+    ]
+  },
+  {
+    "word": "फालूदा",
+    "aliases": [
+      "falooda",
+      "फालूदा",
+      "faluda"
+    ]
+  },
+  {
+    "word": "संदेश",
+    "aliases": [
+      "sandesh",
+      "संदेश",
+      "shondesh"
+    ]
+  },
+  {
+    "word": "सोन पापड़ी",
+    "aliases": [
+      "soan papdi",
+      "सोन पापड़ी",
+      "patisa"
+    ]
+  },
+  {
+    "word": "बालूशाही",
+    "aliases": [
+      "balushahi",
+      "बालूशाही",
+      "badusha"
+    ]
+  },
+  {
+    "word": "तिलकुट",
+    "aliases": [
+      "tilkut",
+      "तिलकुट",
+      "sesame sweet"
+    ]
+  },
+  {
+    "word": "चिक्की",
+    "aliases": [
+      "chikki",
+      "चिक्की",
+      "groundnut chikki"
+    ]
+  },
+  {
+    "word": "चकली",
+    "aliases": [
+      "chakli",
+      "चकली",
+      "spiral snack"
+    ]
+  },
+  {
+    "word": "मठरी",
+    "aliases": [
+      "mathri",
+      "मठरी",
+      "crispy snack"
+    ]
+  },
+  {
+    "word": "श्रीखंड",
+    "aliases": [
+      "shrikhand",
+      "श्रीखंड",
+      "sweet yogurt"
+    ]
+  },
+  {
+    "word": "ठंडाई",
+    "aliases": [
+      "thandai",
+      "ठंडाई",
+      "holi drink"
+    ]
+  },
+  {
+    "word": "छाछ",
+    "aliases": [
+      "chaas",
+      "छाछ",
+      "mattha",
+      "buttermilk"
+    ]
+  },
+  {
+    "word": "बादाम दूध",
+    "aliases": [
+      "badam milk",
+      "बादाम दूध",
+      "almond milk"
+    ]
+  },
+  {
+    "word": "गन्ने का रस",
+    "aliases": [
+      "ganna juice",
+      "गन्ने का रस",
+      "sugarcane juice"
+    ]
+  },
+  {
+    "word": "आम पन्ना",
+    "aliases": [
+      "aam panna",
+      "आम पन्ना",
+      "raw mango drink"
+    ]
+  },
+  {
+    "word": "गुझिया",
+    "aliases": [
+      "gujiya",
+      "गुझिया",
+      "gujia",
+      "holi sweet"
+    ]
+  },
+  {
+    "word": "साबूदाना वड़ा",
+    "aliases": [
+      "sabudana vada",
+      "साबूदाना वड़ा",
+      "sago fritter"
+    ]
+  },
+  {
+    "word": "सरसों का साग",
+    "aliases": [
+      "sarson saag",
+      "सरसों का साग",
+      "mustard greens"
+    ]
+  },
+  {
+    "word": "लिट्टी चोखा",
+    "aliases": [
+      "litti chokha",
+      "लिट्टी चोखा",
+      "bihari litti"
+    ]
+  },
+  {
+    "word": "स्प्रिंग रोल",
+    "aliases": [
+      "spring roll",
+      "स्प्रिंग रोल",
+      "veg roll"
+    ]
+  },
+  {
+    "word": "ईरानी चाय",
+    "aliases": [
+      "irani chai",
+      "ईरानी चाय",
+      "hyderabadi tea"
+    ]
+  },
+  {
+    "word": "सौंफ",
+    "aliases": [
+      "saunf",
+      "सौंफ",
+      "fennel seeds"
+    ]
+  },
+  {
+    "word": "लौंग",
+    "aliases": [
+      "laung",
+      "लौंग",
+      "clove"
+    ]
+  },
+  {
+    "word": "जीरा",
+    "aliases": [
+      "jeera",
+      "जीरा",
+      "cumin"
+    ]
+  },
+  {
+    "word": "अजवायन",
+    "aliases": [
+      "ajwain",
+      "अजवायन",
+      "carom seeds"
+    ]
+  },
+  {
+    "word": "अदरक",
+    "aliases": [
+      "adrak",
+      "अदरक",
+      "ginger"
+    ]
+  },
+  {
+    "word": "टमाटर",
+    "aliases": [
+      "tamatar",
+      "टमाटर",
+      "tomato"
+    ]
+  },
+  {
+    "word": "गोभी",
+    "aliases": [
+      "gobi",
+      "गोभी",
+      "cauliflower"
+    ]
+  },
+  {
+    "word": "शिमला मिर्च",
+    "aliases": [
+      "shimla mirch",
+      "शिमला मिर्च",
+      "capsicum",
+      "bell pepper"
+    ]
+  },
+  {
+    "word": "कद्दू",
+    "aliases": [
+      "kaddu",
+      "कद्दू",
+      "pumpkin"
+    ]
+  },
+  {
+    "word": "सेव टमाटर",
+    "aliases": [
+      "sev tamatar",
+      "सेव टमाटर",
+      "sev sabzi"
+    ]
+  },
+  {
+    "word": "मटर पनीर",
+    "aliases": [
+      "matar paneer",
+      "मटर पनीर",
+      "peas paneer"
+    ]
+  },
+  {
+    "word": "होली",
+    "aliases": [
+      "holi",
+      "होली",
+      "festival of colors",
+      "rangpanchami"
+    ]
+  },
+  {
+    "word": "नवरात्रि",
+    "aliases": [
+      "navratri",
+      "नवरात्रि",
+      "navaratri",
+      "dussehra"
+    ]
+  },
+  {
+    "word": "ओणम",
+    "aliases": [
+      "onam",
+      "ओणम",
+      "kerala onam"
+    ]
+  },
+  {
+    "word": "लोहड़ी",
+    "aliases": [
+      "lohri",
+      "लोहड़ी",
+      "winter bonfire"
+    ]
+  },
+  {
+    "word": "करवा चौथ",
+    "aliases": [
+      "karwa chauth",
+      "करवा चौथ",
+      "karva chauth"
+    ]
+  },
+  {
+    "word": "दशहरा",
+    "aliases": [
+      "dussehra",
+      "दशहरा",
+      "vijayadashami"
+    ]
+  },
+  {
+    "word": "गुरु पर्व",
+    "aliases": [
+      "guru parv",
+      "गुरु पर्व",
+      "guru nanak jayanti"
+    ]
+  },
+  {
+    "word": "तीज",
+    "aliases": [
+      "teej",
+      "तीज",
+      "hartalika teej"
+    ]
+  },
+  {
+    "word": "गोवर्धन पूजा",
+    "aliases": [
+      "govardhan puja",
+      "गोवर्धन पूजा",
+      "annakut"
+    ]
+  },
+  {
+    "word": "उगादी",
+    "aliases": [
+      "ugadi",
+      "उगादी",
+      "yugadi",
+      "telugu new year"
+    ]
+  },
+  {
+    "word": "महावीर जयंती",
+    "aliases": [
+      "mahavir jayanti",
+      "महावीर जयंती",
+      "jain festival"
+    ]
+  },
+  {
+    "word": "गरबा",
+    "aliases": [
+      "garba",
+      "गरबा",
+      "gujarati garba"
+    ]
+  },
+  {
+    "word": "आरती",
+    "aliases": [
+      "aarti",
+      "आरती",
+      "puja aarti"
+    ]
+  },
+  {
+    "word": "दीपक",
+    "aliases": [
+      "diya",
+      "दीपक",
+      "deepak",
+      "earthen lamp"
+    ]
+  },
+  {
+    "word": "अनार",
+    "aliases": [
+      "anar",
+      "अनार",
+      "fountain firework"
+    ]
+  },
+  {
+    "word": "पिचकारी",
+    "aliases": [
+      "pichkari",
+      "पिचकारी",
+      "water gun"
+    ]
+  },
+  {
+    "word": "गुब्बारा",
+    "aliases": [
+      "water balloon",
+      "गुब्बारा",
+      "pani ka gubbara"
+    ]
+  },
+  {
+    "word": "बारात",
+    "aliases": [
+      "baraat",
+      "बारात",
+      "wedding procession"
+    ]
+  },
+  {
+    "word": "शादी",
+    "aliases": [
+      "wedding",
+      "शादी",
+      "vivah",
+      "byah"
+    ]
+  },
+  {
+    "word": "जयमाला",
+    "aliases": [
+      "jaimala",
+      "जयमाला",
+      "varmala"
+    ]
+  },
+  {
+    "word": "तिलक",
+    "aliases": [
+      "tilak",
+      "तिलक",
+      "teeka"
+    ]
+  },
+  {
+    "word": "जन्मदिन",
+    "aliases": [
+      "birthday",
+      "जन्मदिन",
+      "janamdin"
+    ]
+  },
+  {
+    "word": "भंडारा",
+    "aliases": [
+      "bhandara",
+      "भंडारा",
+      "community feast"
+    ]
+  },
+  {
+    "word": "कपूर",
+    "aliases": [
+      "kapoor",
+      "कपूर",
+      "camphor"
+    ]
+  },
+  {
+    "word": "हवन",
+    "aliases": [
+      "hawan",
+      "हवन",
+      "homam",
+      "fire ritual"
+    ]
+  },
+  {
+    "word": "कलश",
+    "aliases": [
+      "kalash",
+      "कलश",
+      "sacred pot"
+    ]
+  },
+  {
+    "word": "गेंदे की माला",
+    "aliases": [
+      "gende ki mala",
+      "गेंदे की माला",
+      "marigold garland"
+    ]
+  },
+  {
+    "word": "वल्लम कली",
+    "aliases": [
+      "boat race",
+      "वल्लम कली",
+      "vallam kali"
+    ]
+  },
+  {
+    "word": "कोलम",
+    "aliases": [
+      "kolam",
+      "कोलम",
+      "rice flour art"
+    ]
+  },
+  {
+    "word": "लावणी",
+    "aliases": [
+      "lavani",
+      "लावणी",
+      "marathi dance"
+    ]
+  },
+  {
+    "word": "पुतला",
+    "aliases": [
+      "putla",
+      "पुतला",
+      "effigy"
+    ]
+  },
+  {
+    "word": "रोज़ा",
+    "aliases": [
+      "roza",
+      "रोज़ा",
+      "ramadan fast"
+    ]
+  },
+  {
+    "word": "सेवइयां",
+    "aliases": [
+      "sewaiyan",
+      "सेवइयां",
+      "eid vermicelli"
+    ]
+  },
+  {
+    "word": "शेरवानी",
+    "aliases": [
+      "sherwani",
+      "शेरवानी",
+      "groom suit"
+    ]
+  },
+  {
+    "word": "दही हांडी",
+    "aliases": [
+      "dahi handi",
+      "दही हांडी",
+      "matki phod"
+    ]
+  },
+  {
+    "word": "त्रिशूल",
+    "aliases": [
+      "trishul",
+      "त्रिशूल",
+      "trident"
+    ]
+  },
+  {
+    "word": "कुमकुम",
+    "aliases": [
+      "kumkum",
+      "कुमकुम",
+      "roli"
+    ]
+  },
+  {
+    "word": "तुलसी",
+    "aliases": [
+      "tulsi",
+      "तुलसी",
+      "holy basil"
+    ]
+  },
+  {
+    "word": "चना पूरी",
+    "aliases": [
+      "chana puri",
+      "चना पूरी",
+      "kanjak prasad"
+    ]
+  },
+  {
+    "word": "सिंदूर खेला",
+    "aliases": [
+      "sindoor khela",
+      "सिंदूर खेला",
+      "dashami ritual"
+    ]
+  },
+  {
+    "word": "शिव जयंती",
+    "aliases": [
+      "chhatrapati shivaji jayanti",
+      "शिव जयंती",
+      "shivaji utsav"
+    ]
+  },
+  {
+    "word": "तुलसी विवाह",
+    "aliases": [
+      "tulsi vivah",
+      "तुलसी विवाह",
+      "holy wedding"
+    ]
+  },
+  {
+    "word": "राधा अष्टमी",
+    "aliases": [
+      "radha ashtami",
+      "राधा अष्टमी",
+      "radha birthday"
+    ]
+  },
+  {
+    "word": "कुंभ मेला",
+    "aliases": [
+      "kumbh mela",
+      "कुंभ मेला",
+      "holy bath"
+    ]
+  },
+  {
+    "word": "शोभा यात्रा",
+    "aliases": [
+      "shobha yatra",
+      "शोभा यात्रा",
+      "procession"
+    ]
+  },
+  {
+    "word": "चौकी",
+    "aliases": [
+      "chowki",
+      "चौकी",
+      "mata ki chowki"
+    ]
+  },
+  {
+    "word": "कव्वाली",
+    "aliases": [
+      "qawwali",
+      "कव्वाली",
+      "sufi song"
+    ]
+  },
+  {
+    "word": "ताज़िया",
+    "aliases": [
+      "tazia",
+      "ताज़िया",
+      "muharram procession"
+    ]
+  },
+  {
+    "word": "ईस्टर एग",
+    "aliases": [
+      "easter egg",
+      "ईस्टर एग",
+      "painted egg"
+    ]
+  },
+  {
+    "word": "गेंद",
+    "aliases": [
+      "gend",
+      "गेंद",
+      "ball",
+      "cricket ball"
+    ]
+  },
+  {
+    "word": "चौका",
+    "aliases": [
+      "chauka",
+      "चौका",
+      "boundary",
+      "four",
+      "4 runs"
+    ]
+  },
+  {
+    "word": "दो रन",
+    "aliases": [
+      "double",
+      "दो रन",
+      "two runs"
+    ]
+  },
+  {
+    "word": "यॉर्क",
+    "aliases": [
+      "yorker",
+      "यॉर्क",
+      "toe crusher",
+      "inswinging yorker"
+    ]
+  },
+  {
+    "word": "गूगली",
+    "aliases": [
+      "googly",
+      "गूगली",
+      "wrong one"
+    ]
+  },
+  {
+    "word": "कैरम बॉल",
+    "aliases": [
+      "carrom ball",
+      "कैरम बॉल",
+      "flick ball"
+    ]
+  },
+  {
+    "word": "इनस्विंग",
+    "aliases": [
+      "inswing",
+      "इनस्विंग",
+      "incoming ball"
+    ]
+  },
+  {
+    "word": "ऑफ कटर",
+    "aliases": [
+      "off cutter",
+      "ऑफ कटर",
+      "cutting ball"
+    ]
+  },
+  {
+    "word": "नो बॉल",
+    "aliases": [
+      "no ball",
+      "नो बॉल",
+      "front foot no ball"
+    ]
+  },
+  {
+    "word": "डेड बॉल",
+    "aliases": [
+      "dead ball",
+      "डेड बॉल",
+      "stopped play"
+    ]
+  },
+  {
+    "word": "कैच",
+    "aliases": [
+      "caught",
+      "कैच",
+      "caught out"
+    ]
+  },
+  {
+    "word": "हिट विकेट",
+    "aliases": [
+      "hit wicket",
+      "हिट विकेट",
+      "hitting stumps"
+    ]
+  },
+  {
+    "word": "शतक",
+    "aliases": [
+      "shatak",
+      "शतक",
+      "century",
+      "100 runs"
+    ]
+  },
+  {
+    "word": "हैट्रिक",
+    "aliases": [
+      "hat trick",
+      "हैट्रिक",
+      "three wickets"
+    ]
+  },
+  {
+    "word": "सुपर ओवर",
+    "aliases": [
+      "super over",
+      "सुपर ओवर",
+      "tie breaker"
+    ]
+  },
+  {
+    "word": "उपकप्तान",
+    "aliases": [
+      "upkaptaan",
+      "उपकप्तान",
+      "vice captain"
+    ]
+  },
+  {
+    "word": "तीसरा अंपायर",
+    "aliases": [
+      "third umpire",
+      "तीसरा अंपायर",
+      "tv umpire"
+    ]
+  },
+  {
+    "word": "डीआरएस",
+    "aliases": [
+      "review",
+      "डीआरएस",
+      "drs review"
+    ]
+  },
+  {
+    "word": "हॉक आई",
+    "aliases": [
+      "hawk eye",
+      "हॉक आई",
+      "ball tracker"
+    ]
+  },
+  {
+    "word": "पवेलियन",
+    "aliases": [
+      "pavilion",
+      "पवेलियन",
+      "dressing room"
+    ]
+  },
+  {
+    "word": "फ्लडलाइट्स",
+    "aliases": [
+      "floodlights",
+      "फ्लडलाइट्स",
+      "night lights"
+    ]
+  },
+  {
+    "word": "साइट स्क्रीन",
+    "aliases": [
+      "sight screen",
+      "साइट स्क्रीन",
+      "white screen"
+    ]
+  },
+  {
+    "word": "स्टंप्स",
+    "aliases": [
+      "stumps",
+      "स्टंप्स",
+      "three sticks"
+    ]
+  },
+  {
+    "word": "पैड",
+    "aliases": [
+      "pads",
+      "पैड",
+      "leg pads"
+    ]
+  },
+  {
+    "word": "थाई पैड",
+    "aliases": [
+      "thigh pad",
+      "थाई पैड",
+      "leg protector"
+    ]
+  },
+  {
+    "word": "जर्सी",
+    "aliases": [
+      "jersey",
+      "जर्सी",
+      "team shirt"
+    ]
+  },
+  {
+    "word": "चीयरलीडर",
+    "aliases": [
+      "cheerleader",
+      "चीयरलीडर",
+      "ipl dance"
+    ]
+  },
+  {
+    "word": "ट्रॉफी",
+    "aliases": [
+      "trophy",
+      "ट्रॉफी",
+      "world cup trophy"
+    ]
+  },
+  {
+    "word": "रनर",
+    "aliases": [
+      "runner",
+      "रनर",
+      "injured runner"
+    ]
+  },
+  {
+    "word": "टी ब्रेक",
+    "aliases": [
+      "tea break",
+      "टी ब्रेक",
+      "test tea"
+    ]
+  },
+  {
+    "word": "पारी",
+    "aliases": [
+      "paari",
+      "पारी",
+      "innings"
+    ]
+  },
+  {
+    "word": "रन रेट",
+    "aliases": [
+      "run rate",
+      "रन रेट",
+      "current run rate"
+    ]
+  },
+  {
+    "word": "कवर ड्राइव",
+    "aliases": [
+      "cover drive",
+      "कवर ड्राइव",
+      "classic shot"
+    ]
+  },
+  {
+    "word": "पुल शॉट",
+    "aliases": [
+      "pull shot",
+      "पुल शॉट",
+      "short ball pull"
+    ]
+  },
+  {
+    "word": "रिवर्स स्वीप",
+    "aliases": [
+      "reverse sweep",
+      "रिवर्स स्वीप",
+      "switch hit"
+    ]
+  },
+  {
+    "word": "हेलिकॉप्टर शॉट",
+    "aliases": [
+      "helicopter shot",
+      "हेलिकॉप्टर शॉट",
+      "dhoni shot"
+    ]
+  },
+  {
+    "word": "ग्लांस",
+    "aliases": [
+      "glance shot",
+      "ग्लांस",
+      "leg glance"
+    ]
+  },
+  {
+    "word": "किनारा",
+    "aliases": [
+      "edge",
+      "किनारा",
+      "outside edge"
+    ]
+  },
+  {
+    "word": "पॉइंट",
+    "aliases": [
+      "point",
+      "पॉइंट",
+      "backward point"
+    ]
+  },
+  {
+    "word": "मिड ऑन",
+    "aliases": [
+      "mid on",
+      "मिड ऑन",
+      "midon"
+    ]
+  },
+  {
+    "word": "फाइन लेग",
+    "aliases": [
+      "fine leg",
+      "फाइन लेग",
+      "short fine leg"
+    ]
+  },
+  {
+    "word": "लॉन्ग ऑफ",
+    "aliases": [
+      "long off",
+      "लॉन्ग ऑफ",
+      "longoff"
+    ]
+  },
+  {
+    "word": "विकेटकीपर",
+    "aliases": [
+      "wicketkeeper",
+      "विकेटकीपर",
+      "keeper",
+      "behind stumps"
+    ]
+  },
+  {
+    "word": "ऑलराउंडर",
+    "aliases": [
+      "all rounder",
+      "ऑलराउंडर",
+      "bat and ball"
+    ]
+  },
+  {
+    "word": "फिनिशर",
+    "aliases": [
+      "finisher",
+      "फिनिशर",
+      "match winner"
+    ]
+  },
+  {
+    "word": "लेफ्ट आर्म स्पिनर",
+    "aliases": [
+      "left arm spinner",
+      "लेफ्ट आर्म स्पिनर",
+      "orthodox"
+    ]
+  },
+  {
+    "word": "टेनिस बॉल",
+    "aliases": [
+      "tennis ball",
+      "टेनिस बॉल",
+      "green ball"
+    ]
+  },
+  {
+    "word": "ओवरथ्रो",
+    "aliases": [
+      "overthrow",
+      "ओवरथ्रो",
+      "extra runs"
+    ]
+  },
+  {
+    "word": "पानी का छिड़काव",
+    "aliases": [
+      "water spray",
+      "पानी का छिड़काव",
+      "pitch water"
+    ]
+  },
+  {
+    "word": "वनडे",
+    "aliases": [
+      "one day match",
+      "वनडे",
+      "50 overs",
+      "odi"
+    ]
+  },
+  {
+    "word": "नेट प्रैक्टिस",
+    "aliases": [
+      "net practice",
+      "नेट प्रैक्टिस",
+      "cricket nets"
+    ]
+  },
+  {
+    "word": "मिसफील्ड",
+    "aliases": [
+      "misfield",
+      "मिसफील्ड",
+      "fumble"
+    ]
+  },
+  {
+    "word": "विज्ञान",
+    "aliases": [
+      "vigyan",
+      "विज्ञान",
+      "science"
+    ]
+  },
+  {
+    "word": "हिंदी",
+    "aliases": [
+      "hindi",
+      "हिंदी",
+      "hindi language",
+      "sahitya"
+    ]
+  },
+  {
+    "word": "चित्रकला",
+    "aliases": [
+      "chitra",
+      "चित्रकला",
+      "drawing",
+      "art"
+    ]
+  },
+  {
+    "word": "कंप्यूटर",
+    "aliases": [
+      "computer",
+      "कंप्यूटर",
+      "it",
+      "information technology"
+    ]
+  },
+  {
+    "word": "अर्थशास्त्र",
+    "aliases": [
+      "artha shastra",
+      "अर्थशास्त्र",
+      "economics"
+    ]
+  },
+  {
+    "word": "जीव विज्ञान",
+    "aliases": [
+      "jeev vigyan",
+      "जीव विज्ञान",
+      "biology"
+    ]
+  },
+  {
+    "word": "कक्षा",
+    "aliases": [
+      "kaksha",
+      "कक्षा",
+      "class",
+      "classroom"
+    ]
+  },
+  {
+    "word": "डस्टर",
+    "aliases": [
+      "duster",
+      "डस्टर",
+      "board eraser"
+    ]
+  },
+  {
+    "word": "बेंच",
+    "aliases": [
+      "bench",
+      "बेंच",
+      "wooden bench"
+    ]
+  },
+  {
+    "word": "मेज",
+    "aliases": [
+      "mez",
+      "मेज",
+      "table"
+    ]
+  },
+  {
+    "word": "किताब",
+    "aliases": [
+      "kitaab",
+      "किताब",
+      "book"
+    ]
+  },
+  {
+    "word": "पेंसिल",
+    "aliases": [
+      "pencil",
+      "पेंसिल",
+      "lead pencil"
+    ]
+  },
+  {
+    "word": "पटरी",
+    "aliases": [
+      "patri",
+      "पटरी",
+      "scale",
+      "ruler"
+    ]
+  },
+  {
+    "word": "चांदा",
+    "aliases": [
+      "chanda",
+      "चांदा",
+      "protractor"
+    ]
+  },
+  {
+    "word": "पेंसिल बॉक्स",
+    "aliases": [
+      "pencil box",
+      "पेंसिल बॉक्स",
+      "pen case"
+    ]
+  },
+  {
+    "word": "मोम रंग",
+    "aliases": [
+      "mom rang",
+      "मोम रंग",
+      "crayons"
+    ]
+  },
+  {
+    "word": "ब्रश",
+    "aliases": [
+      "toolika",
+      "ब्रश",
+      "paint brush"
+    ]
+  },
+  {
+    "word": "ड्राइंग शीट",
+    "aliases": [
+      "drawing sheet",
+      "ड्राइंग शीट",
+      "art sheet"
+    ]
+  },
+  {
+    "word": "गोंद",
+    "aliases": [
+      "gond",
+      "गोंद",
+      "glue",
+      "fevicol"
+    ]
+  },
+  {
+    "word": "पिन",
+    "aliases": [
+      "all pin",
+      "पिन",
+      "board pin"
+    ]
+  },
+  {
+    "word": "फ़ोल्डर",
+    "aliases": [
+      "folder",
+      "फ़ोल्डर",
+      "document folder"
+    ]
+  },
+  {
+    "word": "प्रगति पत्र",
+    "aliases": [
+      "report card",
+      "प्रगति पत्र",
+      "progress report"
+    ]
+  },
+  {
+    "word": "पदक",
+    "aliases": [
+      "padak",
+      "पदक",
+      "medal"
+    ]
+  },
+  {
+    "word": "स्कूल वैन",
+    "aliases": [
+      "school van",
+      "स्कूल वैन",
+      "pool car"
+    ]
+  },
+  {
+    "word": "बेल्ट",
+    "aliases": [
+      "belt",
+      "बेल्ट",
+      "school belt"
+    ]
+  },
+  {
+    "word": "जूते",
+    "aliases": [
+      "joote",
+      "जूते",
+      "school shoes"
+    ]
+  },
+  {
+    "word": "टिफिन बॉक्स",
+    "aliases": [
+      "tiffin box",
+      "टिफिन बॉक्स",
+      "lunch box"
+    ]
+  },
+  {
+    "word": "राष्ट्रगान",
+    "aliases": [
+      "rashtragan",
+      "राष्ट्रगान",
+      "national anthem",
+      "jana gana mana"
+    ]
+  },
+  {
+    "word": "परेड",
+    "aliases": [
+      "parade",
+      "परेड",
+      "march past"
+    ]
+  },
+  {
+    "word": "पीरियड",
+    "aliases": [
+      "period",
+      "पीरियड",
+      "class period"
+    ]
+  },
+  {
+    "word": "प्रधानाचार्य",
+    "aliases": [
+      "pradhanacharya",
+      "प्रधानाचार्य",
+      "principal"
+    ]
+  },
+  {
+    "word": "छात्र",
+    "aliases": [
+      "chhatra",
+      "छात्र",
+      "student",
+      "boy student"
+    ]
+  },
+  {
+    "word": "मित्र",
+    "aliases": [
+      "dost",
+      "मित्र",
+      "friend",
+      "yaar"
+    ]
+  },
+  {
+    "word": "टेस्ट",
+    "aliases": [
+      "test",
+      "टेस्ट",
+      "class test",
+      "unit test"
+    ]
+  },
+  {
+    "word": "उत्तर पुस्तिका",
+    "aliases": [
+      "uttar pustika",
+      "उत्तर पुस्तिका",
+      "answer sheet"
+    ]
+  },
+  {
+    "word": "छुट्टी",
+    "aliases": [
+      "chhutti",
+      "छुट्टी",
+      "holiday"
+    ]
+  },
+  {
+    "word": "पिकनिक",
+    "aliases": [
+      "picnic",
+      "पिकनिक",
+      "school picnic"
+    ]
+  },
+  {
+    "word": "विज्ञान मेला",
+    "aliases": [
+      "vigyan mela",
+      "विज्ञान मेला",
+      "science exhibition"
+    ]
+  },
+  {
+    "word": "प्रश्नोत्तरी",
+    "aliases": [
+      "quiz",
+      "प्रश्नोत्तरी",
+      "gk quiz"
+    ]
+  },
+  {
+    "word": "कविता",
+    "aliases": [
+      "kavita",
+      "कविता",
+      "poem",
+      "poetry"
+    ]
+  },
+  {
+    "word": "वर्तनी",
+    "aliases": [
+      "vartani",
+      "वर्तनी",
+      "spelling"
+    ]
+  },
+  {
+    "word": "हाजिरी",
+    "aliases": [
+      "hajiri",
+      "हाजिरी",
+      "roll call"
+    ]
+  },
+  {
+    "word": "खेल का मैदान",
+    "aliases": [
+      "khel maidan",
+      "खेल का मैदान",
+      "sports ground",
+      "playground"
+    ]
+  },
+  {
+    "word": "एटलस",
+    "aliases": [
+      "atlas",
+      "एटलस",
+      "map book"
+    ]
+  },
+  {
+    "word": "बीकर",
+    "aliases": [
+      "beaker",
+      "बीकर",
+      "lab beaker"
+    ]
+  },
+  {
+    "word": "लेंस",
+    "aliases": [
+      "lens",
+      "लेंस",
+      "glass lens"
+    ]
+  },
+  {
+    "word": "थर्मामीटर",
+    "aliases": [
+      "thermometer",
+      "थर्मामीटर",
+      "tapman yantra"
+    ]
+  },
+  {
+    "word": "तिपाई",
+    "aliases": [
+      "tripod stand",
+      "तिपाई",
+      "lab stand"
+    ]
+  },
+  {
+    "word": "कांच की प्लेट",
+    "aliases": [
+      "watch glass",
+      "कांच की प्लेट",
+      "round glass"
+    ]
+  },
+  {
+    "word": "लिटमस पत्र",
+    "aliases": [
+      "litmus paper",
+      "लिटमस पत्र",
+      "acid paper"
+    ]
+  },
+  {
+    "word": "कुतुब मीनार",
+    "aliases": [
+      "qutub minar",
+      "कुतुब मीनार",
+      "delhi tower"
+    ]
+  },
+  {
+    "word": "गेटवे ऑफ इंडिया",
+    "aliases": [
+      "gateway of india",
+      "गेटवे ऑफ इंडिया",
+      "mumbai monument"
+    ]
+  },
+  {
+    "word": "स्वर्ण मंदिर",
+    "aliases": [
+      "golden temple",
+      "स्वर्ण मंदिर",
+      "harmandir sahib",
+      "amritsar"
+    ]
+  },
+  {
+    "word": "मीनाक्षी मंदिर",
+    "aliases": [
+      "meenakshi mandir",
+      "मीनाक्षी मंदिर",
+      "madurai temple"
+    ]
+  },
+  {
+    "word": "फतेहपुर सीकरी",
+    "aliases": [
+      "fatehpur sikri",
+      "फतेहपुर सीकरी",
+      "akbar capital"
+    ]
+  },
+  {
+    "word": "जंतर मंतर",
+    "aliases": [
+      "jantar mantar",
+      "जंतर मंतर",
+      "astronomy observatory"
+    ]
+  },
+  {
+    "word": "मेहरानगढ़",
+    "aliases": [
+      "mehrangarh",
+      "मेहरानगढ़",
+      "jodhpur fort"
+    ]
+  },
+  {
+    "word": "ग्वालियर किला",
+    "aliases": [
+      "gwalior quila",
+      "ग्वालियर किला",
+      "gwalior fort"
+    ]
+  },
+  {
+    "word": "बैंगलोर पैलेस",
+    "aliases": [
+      "bangalore palace",
+      "बैंगलोर पैलेस",
+      "bengaluru palace"
+    ]
+  },
+  {
+    "word": "हावड़ा ब्रिज",
+    "aliases": [
+      "howrah bridge",
+      "हावड़ा ब्रिज",
+      "rabindra setu"
+    ]
+  },
+  {
+    "word": "अक्षरधाम",
+    "aliases": [
+      "akshardham",
+      "अक्षरधाम",
+      "swaminarayan temple"
+    ]
+  },
+  {
+    "word": "केदारनाथ",
+    "aliases": [
+      "kedarnath",
+      "केदारनाथ",
+      "shiva temple"
+    ]
+  },
+  {
+    "word": "जगन्नाथ पूरी",
+    "aliases": [
+      "jagannath puri",
+      "जगन्नाथ पूरी",
+      "puri dham"
+    ]
+  },
+  {
+    "word": "तिरुपति",
+    "aliases": [
+      "tirupati",
+      "तिरुपति",
+      "balaji",
+      "venkateswara"
+    ]
+  },
+  {
+    "word": "ऋषिकेश",
+    "aliases": [
+      "rishikesh",
+      "ऋषिकेश",
+      "yoga capital",
+      "lakshman jhula"
+    ]
+  },
+  {
+    "word": "प्रयागराज",
+    "aliases": [
+      "prayagraj",
+      "प्रयागराज",
+      "allahabad",
+      "sangam"
+    ]
+  },
+  {
+    "word": "वृंदावन",
+    "aliases": [
+      "vrindavan",
+      "वृंदावन",
+      "banke bihari"
+    ]
+  },
+  {
+    "word": "मनाली",
+    "aliases": [
+      "manali",
+      "मनाली",
+      "solang valley"
+    ]
+  },
+  {
+    "word": "नैनीताल",
+    "aliases": [
+      "nainital",
+      "नैनीताल",
+      "naini lake"
+    ]
+  },
+  {
+    "word": "लेह",
+    "aliases": [
+      "leh",
+      "लेह",
+      "leh ladakh"
+    ]
+  },
+  {
+    "word": "कोडाइकनाल",
+    "aliases": [
+      "kodaikanal",
+      "कोडाइकनाल",
+      "princess of hills"
+    ]
+  },
+  {
+    "word": "दार्जिलिंग",
+    "aliases": [
+      "darjeeling",
+      "दार्जिलिंग",
+      "toy train",
+      "tea hills"
+    ]
+  },
+  {
+    "word": "चेरापूंजी",
+    "aliases": [
+      "cherrapunji",
+      "चेरापूंजी",
+      "sohra",
+      "rainy place"
+    ]
+  },
+  {
+    "word": "पांडिचेरी",
+    "aliases": [
+      "pondicherry",
+      "पांडिचेरी",
+      "puducherry",
+      "auroville"
+    ]
+  },
+  {
+    "word": "कोलकाता",
+    "aliases": [
+      "kolkata",
+      "कोलकाता",
+      "calcutta",
+      "city of joy"
+    ]
+  },
+  {
+    "word": "हैदराबाद",
+    "aliases": [
+      "hyderabad",
+      "हैदराबाद",
+      "city of pearls"
+    ]
+  },
+  {
+    "word": "जयपुर",
+    "aliases": [
+      "jaipur",
+      "जयपुर",
+      "pink city"
+    ]
+  },
+  {
+    "word": "इंदौर",
+    "aliases": [
+      "indore",
+      "इंदौर",
+      "cleanest city"
+    ]
+  },
+  {
+    "word": "रांची",
+    "aliases": [
+      "ranchi",
+      "रांची",
+      "jharkhand capital"
+    ]
+  },
+  {
+    "word": "आगरा",
+    "aliases": [
+      "agra",
+      "आगरा",
+      "petha city"
+    ]
+  },
+  {
+    "word": "नागपुर",
+    "aliases": [
+      "nagpur",
+      "नागपुर",
+      "orange city"
+    ]
+  },
+  {
+    "word": "कोच्चि",
+    "aliases": [
+      "kochi",
+      "कोच्चि",
+      "cochin",
+      "queen of arabian sea"
+    ]
+  },
+  {
+    "word": "भुवनेश्वर",
+    "aliases": [
+      "bhubaneswar",
+      "भुवनेश्वर",
+      "temple city"
+    ]
+  },
+  {
+    "word": "जबलपुर",
+    "aliases": [
+      "jabalpur",
+      "जबलपुर",
+      "bhedaghat marble"
+    ]
+  },
+  {
+    "word": "बीकानेर",
+    "aliases": [
+      "bikaner",
+      "बीकानेर",
+      "bhujia city"
+    ]
+  },
+  {
+    "word": "अलीगढ़",
+    "aliases": [
+      "aligarh",
+      "अलीगढ़",
+      "lock city"
+    ]
+  },
+  {
+    "word": "गोरखपुर",
+    "aliases": [
+      "gorakhpur",
+      "गोरखपुर",
+      "terai city"
+    ]
+  },
+  {
+    "word": "गंगा नदी",
+    "aliases": [
+      "ganga nadi",
+      "गंगा नदी",
+      "holy ganga",
+      "ganges"
+    ]
+  },
+  {
+    "word": "नर्मदा नदी",
+    "aliases": [
+      "narmada",
+      "नर्मदा नदी",
+      "holy narmada"
+    ]
+  },
+  {
+    "word": "कावेरी नदी",
+    "aliases": [
+      "kaveri",
+      "कावेरी नदी",
+      "cauvery river"
+    ]
+  },
+  {
+    "word": "थार रेगिस्तान",
+    "aliases": [
+      "thar registan",
+      "थार रेगिस्तान",
+      "great indian desert"
+    ]
+  },
+  {
+    "word": "पश्चिमी घाट",
+    "aliases": [
+      "western ghats",
+      "पश्चिमी घाट",
+      "sahyadri"
+    ]
+  },
+  {
+    "word": "वुलर झील",
+    "aliases": [
+      "wular jheel",
+      "वुलर झील",
+      "freshwater lake"
+    ]
+  },
+  {
+    "word": "धुआंधार प्रपात",
+    "aliases": [
+      "dhuandhar",
+      "धुआंधार प्रपात",
+      "narmada falls"
+    ]
+  },
+  {
+    "word": "मरीन ड्राइव",
+    "aliases": [
+      "marine drive",
+      "मरीन ड्राइव",
+      "queens necklace"
+    ]
+  },
+  {
+    "word": "बड़ा इमामबाड़ा",
+    "aliases": [
+      "bara imambara",
+      "बड़ा इमामबाड़ा",
+      "bhulbhulaiya"
+    ]
+  },
+  {
+    "word": "कन्याकुमारी",
+    "aliases": [
+      "kanyakumari",
+      "कन्याकुमारी",
+      "southern tip"
+    ]
+  },
+  {
+    "word": "शेर",
+    "aliases": [
+      "sher",
+      "शेर",
+      "lion",
+      "singh"
+    ]
+  },
+  {
+    "word": "तेंदुआ",
+    "aliases": [
+      "tendua",
+      "तेंदुआ",
+      "panther",
+      "leopard"
+    ]
+  },
+  {
+    "word": "लंगूर",
+    "aliases": [
+      "langoor",
+      "लंगूर",
+      "gray langur",
+      "baboon"
+    ]
+  },
+  {
+    "word": "गधा",
+    "aliases": [
+      "gadha",
+      "गधा",
+      "donkey",
+      "ass"
+    ]
+  },
+  {
+    "word": "बैल",
+    "aliases": [
+      "bail",
+      "बैल",
+      "ox",
+      "bull"
+    ]
+  },
+  {
+    "word": "बकरा",
+    "aliases": [
+      "bakra",
+      "बकरा",
+      "he-goat"
+    ]
+  },
+  {
+    "word": "पिल्ला",
+    "aliases": [
+      "pilla",
+      "पिल्ला",
+      "puppy",
+      "pup"
+    ]
+  },
+  {
+    "word": "चूहा",
+    "aliases": [
+      "chuha",
+      "चूहा",
+      "mouse",
+      "rat"
+    ]
+  },
+  {
+    "word": "सांप",
+    "aliases": [
+      "saanp",
+      "सांप",
+      "snake",
+      "serpent"
+    ]
+  },
+  {
+    "word": "घड़ियाल",
+    "aliases": [
+      "ghariyal",
+      "घड़ियाल",
+      "alligator",
+      "gavial"
+    ]
+  },
+  {
+    "word": "मछली",
+    "aliases": [
+      "machhli",
+      "मछली",
+      "fish",
+      "meen"
+    ]
+  },
+  {
+    "word": "डॉल्फिन",
+    "aliases": [
+      "dolphin",
+      "डॉल्फिन",
+      "ganga dolphin"
+    ]
+  },
+  {
+    "word": "झींगा",
+    "aliases": [
+      "jhinga",
+      "झींगा",
+      "prawn",
+      "shrimp"
+    ]
+  },
+  {
+    "word": "तोता",
+    "aliases": [
+      "tota",
+      "तोता",
+      "parrot",
+      "mithoo"
+    ]
+  },
+  {
+    "word": "कौआ",
+    "aliases": [
+      "kauwa",
+      "कौआ",
+      "crow",
+      "raven"
+    ]
+  },
+  {
+    "word": "बाज़",
+    "aliases": [
+      "baaz",
+      "बाज़",
+      "falcon",
+      "hawk"
+    ]
+  },
+  {
+    "word": "हंस",
+    "aliases": [
+      "hans",
+      "हंस",
+      "swan"
+    ]
+  },
+  {
+    "word": "बगुला",
+    "aliases": [
+      "bagula",
+      "बगुला",
+      "heron",
+      "egret"
+    ]
+  },
+  {
+    "word": "तीतर",
+    "aliases": [
+      "teetar",
+      "तीतर",
+      "partridge"
+    ]
+  },
+  {
+    "word": "गौरैया",
+    "aliases": [
+      "gauraiya",
+      "गौरैया",
+      "sparrow"
+    ]
+  },
+  {
+    "word": "मधुमक्खी",
+    "aliases": [
+      "madhumakkhi",
+      "मधुमक्खी",
+      "honeybee",
+      "bee"
+    ]
+  },
+  {
+    "word": "मकड़ी",
+    "aliases": [
+      "makdi",
+      "मकड़ी",
+      "spider"
+    ]
+  },
+  {
+    "word": "झींगुर",
+    "aliases": [
+      "jheengur",
+      "झींगुर",
+      "cricket insect"
+    ]
+  },
+  {
+    "word": "जोंक",
+    "aliases": [
+      "jhonk",
+      "जोंक",
+      "leech"
+    ]
+  },
+  {
+    "word": "नेवला",
+    "aliases": [
+      "nevla",
+      "नेवला",
+      "mongoose"
+    ]
+  },
+  {
+    "word": "सियार",
+    "aliases": [
+      "siyar",
+      "सियार",
+      "jackal",
+      "gidad"
+    ]
+  },
+  {
+    "word": "नीलगाय",
+    "aliases": [
+      "nilgai",
+      "नीलगाय",
+      "blue bull"
+    ]
+  },
+  {
+    "word": "गैंडा",
+    "aliases": [
+      "ganda",
+      "गैंडा",
+      "rhino",
+      "rhinoceros"
+    ]
+  },
+  {
+    "word": "ज़ेब्रा",
+    "aliases": [
+      "zebra",
+      "ज़ेब्रा",
+      "striped animal"
+    ]
+  },
+  {
+    "word": "गोरिल्ला",
+    "aliases": [
+      "gorilla",
+      "गोरिल्ला",
+      "great ape"
+    ]
+  },
+  {
+    "word": "चमगादड़",
+    "aliases": [
+      "chamgadar",
+      "चमगादड़",
+      "bat"
+    ]
+  },
+  {
+    "word": "अजगर",
+    "aliases": [
+      "ajgar",
+      "अजगर",
+      "python"
+    ]
+  },
+  {
+    "word": "जेलीफ़िश",
+    "aliases": [
+      "jellyfish",
+      "जेलीफ़िश",
+      "jelly fish"
+    ]
+  },
+  {
+    "word": "जुगनू",
+    "aliases": [
+      "firefly",
+      "जुगनू",
+      "glowworm"
+    ]
+  },
+  {
+    "word": "खटमल",
+    "aliases": [
+      "khatmal",
+      "खटमल",
+      "bedbug"
+    ]
+  },
+  {
+    "word": "कनखजूरा",
+    "aliases": [
+      "kankhajura",
+      "कनखजूरा",
+      "centipede"
+    ]
+  },
+  {
+    "word": "बिज्जू",
+    "aliases": [
+      "bijju",
+      "बिज्जू",
+      "badger"
+    ]
+  },
+  {
+    "word": "पेंगुइन",
+    "aliases": [
+      "penguin",
+      "पेंगुइन",
+      "snow bird"
+    ]
+  },
+  {
+    "word": "कठफोड़वा",
+    "aliases": [
+      "woodpecker",
+      "कठफोड़वा",
+      "tree bird"
+    ]
+  },
+  {
+    "word": "चकोर",
+    "aliases": [
+      "chakor",
+      "चकोर",
+      "moon bird"
+    ]
+  },
+  {
+    "word": "कतला",
+    "aliases": [
+      "katla",
+      "कतला",
+      "river fish"
+    ]
+  },
+  {
+    "word": "फ़ाख्ता",
+    "aliases": [
+      "fakhta",
+      "फ़ाख्ता",
+      "dove",
+      "ring dove"
+    ]
+  },
+  {
+    "word": "झाऊ चूहा",
+    "aliases": [
+      "hedgehog",
+      "झाऊ चूहा",
+      "spiky mammal"
+    ]
+  },
+  {
+    "word": "दादुर",
+    "aliases": [
+      "toad",
+      "दादुर",
+      "dry frog"
+    ]
+  },
+  {
+    "word": "भूंड़",
+    "aliases": [
+      "cicada",
+      "भूंड़",
+      "tree cricket",
+      "summer bug"
+    ]
+  },
+  {
+    "word": "व्याध पतंग",
+    "aliases": [
+      "dragonfly",
+      "व्याध पतंग",
+      "helicopter bug"
+    ]
+  },
+  {
+    "word": "सोनकीड़ा",
+    "aliases": [
+      "ladybug",
+      "सोनकीड़ा",
+      "red black beetle"
+    ]
+  },
+  {
+    "word": "ट्राउट",
+    "aliases": [
+      "trout",
+      "ट्राउट",
+      "mountain fish"
+    ]
+  },
+  {
+    "word": "हॉर्नबिल",
+    "aliases": [
+      "hornbill",
+      "हॉर्नबिल",
+      "great hornbill",
+      "dhanchidya"
+    ]
+  },
+  {
+    "word": "हिम तेंदुआ",
+    "aliases": [
+      "snow leopard",
+      "हिम तेंदुआ",
+      "mountain cat",
+      "ghost cat"
+    ]
+  },
+  {
+    "word": "दिलवाले दुल्हनिया ले जाएंगे",
+    "aliases": [
+      "ddlj",
+      "दिलवाले दुल्हनिया ले जाएंगे",
+      "raj simran",
+      "romance"
+    ]
+  },
+  {
+    "word": "हीरोइन",
+    "aliases": [
+      "heroine",
+      "हीरोइन",
+      "lead actress",
+      "nayika"
+    ]
+  },
+  {
+    "word": "निर्माता",
+    "aliases": [
+      "producer",
+      "निर्माता",
+      "film producer"
+    ]
+  },
+  {
+    "word": "एक्शन",
+    "aliases": [
+      "action",
+      "एक्शन",
+      "director action"
+    ]
+  },
+  {
+    "word": "डायलॉग",
+    "aliases": [
+      "dialogue",
+      "डायलॉग",
+      "filmy dialogue"
+    ]
+  },
+  {
+    "word": "स्पॉटलाइट",
+    "aliases": [
+      "spotlight",
+      "स्पॉटलाइट",
+      "stage light"
+    ]
+  },
+  {
+    "word": "पोशाक",
+    "aliases": [
+      "costume",
+      "पोशाक",
+      "dress",
+      "wardrobe"
+    ]
+  },
+  {
+    "word": "टीज़र",
+    "aliases": [
+      "teaser",
+      "टीज़र",
+      "first look"
+    ]
+  },
+  {
+    "word": "फ़्लैशबैक",
+    "aliases": [
+      "flashback",
+      "फ़्लैशबैक",
+      "past story"
+    ]
+  },
+  {
+    "word": "बैकग्राउंड संगीत",
+    "aliases": [
+      "background music",
+      "बैकग्राउंड संगीत",
+      "bgm",
+      "score"
+    ]
+  },
+  {
+    "word": "कोरियोग्राफी",
+    "aliases": [
+      "choreography",
+      "कोरियोग्राफी",
+      "dance steps"
+    ]
+  },
+  {
+    "word": "गायक",
+    "aliases": [
+      "gayak",
+      "गायक",
+      "playback singer"
+    ]
+  },
+  {
+    "word": "ऑर्केस्ट्रा",
+    "aliases": [
+      "orchestra",
+      "ऑर्केस्ट्रा",
+      "band"
+    ]
+  },
+  {
+    "word": "रेड कार्पेट",
+    "aliases": [
+      "red carpet",
+      "रेड कार्पेट",
+      "awards carpet"
+    ]
+  },
+  {
+    "word": "हिट",
+    "aliases": [
+      "hit",
+      "हिट",
+      "superhit"
+    ]
+  },
+  {
+    "word": "हाउसफुल",
+    "aliases": [
+      "housefull",
+      "हाउसफुल",
+      "all seats booked"
+    ]
+  },
+  {
+    "word": "थिएटर",
+    "aliases": [
+      "theatre",
+      "थिएटर",
+      "cinema hall"
+    ]
+  },
+  {
+    "word": "प्रोजेक्टर",
+    "aliases": [
+      "projector",
+      "प्रोजेक्टर",
+      "film projector"
+    ]
+  },
+  {
+    "word": "पहली पंक्ति",
+    "aliases": [
+      "first row",
+      "पहली पंक्ति",
+      "front seats"
+    ]
+  },
+  {
+    "word": "भाषण",
+    "aliases": [
+      "bhashan",
+      "भाषण",
+      "acceptance speech"
+    ]
+  },
+  {
+    "word": "प्रशंसक",
+    "aliases": [
+      "fan club",
+      "प्रशंसक",
+      "devoted fans"
+    ]
+  },
+  {
+    "word": "स्टंट",
+    "aliases": [
+      "stunt",
+      "स्टंट",
+      "action stunt"
+    ]
+  },
+  {
+    "word": "बॉडी डबल",
+    "aliases": [
+      "body double",
+      "बॉडी डबल",
+      "shadow actor"
+    ]
+  },
+  {
+    "word": "एनिमेशन",
+    "aliases": [
+      "animation",
+      "एनिमेशन",
+      "cartoon film"
+    ]
+  },
+  {
+    "word": "कार धमाका",
+    "aliases": [
+      "car blast",
+      "कार धमाका",
+      "flying car"
+    ]
+  },
+  {
+    "word": "बारिश का डांस",
+    "aliases": [
+      "rain dance",
+      "बारिश का डांस",
+      "saree in rain"
+    ]
+  },
+  {
+    "word": "एयरपोर्ट क्लाइमेक्स",
+    "aliases": [
+      "airport climax",
+      "एयरपोर्ट क्लाइमेक्स",
+      "stopping wedding"
+    ]
+  },
+  {
+    "word": "ऑर्डर ऑर्डर",
+    "aliases": [
+      "order order",
+      "ऑर्डर ऑर्डर",
+      "silence in court"
+    ]
+  },
+  {
+    "word": "गब्बर",
+    "aliases": [
+      "gabbar",
+      "गब्बर",
+      "sholay gabbar"
+    ]
+  },
+  {
+    "word": "मोगैम्बो",
+    "aliases": [
+      "mogambo",
+      "मोगैम्बो",
+      "mogambo khush hua"
+    ]
+  },
+  {
+    "word": "सर्किट",
+    "aliases": [
+      "circuit",
+      "सर्किट",
+      "munna circuit"
+    ]
+  },
+  {
+    "word": "पुष्पा",
+    "aliases": [
+      "pushpa",
+      "पुष्पा",
+      "jhukega nahi"
+    ]
+  },
+  {
+    "word": "देवदास",
+    "aliases": [
+      "devdas",
+      "देवदास",
+      "paro devdas"
+    ]
+  },
+  {
+    "word": "डिस्को डांसर",
+    "aliases": [
+      "disco dancer",
+      "डिस्को डांसर",
+      "i am a disco dancer"
+    ]
+  },
+  {
+    "word": "शहंशाह",
+    "aliases": [
+      "shahenshah",
+      "शहंशाह",
+      "rishte me toh hum"
+    ]
+  },
+  {
+    "word": "गोल्डन जुबली",
+    "aliases": [
+      "golden jubilee",
+      "गोल्डन जुबली",
+      "50 weeks run"
+    ]
+  },
+  {
+    "word": "ऑडिशन",
+    "aliases": [
+      "audition",
+      "ऑडिशन",
+      "talent trial"
+    ]
+  },
+  {
+    "word": "कैमरामैन",
+    "aliases": [
+      "cameraman",
+      "कैमरामैन",
+      "dop"
+    ]
+  },
+  {
+    "word": "क्रेन शॉट",
+    "aliases": [
+      "crane shot",
+      "क्रेन शॉट",
+      "high angle shot"
+    ]
+  },
+  {
+    "word": "रीटेक",
+    "aliases": [
+      "retake",
+      "रीटेक",
+      "take two"
+    ]
+  },
+  {
+    "word": "सेंसर बोर्ड",
+    "aliases": [
+      "censor board",
+      "सेंसर बोर्ड",
+      "film certificate"
+    ]
+  },
+  {
+    "word": "खड़े होकर ताली",
+    "aliases": [
+      "standing ovation",
+      "खड़े होकर ताली",
+      "audience clap"
+    ]
+  },
+  {
+    "word": "माँ का प्यार",
+    "aliases": [
+      "mother sentiment",
+      "माँ का प्यार",
+      "mere paas maa hai"
+    ]
+  },
+  {
+    "word": "भेष बदलना",
+    "aliases": [
+      "disguise",
+      "भेष बदलना",
+      "fake mustache"
+    ]
+  },
+  {
+    "word": "भूतिया कहानी",
+    "aliases": [
+      "ghost story",
+      "भूतिया कहानी",
+      "bhoot film"
+    ]
+  },
+  {
+    "word": "माफिया डॉन",
+    "aliases": [
+      "mafia don",
+      "माफिया डॉन",
+      "underworld boss"
+    ]
+  },
+  {
+    "word": "गवाह",
+    "aliases": [
+      "court witness",
+      "गवाह",
+      "chashmadeed gawah"
+    ]
+  },
+  {
+    "word": "बुलेटप्रूफ जैकेट",
+    "aliases": [
+      "bulletproof jacket",
+      "बुलेटप्रूफ जैकेट",
+      "safety vest"
+    ]
+  },
+  {
+    "word": "बम टाइमर",
+    "aliases": [
+      "bomb timer",
+      "बम टाइमर",
+      "cut red wire"
+    ]
+  }
+]

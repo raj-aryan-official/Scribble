@@ -1,0 +1,1336 @@
+[
+  {
+    "word": "chai",
+    "aliases": [
+      "chai",
+      "चाय",
+      "chaai",
+      "tea"
+    ]
+  },
+  {
+    "word": "auto-rickshaw",
+    "aliases": [
+      "auto-rickshaw",
+      "ऑटो-रिक्शा",
+      "auto",
+      "autorickshaw",
+      "tuk tuk",
+      "rickshaw"
+    ]
+  },
+  {
+    "word": "diya",
+    "aliases": [
+      "diya",
+      "दीया",
+      "deepak",
+      "lamp"
+    ]
+  },
+  {
+    "word": "matka",
+    "aliases": [
+      "matka",
+      "मटका",
+      "matki",
+      "ghada",
+      "clay pot"
+    ]
+  },
+  {
+    "word": "charpai",
+    "aliases": [
+      "charpai",
+      "चारपाई",
+      "khatia",
+      "khat",
+      "cot"
+    ]
+  },
+  {
+    "word": "jhumka",
+    "aliases": [
+      "jhumka",
+      "झुमका",
+      "earring",
+      "jhumki"
+    ]
+  },
+  {
+    "word": "belan",
+    "aliases": [
+      "belan",
+      "बेलन",
+      "rolling pin"
+    ]
+  },
+  {
+    "word": "agarbatti",
+    "aliases": [
+      "agarbatti",
+      "अगरबत्ती",
+      "incense",
+      "dhoopbatti"
+    ]
+  },
+  {
+    "word": "jhadu",
+    "aliases": [
+      "jhadu",
+      "झाड़ू",
+      "broom",
+      "jhadhoo"
+    ]
+  },
+  {
+    "word": "thali",
+    "aliases": [
+      "thali",
+      "थाली",
+      "plate"
+    ]
+  },
+  {
+    "word": "kadhai",
+    "aliases": [
+      "kadhai",
+      "कढ़ाई",
+      "wok",
+      "pan"
+    ]
+  },
+  {
+    "word": "chulha",
+    "aliases": [
+      "chulha",
+      "चूल्हा",
+      "stove",
+      "angithi"
+    ]
+  },
+  {
+    "word": "lota",
+    "aliases": [
+      "lota",
+      "लोटा",
+      "jug",
+      "mug"
+    ]
+  },
+  {
+    "word": "gamla",
+    "aliases": [
+      "gamla",
+      "गमला",
+      "flower pot",
+      "pot"
+    ]
+  },
+  {
+    "word": "morpankh",
+    "aliases": [
+      "morpankh",
+      "मोरपंख",
+      "peacock feather"
+    ]
+  },
+  {
+    "word": "toran",
+    "aliases": [
+      "toran",
+      "तोरण",
+      "bandanwar",
+      "door hanging"
+    ]
+  },
+  {
+    "word": "rangoli",
+    "aliases": [
+      "rangoli",
+      "रंगोली",
+      "kolam",
+      "floor art"
+    ]
+  },
+  {
+    "word": "taash",
+    "aliases": [
+      "taash",
+      "ताश",
+      "playing cards",
+      "cards"
+    ]
+  },
+  {
+    "word": "carrom",
+    "aliases": [
+      "carrom",
+      "कैरम",
+      "carrom board"
+    ]
+  },
+  {
+    "word": "patang",
+    "aliases": [
+      "patang",
+      "पतंग",
+      "kite"
+    ]
+  },
+  {
+    "word": "manjha",
+    "aliases": [
+      "manjha",
+      "मांझा",
+      "kite string",
+      "thread"
+    ]
+  },
+  {
+    "word": "charkha",
+    "aliases": [
+      "charkha",
+      "चरखा",
+      "spinning wheel"
+    ]
+  },
+  {
+    "word": "tabla",
+    "aliases": [
+      "tabla",
+      "तबला",
+      "drum",
+      "tablas"
+    ]
+  },
+  {
+    "word": "dholak",
+    "aliases": [
+      "dholak",
+      "ढोलक",
+      "dhol",
+      "drum"
+    ]
+  },
+  {
+    "word": "sitar",
+    "aliases": [
+      "sitar",
+      "सितार",
+      "lute",
+      "string instrument"
+    ]
+  },
+  {
+    "word": "bansuri",
+    "aliases": [
+      "bansuri",
+      "बांसुरी",
+      "flute",
+      "bansi"
+    ]
+  },
+  {
+    "word": "ghungroo",
+    "aliases": [
+      "ghungroo",
+      "घुंघरू",
+      "bells",
+      "anklet bells"
+    ]
+  },
+  {
+    "word": "payal",
+    "aliases": [
+      "payal",
+      "पायल",
+      "anklet",
+      "pajeb"
+    ]
+  },
+  {
+    "word": "churi",
+    "aliases": [
+      "churi",
+      "चूड़ी",
+      "bangles",
+      "chudi",
+      "choodi"
+    ]
+  },
+  {
+    "word": "sindoor",
+    "aliases": [
+      "sindoor",
+      "सिंदूर",
+      "vermilion",
+      "kumkum"
+    ]
+  },
+  {
+    "word": "kajal",
+    "aliases": [
+      "kajal",
+      "काजल",
+      "kohl",
+      "eyeliner"
+    ]
+  },
+  {
+    "word": "kanghi",
+    "aliases": [
+      "kanghi",
+      "कंघी",
+      "comb"
+    ]
+  },
+  {
+    "word": "aaina",
+    "aliases": [
+      "aaina",
+      "आईना",
+      "sheesha",
+      "mirror"
+    ]
+  },
+  {
+    "word": "ittar",
+    "aliases": [
+      "ittar",
+      "इत्र",
+      "attar",
+      "perfume"
+    ]
+  },
+  {
+    "word": "hookah",
+    "aliases": [
+      "hookah",
+      "हुक्का",
+      "hubble bubble",
+      "pipe"
+    ]
+  },
+  {
+    "word": "lalten",
+    "aliases": [
+      "lalten",
+      "लालटेन",
+      "lantern",
+      "lamp"
+    ]
+  },
+  {
+    "word": "gullak",
+    "aliases": [
+      "gullak",
+      "गुल्लक",
+      "piggy bank",
+      "coin bank"
+    ]
+  },
+  {
+    "word": "tala",
+    "aliases": [
+      "tala",
+      "ताला",
+      "lock"
+    ]
+  },
+  {
+    "word": "chabi",
+    "aliases": [
+      "chabi",
+      "चाबी",
+      "key",
+      "kunji"
+    ]
+  },
+  {
+    "word": "sandook",
+    "aliases": [
+      "sandook",
+      "संदूक",
+      "trunk",
+      "chest",
+      "box"
+    ]
+  },
+  {
+    "word": "tijori",
+    "aliases": [
+      "tijori",
+      "तिजोरी",
+      "safe",
+      "vault"
+    ]
+  },
+  {
+    "word": "tokri",
+    "aliases": [
+      "tokri",
+      "टोकरी",
+      "basket"
+    ]
+  },
+  {
+    "word": "rassi",
+    "aliases": [
+      "rassi",
+      "रस्सी",
+      "rope",
+      "string"
+    ]
+  },
+  {
+    "word": "chhatri",
+    "aliases": [
+      "chhatri",
+      "छतरी",
+      "chata",
+      "umbrella"
+    ]
+  },
+  {
+    "word": "gamchha",
+    "aliases": [
+      "gamchha",
+      "गमछा",
+      "towel",
+      "cloth"
+    ]
+  },
+  {
+    "word": "lungi",
+    "aliases": [
+      "lungi",
+      "लुंगी",
+      "sarong"
+    ]
+  },
+  {
+    "word": "dhoti",
+    "aliases": [
+      "dhoti",
+      "धोती",
+      "dhoti kurta"
+    ]
+  },
+  {
+    "word": "pagri",
+    "aliases": [
+      "pagri",
+      "पगड़ी",
+      "turban",
+      "safa"
+    ]
+  },
+  {
+    "word": "topi",
+    "aliases": [
+      "topi",
+      "टोपी",
+      "cap",
+      "hat"
+    ]
+  },
+  {
+    "word": "rumaal",
+    "aliases": [
+      "rumaal",
+      "रूमाल",
+      "handkerchief",
+      "rumal"
+    ]
+  },
+  {
+    "word": "jhola",
+    "aliases": [
+      "jhola",
+      "झोला",
+      "bag",
+      "tote bag"
+    ]
+  },
+  {
+    "word": "thela",
+    "aliases": [
+      "thela",
+      "ठेला",
+      "cart",
+      "handcart"
+    ]
+  },
+  {
+    "word": "cycle",
+    "aliases": [
+      "cycle",
+      "साइकिल",
+      "bicycle",
+      "saikil"
+    ]
+  },
+  {
+    "word": "rickshaw",
+    "aliases": [
+      "rickshaw",
+      "रिक्शा",
+      "cycle rickshaw"
+    ]
+  },
+  {
+    "word": "tanga",
+    "aliases": [
+      "tanga",
+      "तांगा",
+      "horse cart"
+    ]
+  },
+  {
+    "word": "bailgadi",
+    "aliases": [
+      "bailgadi",
+      "बैलगाड़ी",
+      "bullock cart"
+    ]
+  },
+  {
+    "word": "naav",
+    "aliases": [
+      "naav",
+      "नाव",
+      "boat",
+      "kisti"
+    ]
+  },
+  {
+    "word": "tractor",
+    "aliases": [
+      "tractor",
+      "ट्रैक्टर",
+      "kisan tractor"
+    ]
+  },
+  {
+    "word": "truck",
+    "aliases": [
+      "truck",
+      "ट्रक",
+      "lorry"
+    ]
+  },
+  {
+    "word": "bus",
+    "aliases": [
+      "bus",
+      "बस",
+      "gaadi"
+    ]
+  },
+  {
+    "word": "railgadi",
+    "aliases": [
+      "railgadi",
+      "रेलगाड़ी",
+      "train",
+      "chhook chhook"
+    ]
+  },
+  {
+    "word": "handpump",
+    "aliases": [
+      "handpump",
+      "हैंडपंप",
+      "water pump"
+    ]
+  },
+  {
+    "word": "kuan",
+    "aliases": [
+      "kuan",
+      "कुआं",
+      "well"
+    ]
+  },
+  {
+    "word": "takiya",
+    "aliases": [
+      "takiya",
+      "तकिया",
+      "pillow",
+      "cushion"
+    ]
+  },
+  {
+    "word": "kambal",
+    "aliases": [
+      "kambal",
+      "कंबल",
+      "blanket"
+    ]
+  },
+  {
+    "word": "razai",
+    "aliases": [
+      "razai",
+      "रजाई",
+      "quilt"
+    ]
+  },
+  {
+    "word": "chaddar",
+    "aliases": [
+      "chaddar",
+      "चादर",
+      "bedsheet"
+    ]
+  },
+  {
+    "word": "gadda",
+    "aliases": [
+      "gadda",
+      "गद्दा",
+      "mattress"
+    ]
+  },
+  {
+    "word": "pankha",
+    "aliases": [
+      "pankha",
+      "पंखा",
+      "fan",
+      "ceiling fan"
+    ]
+  },
+  {
+    "word": "cooler",
+    "aliases": [
+      "cooler",
+      "कूलर",
+      "air cooler"
+    ]
+  },
+  {
+    "word": "heater",
+    "aliases": [
+      "heater",
+      "हीटर",
+      "room heater"
+    ]
+  },
+  {
+    "word": "ketli",
+    "aliases": [
+      "ketli",
+      "केतली",
+      "kettle",
+      "teapot"
+    ]
+  },
+  {
+    "word": "chamach",
+    "aliases": [
+      "chamach",
+      "चम्मच",
+      "spoon"
+    ]
+  },
+  {
+    "word": "kanta",
+    "aliases": [
+      "kanta",
+      "कांटा",
+      "fork"
+    ]
+  },
+  {
+    "word": "chaku",
+    "aliases": [
+      "chaku",
+      "चाकू",
+      "knife",
+      "chhuri"
+    ]
+  },
+  {
+    "word": "chakla",
+    "aliases": [
+      "chakla",
+      "चकला",
+      "rolling board"
+    ]
+  },
+  {
+    "word": "tawa",
+    "aliases": [
+      "tawa",
+      "तवा",
+      "pan",
+      "griddle"
+    ]
+  },
+  {
+    "word": "silbatta",
+    "aliases": [
+      "silbatta",
+      "सिलबट्टा",
+      "grindstone"
+    ]
+  },
+  {
+    "word": "kalash",
+    "aliases": [
+      "kalash",
+      "कलश",
+      "pot",
+      "sacred pot"
+    ]
+  },
+  {
+    "word": "shankh",
+    "aliases": [
+      "shankh",
+      "शंख",
+      "conch",
+      "shell"
+    ]
+  },
+  {
+    "word": "ghanti",
+    "aliases": [
+      "ghanti",
+      "घंटी",
+      "bell"
+    ]
+  },
+  {
+    "word": "mala",
+    "aliases": [
+      "mala",
+      "माला",
+      "garland",
+      "necklace"
+    ]
+  },
+  {
+    "word": "batua",
+    "aliases": [
+      "batua",
+      "बटुआ",
+      "purse",
+      "wallet"
+    ]
+  },
+  {
+    "word": "peti",
+    "aliases": [
+      "peti",
+      "पेटी",
+      "box",
+      "crate"
+    ]
+  },
+  {
+    "word": "lifafa",
+    "aliases": [
+      "lifafa",
+      "लिफाफा",
+      "envelope"
+    ]
+  },
+  {
+    "word": "kalam",
+    "aliases": [
+      "kalam",
+      "कलम",
+      "pen"
+    ]
+  },
+  {
+    "word": "takhti",
+    "aliases": [
+      "takhti",
+      "तख्ती",
+      "wooden board"
+    ]
+  },
+  {
+    "word": "slate",
+    "aliases": [
+      "slate",
+      "स्लेट",
+      "writing board"
+    ]
+  },
+  {
+    "word": "basta",
+    "aliases": [
+      "basta",
+      "बस्ता",
+      "school bag"
+    ]
+  },
+  {
+    "word": "tiffin",
+    "aliases": [
+      "tiffin",
+      "टिफिन",
+      "lunchbox",
+      "dabba"
+    ]
+  },
+  {
+    "word": "bottle",
+    "aliases": [
+      "bottle",
+      "बोतल",
+      "water bottle"
+    ]
+  },
+  {
+    "word": "torch",
+    "aliases": [
+      "torch",
+      "टॉर्च",
+      "flashlight"
+    ]
+  },
+  {
+    "word": "mombatti",
+    "aliases": [
+      "mombatti",
+      "मोमबत्ती",
+      "candle"
+    ]
+  },
+  {
+    "word": "machis",
+    "aliases": [
+      "machis",
+      "माचिस",
+      "matchbox",
+      "matchstick"
+    ]
+  },
+  {
+    "word": "darwaza",
+    "aliases": [
+      "darwaza",
+      "दरवाज़ा",
+      "door",
+      "gate"
+    ]
+  },
+  {
+    "word": "khidki",
+    "aliases": [
+      "khidki",
+      "खिड़की",
+      "window"
+    ]
+  },
+  {
+    "word": "parda",
+    "aliases": [
+      "parda",
+      "परदा",
+      "curtain"
+    ]
+  },
+  {
+    "word": "guldasta",
+    "aliases": [
+      "guldasta",
+      "गुलदस्ता",
+      "bouquet",
+      "vase"
+    ]
+  },
+  {
+    "word": "jhoomar",
+    "aliases": [
+      "jhoomar",
+      "झूमर",
+      "chandelier"
+    ]
+  },
+  {
+    "word": "tasveer",
+    "aliases": [
+      "tasveer",
+      "तस्वीर",
+      "photo",
+      "picture"
+    ]
+  },
+  {
+    "word": "ghadi",
+    "aliases": [
+      "ghadi",
+      "घड़ी",
+      "clock",
+      "watch"
+    ]
+  },
+  {
+    "word": "radio",
+    "aliases": [
+      "radio",
+      "रेडियो",
+      "transistor"
+    ]
+  },
+  {
+    "word": "television",
+    "aliases": [
+      "television",
+      "टेलीविजन",
+      "tv",
+      "doordarshan"
+    ]
+  },
+  {
+    "word": "antenna",
+    "aliases": [
+      "antenna",
+      "एंटीना",
+      "dish antenna"
+    ]
+  },
+  {
+    "word": "remote",
+    "aliases": [
+      "remote",
+      "रिमोट",
+      "tv remote"
+    ]
+  },
+  {
+    "word": "bulb",
+    "aliases": [
+      "bulb",
+      "बल्ब",
+      "light bulb"
+    ]
+  },
+  {
+    "word": "tubelight",
+    "aliases": [
+      "tubelight",
+      "ट्यूबलाइट",
+      "tube light"
+    ]
+  },
+  {
+    "word": "switch",
+    "aliases": [
+      "switch",
+      "स्विच",
+      "electric switch"
+    ]
+  },
+  {
+    "word": "taar",
+    "aliases": [
+      "taar",
+      "तार",
+      "wire",
+      "cable"
+    ]
+  },
+  {
+    "word": "balti",
+    "aliases": [
+      "balti",
+      "बाल्टी",
+      "bucket"
+    ]
+  },
+  {
+    "word": "mugga",
+    "aliases": [
+      "mugga",
+      "मग्गा",
+      "mug"
+    ]
+  },
+  {
+    "word": "sabun",
+    "aliases": [
+      "sabun",
+      "साबुन",
+      "soap"
+    ]
+  },
+  {
+    "word": "tel",
+    "aliases": [
+      "tel",
+      "तेल",
+      "hair oil",
+      "oil"
+    ]
+  },
+  {
+    "word": "mehendi",
+    "aliases": [
+      "mehendi",
+      "मेहंदी",
+      "henna"
+    ]
+  },
+  {
+    "word": "katori",
+    "aliases": [
+      "katori",
+      "कटोरी",
+      "bowl"
+    ]
+  },
+  {
+    "word": "chimta",
+    "aliases": [
+      "chimta",
+      "चिमता",
+      "tongs"
+    ]
+  },
+  {
+    "word": "okhli",
+    "aliases": [
+      "okhli",
+      "ओखली",
+      "mortar and pestle"
+    ]
+  },
+  {
+    "word": "masaledani",
+    "aliases": [
+      "masaledani",
+      "मसालेदानी",
+      "spice box"
+    ]
+  },
+  {
+    "word": "jharokha",
+    "aliases": [
+      "jharokha",
+      "झरोखा",
+      "balcony",
+      "small window"
+    ]
+  },
+  {
+    "word": "kundi",
+    "aliases": [
+      "kundi",
+      "कुंडी",
+      "latch"
+    ]
+  },
+  {
+    "word": "pul",
+    "aliases": [
+      "pul",
+      "पुल",
+      "bridge"
+    ]
+  },
+  {
+    "word": "sadak",
+    "aliases": [
+      "sadak",
+      "सड़क",
+      "road",
+      "street"
+    ]
+  },
+  {
+    "word": "dhaba",
+    "aliases": [
+      "dhaba",
+      "ढाबा",
+      "roadside restaurant"
+    ]
+  },
+  {
+    "word": "mela",
+    "aliases": [
+      "mela",
+      "मेला",
+      "fair",
+      "carnival"
+    ]
+  },
+  {
+    "word": "jhula",
+    "aliases": [
+      "jhula",
+      "झूला",
+      "swing"
+    ]
+  },
+  {
+    "word": "circus",
+    "aliases": [
+      "circus",
+      "सर्कस",
+      "circus tent"
+    ]
+  },
+  {
+    "word": "tambu",
+    "aliases": [
+      "tambu",
+      "तंबू",
+      "tent"
+    ]
+  },
+  {
+    "word": "angithi",
+    "aliases": [
+      "angithi",
+      "अंगीठी",
+      "brazier",
+      "coal stove"
+    ]
+  },
+  {
+    "word": "chimney",
+    "aliases": [
+      "chimney",
+      "चिमनी",
+      "smoke vent"
+    ]
+  },
+  {
+    "word": "generator",
+    "aliases": [
+      "generator",
+      "जनरेटर",
+      "power generator"
+    ]
+  },
+  {
+    "word": "motor",
+    "aliases": [
+      "motor",
+      "मोटर",
+      "water motor"
+    ]
+  },
+  {
+    "word": "almari",
+    "aliases": [
+      "almari",
+      "अलमारी",
+      "wardrobe",
+      "cupboard"
+    ]
+  },
+  {
+    "word": "mez",
+    "aliases": [
+      "mez",
+      "मेज",
+      "table"
+    ]
+  },
+  {
+    "word": "kursi",
+    "aliases": [
+      "kursi",
+      "कुर्सी",
+      "chair"
+    ]
+  },
+  {
+    "word": "sofa",
+    "aliases": [
+      "sofa",
+      "सोफा",
+      "couch"
+    ]
+  },
+  {
+    "word": "stool",
+    "aliases": [
+      "stool",
+      "स्टूल",
+      "small seat"
+    ]
+  },
+  {
+    "word": "modha",
+    "aliases": [
+      "modha",
+      "मोढ़ा",
+      "cane stool"
+    ]
+  },
+  {
+    "word": "dari",
+    "aliases": [
+      "dari",
+      "दरी",
+      "carpet",
+      "rug"
+    ]
+  },
+  {
+    "word": "paadan",
+    "aliases": [
+      "paadan",
+      "पायदान",
+      "doormat"
+    ]
+  },
+  {
+    "word": "chashma",
+    "aliases": [
+      "chashma",
+      "चश्मा",
+      "spectacles",
+      "glasses"
+    ]
+  },
+  {
+    "word": "haar",
+    "aliases": [
+      "haar",
+      "हार",
+      "necklace"
+    ]
+  },
+  {
+    "word": "kangan",
+    "aliases": [
+      "kangan",
+      "कंगन",
+      "bangle"
+    ]
+  },
+  {
+    "word": "nath",
+    "aliases": [
+      "nath",
+      "नथ",
+      "nose ring"
+    ]
+  },
+  {
+    "word": "bichia",
+    "aliases": [
+      "bichia",
+      "बिछिया",
+      "toe ring"
+    ]
+  },
+  {
+    "word": "kulhad",
+    "aliases": [
+      "kulhad",
+      "कुल्हड़",
+      "clay cup"
+    ]
+  },
+  {
+    "word": "surahi",
+    "aliases": [
+      "surahi",
+      "सुराही",
+      "clay jug"
+    ]
+  },
+  {
+    "word": "paan daan",
+    "aliases": [
+      "paan daan",
+      "पानदान",
+      "betel box"
+    ]
+  },
+  {
+    "word": "sindoor daani",
+    "aliases": [
+      "sindoor daani",
+      "सिंदूरदानी",
+      "vermilion box"
+    ]
+  },
+  {
+    "word": "suitcase",
+    "aliases": [
+      "suitcase",
+      "सूटकेस",
+      "attache",
+      "baggage"
+    ]
+  },
+  {
+    "word": "pressure cooker",
+    "aliases": [
+      "pressure cooker",
+      "प्रेशर कुकर",
+      "cooker"
+    ]
+  },
+  {
+    "word": "chhoti dibbi",
+    "aliases": [
+      "chhoti dibbi",
+      "डिब्बी",
+      "small box"
+    ]
+  },
+  {
+    "word": "pattal",
+    "aliases": [
+      "pattal",
+      "पत्तल",
+      "leaf plate"
+    ]
+  },
+  {
+    "word": "dona",
+    "aliases": [
+      "dona",
+      "दोना",
+      "leaf bowl"
+    ]
+  },
+  {
+    "word": "banta",
+    "aliases": [
+      "banta",
+      "बंटा",
+      "marble soda",
+      "goli soda"
+    ]
+  },
+  {
+    "word": "gulel",
+    "aliases": [
+      "gulel",
+      "गुलेल",
+      "slingshot"
+    ]
+  },
+  {
+    "word": "lattu",
+    "aliases": [
+      "lattu",
+      "लट्टू",
+      "spinning top"
+    ]
+  },
+  {
+    "word": "stapler",
+    "aliases": [
+      "stapler",
+      "स्टेपलर",
+      "staple machine"
+    ]
+  }
+]

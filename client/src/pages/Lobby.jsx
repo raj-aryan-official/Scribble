@@ -244,6 +244,7 @@ export const Lobby = () => {
     const handleDrawTimeChange = (drawTime) => emitUpdateSettings({ drawTime });
     const handleDifficultyChange = (difficulty) => emitUpdateSettings({ difficulty });
     const handleWordChoiceChange = (wordChoice) => emitUpdateSettings({ wordChoice });
+    const handleWordLanguageChange = (wordLanguage) => emitUpdateSettings({ wordLanguage, packs: [] });
     const handleModeChange = (mode) => {
         const def = MODE_DEFINITIONS[mode];
         const updates = { mode };
@@ -471,6 +472,7 @@ export const Lobby = () => {
                                     onDrawTimeChange={handleDrawTimeChange}
                                     onDifficultyChange={handleDifficultyChange}
                                     onWordChoiceChange={handleWordChoiceChange}
+                                    onWordLanguageChange={handleWordLanguageChange}
                                     onTwistsChange={handleTwistsChange}
                                     onToggleEnabledTwist={handleToggleEnabledTwist}
                                     onTogglePack={handleTogglePack}
@@ -528,6 +530,7 @@ export const Lobby = () => {
                         onDrawTimeChange={handleDrawTimeChange}
                         onDifficultyChange={handleDifficultyChange}
                         onWordChoiceChange={handleWordChoiceChange}
+                        onWordLanguageChange={handleWordLanguageChange}
                         onTwistsChange={handleTwistsChange}
                         onToggleEnabledTwist={handleToggleEnabledTwist}
                         onTogglePack={handleTogglePack}

@@ -1,0 +1,1262 @@
+[
+  {
+    "word": "हाथी",
+    "aliases": [
+      "haathi",
+      "हाथी",
+      "elephant",
+      "gajraj"
+    ]
+  },
+  {
+    "word": "शेर",
+    "aliases": [
+      "sher",
+      "शेर",
+      "lion",
+      "singh"
+    ]
+  },
+  {
+    "word": "बाघ",
+    "aliases": [
+      "baagh",
+      "बाघ",
+      "tiger",
+      "royal bengal tiger"
+    ]
+  },
+  {
+    "word": "चीता",
+    "aliases": [
+      "cheetah",
+      "चीता",
+      "leopard",
+      "fast cat"
+    ]
+  },
+  {
+    "word": "तेंदुआ",
+    "aliases": [
+      "tendua",
+      "तेंदुआ",
+      "panther",
+      "leopard"
+    ]
+  },
+  {
+    "word": "भालू",
+    "aliases": [
+      "bhalu",
+      "भालू",
+      "bear",
+      "black bear"
+    ]
+  },
+  {
+    "word": "बंदर",
+    "aliases": [
+      "bandar",
+      "बंदर",
+      "monkey",
+      "rhesus macaque"
+    ]
+  },
+  {
+    "word": "लंगूर",
+    "aliases": [
+      "langoor",
+      "लंगूर",
+      "gray langur",
+      "baboon"
+    ]
+  },
+  {
+    "word": "ऊंट",
+    "aliases": [
+      "oont",
+      "ऊंट",
+      "camel",
+      "desert ship"
+    ]
+  },
+  {
+    "word": "घोड़ा",
+    "aliases": [
+      "ghoda",
+      "घोड़ा",
+      "horse",
+      "ashwa"
+    ]
+  },
+  {
+    "word": "गधा",
+    "aliases": [
+      "gadha",
+      "गधा",
+      "donkey",
+      "ass"
+    ]
+  },
+  {
+    "word": "खच्चर",
+    "aliases": [
+      "khachhar",
+      "खच्चर",
+      "mule"
+    ]
+  },
+  {
+    "word": "गाय",
+    "aliases": [
+      "gai",
+      "गाय",
+      "cow",
+      "gau mata"
+    ]
+  },
+  {
+    "word": "बैल",
+    "aliases": [
+      "bail",
+      "बैल",
+      "ox",
+      "bull"
+    ]
+  },
+  {
+    "word": "भैंस",
+    "aliases": [
+      "bhains",
+      "भैंस",
+      "buffalo",
+      "water buffalo"
+    ]
+  },
+  {
+    "word": "बकरी",
+    "aliases": [
+      "bakri",
+      "बकरी",
+      "goat"
+    ]
+  },
+  {
+    "word": "बकरा",
+    "aliases": [
+      "bakra",
+      "बकरा",
+      "he-goat"
+    ]
+  },
+  {
+    "word": "भेड़",
+    "aliases": [
+      "bhed",
+      "भेड़",
+      "sheep"
+    ]
+  },
+  {
+    "word": "कुत्ता",
+    "aliases": [
+      "kutta",
+      "कुत्ता",
+      "dog",
+      "canine"
+    ]
+  },
+  {
+    "word": "पिल्ला",
+    "aliases": [
+      "pilla",
+      "पिल्ला",
+      "puppy",
+      "pup"
+    ]
+  },
+  {
+    "word": "बिल्ली",
+    "aliases": [
+      "billi",
+      "बिल्ली",
+      "cat",
+      "kitty"
+    ]
+  },
+  {
+    "word": "बिलौटा",
+    "aliases": [
+      "bilauta",
+      "बिलौटा",
+      "kitten"
+    ]
+  },
+  {
+    "word": "चूहा",
+    "aliases": [
+      "chuha",
+      "चूहा",
+      "mouse",
+      "rat"
+    ]
+  },
+  {
+    "word": "छिपकली",
+    "aliases": [
+      "chhipkali",
+      "छिपकली",
+      "lizard",
+      "gecko"
+    ]
+  },
+  {
+    "word": "गिरगिट",
+    "aliases": [
+      "girgit",
+      "गिरगिट",
+      "chameleon"
+    ]
+  },
+  {
+    "word": "सांप",
+    "aliases": [
+      "saanp",
+      "सांप",
+      "snake",
+      "serpent"
+    ]
+  },
+  {
+    "word": "कोबरा",
+    "aliases": [
+      "kobra",
+      "कोबरा",
+      "naag",
+      "king cobra"
+    ]
+  },
+  {
+    "word": "मगरमच्छ",
+    "aliases": [
+      "magarmachh",
+      "मगरमच्छ",
+      "crocodile",
+      "croc"
+    ]
+  },
+  {
+    "word": "घड़ियाल",
+    "aliases": [
+      "ghariyal",
+      "घड़ियाल",
+      "alligator",
+      "gavial"
+    ]
+  },
+  {
+    "word": "कछुआ",
+    "aliases": [
+      "kachhua",
+      "कछुआ",
+      "tortoise",
+      "turtle"
+    ]
+  },
+  {
+    "word": "मेंढक",
+    "aliases": [
+      "mendhak",
+      "मेंढक",
+      "frog",
+      "toad"
+    ]
+  },
+  {
+    "word": "मछली",
+    "aliases": [
+      "machhli",
+      "मछली",
+      "fish",
+      "meen"
+    ]
+  },
+  {
+    "word": "शार्क",
+    "aliases": [
+      "shark",
+      "शार्क",
+      "predator fish"
+    ]
+  },
+  {
+    "word": "व्हेल",
+    "aliases": [
+      "whale",
+      "व्हेल",
+      "blue whale"
+    ]
+  },
+  {
+    "word": "डॉल्फिन",
+    "aliases": [
+      "dolphin",
+      "डॉल्फिन",
+      "ganga dolphin"
+    ]
+  },
+  {
+    "word": "ऑक्टोपस",
+    "aliases": [
+      "octopus",
+      "ऑक्टोपस",
+      "eight legs"
+    ]
+  },
+  {
+    "word": "केकड़ा",
+    "aliases": [
+      "kekda",
+      "केकड़ा",
+      "crab"
+    ]
+  },
+  {
+    "word": "झींगा",
+    "aliases": [
+      "jhinga",
+      "झींगा",
+      "prawn",
+      "shrimp"
+    ]
+  },
+  {
+    "word": "मोर",
+    "aliases": [
+      "mor",
+      "मोर",
+      "peacock",
+      "national bird"
+    ]
+  },
+  {
+    "word": "मोरनी",
+    "aliases": [
+      "morni",
+      "मोरनी",
+      "peahen"
+    ]
+  },
+  {
+    "word": "तोता",
+    "aliases": [
+      "tota",
+      "तोता",
+      "parrot",
+      "mithoo"
+    ]
+  },
+  {
+    "word": "मैना",
+    "aliases": [
+      "maina",
+      "मैना",
+      "myna bird"
+    ]
+  },
+  {
+    "word": "कबूतर",
+    "aliases": [
+      "kabootar",
+      "कबूतर",
+      "pigeon",
+      "dove"
+    ]
+  },
+  {
+    "word": "कौआ",
+    "aliases": [
+      "kauwa",
+      "कौआ",
+      "crow",
+      "raven"
+    ]
+  },
+  {
+    "word": "कोयल",
+    "aliases": [
+      "koyal",
+      "कोयल",
+      "cuckoo",
+      "nightingale"
+    ]
+  },
+  {
+    "word": "चील",
+    "aliases": [
+      "cheel",
+      "चील",
+      "kite",
+      "eagle"
+    ]
+  },
+  {
+    "word": "बाज़",
+    "aliases": [
+      "baaz",
+      "बाज़",
+      "falcon",
+      "hawk"
+    ]
+  },
+  {
+    "word": "गिद्ध",
+    "aliases": [
+      "giddh",
+      "गिद्ध",
+      "vulture"
+    ]
+  },
+  {
+    "word": "उल्लू",
+    "aliases": [
+      "ullu",
+      "उल्लू",
+      "owl"
+    ]
+  },
+  {
+    "word": "हंस",
+    "aliases": [
+      "hans",
+      "हंस",
+      "swan"
+    ]
+  },
+  {
+    "word": "बतख",
+    "aliases": [
+      "battakh",
+      "बतख",
+      "duck"
+    ]
+  },
+  {
+    "word": "सारस",
+    "aliases": [
+      "saras",
+      "सारस",
+      "crane"
+    ]
+  },
+  {
+    "word": "बगुला",
+    "aliases": [
+      "bagula",
+      "बगुला",
+      "heron",
+      "egret"
+    ]
+  },
+  {
+    "word": "मुर्गी",
+    "aliases": [
+      "murgi",
+      "मुर्गी",
+      "hen",
+      "chicken"
+    ]
+  },
+  {
+    "word": "मुर्गा",
+    "aliases": [
+      "murga",
+      "मुर्गा",
+      "rooster",
+      "cock"
+    ]
+  },
+  {
+    "word": "तीतर",
+    "aliases": [
+      "teetar",
+      "तीतर",
+      "partridge"
+    ]
+  },
+  {
+    "word": "बटेर",
+    "aliases": [
+      "bater",
+      "बटेर",
+      "quail"
+    ]
+  },
+  {
+    "word": "बुलबुल",
+    "aliases": [
+      "bulbul",
+      "बुलबुल",
+      "nightingale"
+    ]
+  },
+  {
+    "word": "गौरैया",
+    "aliases": [
+      "gauraiya",
+      "गौरैया",
+      "sparrow"
+    ]
+  },
+  {
+    "word": "तितली",
+    "aliases": [
+      "titli",
+      "तितली",
+      "butterfly"
+    ]
+  },
+  {
+    "word": "भौंरा",
+    "aliases": [
+      "bhawra",
+      "भौंरा",
+      "bumblebee",
+      "beetle"
+    ]
+  },
+  {
+    "word": "मधुमक्खी",
+    "aliases": [
+      "madhumakkhi",
+      "मधुमक्खी",
+      "honeybee",
+      "bee"
+    ]
+  },
+  {
+    "word": "मक्खी",
+    "aliases": [
+      "makkhi",
+      "मक्खी",
+      "housefly",
+      "fly"
+    ]
+  },
+  {
+    "word": "मच्छर",
+    "aliases": [
+      "machhar",
+      "मच्छर",
+      "mosquito"
+    ]
+  },
+  {
+    "word": "मकड़ी",
+    "aliases": [
+      "makdi",
+      "मकड़ी",
+      "spider"
+    ]
+  },
+  {
+    "word": "बिच्छू",
+    "aliases": [
+      "bichhoo",
+      "बिच्छू",
+      "scorpion"
+    ]
+  },
+  {
+    "word": "तिलचट्टा",
+    "aliases": [
+      "cockroach",
+      "तिलचट्टा",
+      "roach"
+    ]
+  },
+  {
+    "word": "झींगुर",
+    "aliases": [
+      "jheengur",
+      "झींगुर",
+      "cricket insect"
+    ]
+  },
+  {
+    "word": "कीड़ा",
+    "aliases": [
+      "keeda",
+      "कीड़ा",
+      "insect",
+      "bug"
+    ]
+  },
+  {
+    "word": "केंचुआ",
+    "aliases": [
+      "kechua",
+      "केंचुआ",
+      "earthworm"
+    ]
+  },
+  {
+    "word": "जोंक",
+    "aliases": [
+      "jhonk",
+      "जोंक",
+      "leech"
+    ]
+  },
+  {
+    "word": "खरगोश",
+    "aliases": [
+      "khargosh",
+      "खरगोश",
+      "rabbit",
+      "hare"
+    ]
+  },
+  {
+    "word": "गिलहरी",
+    "aliases": [
+      "gilhari",
+      "गिलहरी",
+      "squirrel"
+    ]
+  },
+  {
+    "word": "नेवला",
+    "aliases": [
+      "nevla",
+      "नेवला",
+      "mongoose"
+    ]
+  },
+  {
+    "word": "लोमड़ी",
+    "aliases": [
+      "lomdi",
+      "लोमड़ी",
+      "fox"
+    ]
+  },
+  {
+    "word": "भेड़िया",
+    "aliases": [
+      "bhediya",
+      "भेड़िया",
+      "wolf"
+    ]
+  },
+  {
+    "word": "सियार",
+    "aliases": [
+      "siyar",
+      "सियार",
+      "jackal",
+      "gidad"
+    ]
+  },
+  {
+    "word": "हिरण",
+    "aliases": [
+      "hiran",
+      "हिरण",
+      "deer",
+      "mrig"
+    ]
+  },
+  {
+    "word": "बारहसिंगा",
+    "aliases": [
+      "barasingha",
+      "बारहसिंगा",
+      "swamp deer"
+    ]
+  },
+  {
+    "word": "नीलगाय",
+    "aliases": [
+      "nilgai",
+      "नीलगाय",
+      "blue bull"
+    ]
+  },
+  {
+    "word": "चिंकारा",
+    "aliases": [
+      "chinkara",
+      "चिंकारा",
+      "gazelle"
+    ]
+  },
+  {
+    "word": "सांभर हिरण",
+    "aliases": [
+      "sambhar",
+      "सांभर हिरण",
+      "sambar deer"
+    ]
+  },
+  {
+    "word": "गैंडा",
+    "aliases": [
+      "ganda",
+      "गैंडा",
+      "rhino",
+      "rhinoceros"
+    ]
+  },
+  {
+    "word": "दरियाई घोड़ा",
+    "aliases": [
+      "dariai ghoda",
+      "दरियाई घोड़ा",
+      "hippo",
+      "hippopotamus"
+    ]
+  },
+  {
+    "word": "जिराफ़",
+    "aliases": [
+      "ziraaf",
+      "जिराफ़",
+      "giraffe"
+    ]
+  },
+  {
+    "word": "ज़ेब्रा",
+    "aliases": [
+      "zebra",
+      "ज़ेब्रा",
+      "striped animal"
+    ]
+  },
+  {
+    "word": "पांडा",
+    "aliases": [
+      "panda",
+      "पांडा",
+      "giant panda"
+    ]
+  },
+  {
+    "word": "कंगारू",
+    "aliases": [
+      "kangaroo",
+      "कंगारू",
+      "pouch animal"
+    ]
+  },
+  {
+    "word": "गोरिल्ला",
+    "aliases": [
+      "gorilla",
+      "गोरिल्ला",
+      "great ape"
+    ]
+  },
+  {
+    "word": "चिंपांजी",
+    "aliases": [
+      "chimpanzee",
+      "चिंपांजी",
+      "chimp"
+    ]
+  },
+  {
+    "word": "याक",
+    "aliases": [
+      "yak",
+      "याक",
+      "mountain ox"
+    ]
+  },
+  {
+    "word": "चमगादड़",
+    "aliases": [
+      "chamgadar",
+      "चमगादड़",
+      "bat"
+    ]
+  },
+  {
+    "word": "सूअर",
+    "aliases": [
+      "suar",
+      "सूअर",
+      "pig",
+      "boar"
+    ]
+  },
+  {
+    "word": "वनमानुष",
+    "aliases": [
+      "vanmanush",
+      "वनमानुष",
+      "orangutan"
+    ]
+  },
+  {
+    "word": "अजगर",
+    "aliases": [
+      "ajgar",
+      "अजगर",
+      "python"
+    ]
+  },
+  {
+    "word": "समुद्री घोड़ा",
+    "aliases": [
+      "seahorse",
+      "समुद्री घोड़ा",
+      "sea horse"
+    ]
+  },
+  {
+    "word": "तारा मछली",
+    "aliases": [
+      "starfish",
+      "तारा मछली",
+      "star fish"
+    ]
+  },
+  {
+    "word": "जेलीफ़िश",
+    "aliases": [
+      "jellyfish",
+      "जेलीफ़िश",
+      "jelly fish"
+    ]
+  },
+  {
+    "word": "रोहू मछली",
+    "aliases": [
+      "rohu",
+      "रोहू मछली",
+      "freshwater fish"
+    ]
+  },
+  {
+    "word": "घोंघा",
+    "aliases": [
+      "snail",
+      "घोंघा",
+      "shell snail"
+    ]
+  },
+  {
+    "word": "जुगनू",
+    "aliases": [
+      "firefly",
+      "जुगनू",
+      "glowworm"
+    ]
+  },
+  {
+    "word": "चींटी",
+    "aliases": [
+      "cheenti",
+      "चींटी",
+      "ant"
+    ]
+  },
+  {
+    "word": "दीमक",
+    "aliases": [
+      "deemak",
+      "दीमक",
+      "termite",
+      "white ant"
+    ]
+  },
+  {
+    "word": "खटमल",
+    "aliases": [
+      "khatmal",
+      "खटमल",
+      "bedbug"
+    ]
+  },
+  {
+    "word": "ततैया",
+    "aliases": [
+      "tataiya",
+      "ततैया",
+      "wasp",
+      "hornet"
+    ]
+  },
+  {
+    "word": "इल्ली",
+    "aliases": [
+      "illli",
+      "इल्ली",
+      "caterpillar"
+    ]
+  },
+  {
+    "word": "कनखजूरा",
+    "aliases": [
+      "kankhajura",
+      "कनखजूरा",
+      "centipede"
+    ]
+  },
+  {
+    "word": "साही",
+    "aliases": [
+      "sahi",
+      "साही",
+      "porcupine"
+    ]
+  },
+  {
+    "word": "ऊदबिलाव",
+    "aliases": [
+      "oodbilao",
+      "ऊदबिलाव",
+      "otter"
+    ]
+  },
+  {
+    "word": "बिज्जू",
+    "aliases": [
+      "bijju",
+      "बिज्जू",
+      "badger"
+    ]
+  },
+  {
+    "word": "स्लॉथ",
+    "aliases": [
+      "sloth",
+      "स्लॉथ",
+      "slow animal"
+    ]
+  },
+  {
+    "word": "सील",
+    "aliases": [
+      "seal",
+      "सील",
+      "sea lion"
+    ]
+  },
+  {
+    "word": "पेंगुइन",
+    "aliases": [
+      "penguin",
+      "पेंगुइन",
+      "snow bird"
+    ]
+  },
+  {
+    "word": "हवासील",
+    "aliases": [
+      "pelican",
+      "हवासील",
+      "water bird"
+    ]
+  },
+  {
+    "word": "राजहंस",
+    "aliases": [
+      "flamingo",
+      "राजहंस",
+      "pink bird"
+    ]
+  },
+  {
+    "word": "कठफोड़वा",
+    "aliases": [
+      "woodpecker",
+      "कठफोड़वा",
+      "tree bird"
+    ]
+  },
+  {
+    "word": "नीलकंठ",
+    "aliases": [
+      "kingfisher",
+      "नीलकंठ",
+      "blue bird"
+    ]
+  },
+  {
+    "word": "हरियल",
+    "aliases": [
+      "harial",
+      "हरियल",
+      "green pigeon"
+    ]
+  },
+  {
+    "word": "चकोर",
+    "aliases": [
+      "chakor",
+      "चकोर",
+      "moon bird"
+    ]
+  },
+  {
+    "word": "सैलामैंडर",
+    "aliases": [
+      "salamander",
+      "सैलामैंडर",
+      "amphibian"
+    ]
+  },
+  {
+    "word": "सीप",
+    "aliases": [
+      "seep",
+      "सीप",
+      "pearl oyster",
+      "oyster",
+      "shell"
+    ]
+  },
+  {
+    "word": "कतला",
+    "aliases": [
+      "katla",
+      "कतला",
+      "river fish"
+    ]
+  },
+  {
+    "word": "हिल्सा",
+    "aliases": [
+      "hilsa",
+      "हिल्सा",
+      "bengal fish"
+    ]
+  },
+  {
+    "word": "पॉम्फ्रेत",
+    "aliases": [
+      "pomfret",
+      "पॉम्फ्रेत",
+      "sea fish"
+    ]
+  },
+  {
+    "word": "फ़ाख्ता",
+    "aliases": [
+      "fakhta",
+      "फ़ाख्ता",
+      "dove",
+      "ring dove"
+    ]
+  },
+  {
+    "word": "कोआला",
+    "aliases": [
+      "koala",
+      "कोआला",
+      "australian bear"
+    ]
+  },
+  {
+    "word": "वॉलरस",
+    "aliases": [
+      "walrus",
+      "वॉलरस",
+      "tusk animal"
+    ]
+  },
+  {
+    "word": "झाऊ चूहा",
+    "aliases": [
+      "hedgehog",
+      "झाऊ चूहा",
+      "spiky mammal"
+    ]
+  },
+  {
+    "word": "वज्रशल्क",
+    "aliases": [
+      "pangolin",
+      "वज्रशल्क",
+      "scaly anteater"
+    ]
+  },
+  {
+    "word": "टैडपोल",
+    "aliases": [
+      "tadpole",
+      "टैडपोल",
+      "baby frog"
+    ]
+  },
+  {
+    "word": "दादुर",
+    "aliases": [
+      "toad",
+      "दादुर",
+      "dry frog"
+    ]
+  },
+  {
+    "word": "लाल चींटी",
+    "aliases": [
+      "red ant",
+      "लाल चींटी",
+      "biting ant"
+    ]
+  },
+  {
+    "word": "काली चींटी",
+    "aliases": [
+      "black ant",
+      "काली चींटी",
+      "sweet ant"
+    ]
+  },
+  {
+    "word": "भूंड़",
+    "aliases": [
+      "cicada",
+      "भूंड़",
+      "tree cricket",
+      "summer bug"
+    ]
+  },
+  {
+    "word": "गुबरैला",
+    "aliases": [
+      "beetle",
+      "गुबरैला",
+      "dung beetle",
+      "scarab"
+    ]
+  },
+  {
+    "word": "रेशम कीट",
+    "aliases": [
+      "silk worm",
+      "रेशम कीट",
+      "silkworm"
+    ]
+  },
+  {
+    "word": "व्याध पतंग",
+    "aliases": [
+      "dragonfly",
+      "व्याध पतंग",
+      "helicopter bug"
+    ]
+  },
+  {
+    "word": "पिस्सू",
+    "aliases": [
+      "pissu",
+      "पिस्सू",
+      "flea",
+      "tiny parasite"
+    ]
+  },
+  {
+    "word": "टिड्डा",
+    "aliases": [
+      "grasshopper",
+      "टिड्डा",
+      "locust"
+    ]
+  },
+  {
+    "word": "सोनकीड़ा",
+    "aliases": [
+      "ladybug",
+      "सोनकीड़ा",
+      "red black beetle"
+    ]
+  },
+  {
+    "word": "घुन",
+    "aliases": [
+      "ghun",
+      "घुन",
+      "weevil",
+      "grain bug"
+    ]
+  },
+  {
+    "word": "चिट्टा",
+    "aliases": [
+      "fire ant",
+      "चिट्टा",
+      "stinging ant"
+    ]
+  },
+  {
+    "word": "ट्राउट",
+    "aliases": [
+      "trout",
+      "ट्राउट",
+      "mountain fish"
+    ]
+  },
+  {
+    "word": "स्टिंगरे",
+    "aliases": [
+      "stingray",
+      "स्टिंगरे",
+      "flat fish"
+    ]
+  },
+  {
+    "word": "इगुआना",
+    "aliases": [
+      "iguana",
+      "इगुआना",
+      "giant lizard"
+    ]
+  },
+  {
+    "word": "हॉर्नबिल",
+    "aliases": [
+      "hornbill",
+      "हॉर्नबिल",
+      "great hornbill",
+      "dhanchidya"
+    ]
+  },
+  {
+    "word": "नागराज",
+    "aliases": [
+      "sheshnag",
+      "नागराज",
+      "king cobra",
+      "king snake"
+    ]
+  },
+  {
+    "word": "उड़न गिलहरी",
+    "aliases": [
+      "flying squirrel",
+      "उड़न गिलहरी",
+      "gliding squirrel"
+    ]
+  },
+  {
+    "word": "हिम तेंदुआ",
+    "aliases": [
+      "snow leopard",
+      "हिम तेंदुआ",
+      "mountain cat",
+      "ghost cat"
+    ]
+  },
+  {
+    "word": "गरुड़",
+    "aliases": [
+      "garuda",
+      "गरुड़",
+      "divine eagle",
+      "golden eagle"
+    ]
+  }
+]

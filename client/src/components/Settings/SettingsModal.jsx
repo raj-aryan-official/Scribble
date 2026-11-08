@@ -265,6 +265,44 @@ export const SettingsModal = ({ isOpen, onClose }) => {
                                     Accessibility & Display
                                 </span>
 
+                                {/* Language Selector */}
+                                <div className="flex items-center justify-between gap-3 py-2">
+                                    <div className="flex flex-col text-left">
+                                        <span className="text-xs sm:text-sm font-bold text-ink">Language / भाषा</span>
+                                        <span className="text-[11px] text-ink-soft">Interface language</span>
+                                    </div>
+                                    <div
+                                        role="radiogroup"
+                                        aria-label="Interface language"
+                                        data-testid="setting-language"
+                                        className="flex items-center gap-1 bg-paper p-1 border-2 border-ink rounded-[6px]"
+                                    >
+                                        {[
+                                            { id: 'en', label: 'English' },
+                                            { id: 'hi', label: 'हिन्दी' }
+                                        ].map((lang) => {
+                                            const isSelected = (settings.language || 'en') === lang.id;
+                                            return (
+                                                <button
+                                                    key={lang.id}
+                                                    type="button"
+                                                    role="radio"
+                                                    aria-checked={isSelected}
+                                                    data-testid={`setting-language-${lang.id}`}
+                                                    onClick={() => updateSettings({ language: lang.id })}
+                                                    className={`px-2.5 py-1 text-xs font-black rounded-[4px] cursor-pointer transition-colors ${
+                                                        isSelected
+                                                            ? 'bg-cobalt text-white shadow-hard-xs border border-ink'
+                                                            : 'text-ink-soft hover:text-ink hover:bg-card'
+                                                    }`}
+                                                >
+                                                    {lang.label}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
                                 {/* Text Size Segmented Selector */}
                                 <div className="flex items-center justify-between gap-2 py-1">
                                     <div className="flex flex-col text-left">

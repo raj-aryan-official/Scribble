@@ -118,8 +118,8 @@ const relayMode = {
             return { allowed: false, isCorrect: false, isClose: false, reason: 'already_guessed' };
         }
 
-        const correct = isCorrect(text, room.wordToGuess);
-        const close = !correct && isClose(text, room.wordToGuess);
+        const correct = isCorrect(text, room.wordToGuess, room.wordAliases);
+        const close = !correct && isClose(text, room.wordToGuess, room.wordAliases);
 
         return {
             allowed: true,
@@ -183,3 +183,4 @@ const relayMode = {
 };
 
 module.exports = relayMode;
+

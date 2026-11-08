@@ -235,3 +235,37 @@ export const MODE_DEFINITIONS = {
         icon: 'sliders'
     }
 };
+
+export const WORD_LANGUAGES = {
+    ENGLISH: 'english',
+    HINDI: 'hindi',
+    HINGLISH: 'hinglish'
+};
+
+export const ALLOWED_WORD_LANGUAGES = [
+    'english',
+    'hindi',
+    'hinglish'
+];
+
+export const REGIONAL_PACKS = [
+    'objects',
+    'food',
+    'festivals',
+    'cricket',
+    'subjects',
+    'places',
+    'animals',
+    'cinema'
+];
+
+export const REGIONAL_PACK_DEFINITIONS = {
+    'objects': { id: 'objects', label: 'Everyday Objects' },
+    'food': { id: 'food', label: 'Desi Food' },
+    'festivals': { id: 'festivals', label: 'Festivals' },
+    'cricket': { id: 'cricket', label: 'Cricket' },
+    'subjects': { id: 'subjects', label: 'School & Subjects' },
+    'places': { id: 'places', label: 'Cities & Monuments' },
+    'animals': { id: 'animals', label: 'Animals' },
+    'cinema': { id: 'cinema', label: 'Cinema & Bollywood' }
+};

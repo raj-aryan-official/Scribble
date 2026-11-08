@@ -1,6 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
 const { EVENTS, GAME_STATES } = require('../../../shared/types.cjs');
-const { normalize } = require('../guess');
+const { normalize, getGraphemes } = require('../guess');
 const blocklist = require('../blocklist');
 const { rejectWithError, getMemberRoom, sanitiseText } = require('./utils');
 const { getTimeLeft, recordChatMessage, endRound } = require('../game/loop');
@@ -32,14 +32,27 @@ const filterProfanity = (text, secretWord) => {
     return result;
 };
 
-const maskWord = (text, secretWord) => {
+const maskWord = (text, secretWord, aliases = []) => {
     if (!text || !secretWord) return text;
-    const normWord = secretWord.trim();
-    if (!normWord) return text;
-    // Build RegExp from escaped string, fresh instance, no reuse of global RegExp with .test()
-    const escaped = escapeRegExp(normWord);
-    const regex = new RegExp(escaped, 'gi');
-    return text.replace(regex, (match) => '*'.repeat(match.length));
+    const wordsToMask = [secretWord, ...(Array.isArray(aliases) ? aliases : [])]
+        .map(w => (typeof w === 'string' ? w.trim() : ''))
+        .filter(w => w.length > 0);
+
+    if (wordsToMask.length === 0) return text;
+
+    // Longer words first so full aliases get replaced before substrings
+    wordsToMask.sort((a, b) => b.length - a.length);
+
+    let result = text;
+    for (const target of wordsToMask) {
+        const escaped = escapeRegExp(target);
+        const regex = new RegExp(escaped, 'gi');
+        result = result.replace(regex, (match) => {
+            const count = getGraphemes(match).length;
+            return '*'.repeat(Math.max(1, count));
+        });
+    }
+    return result;
 };
 
 function registerChatHandlers(io, socket, safeOn) {
@@ -104,7 +117,7 @@ function registerChatHandlers(io, socket, safeOn) {
         // The drawer and players who already guessed this round chat in a 'guessed' channel that only they receive
         if (room.gameState === GAME_STATES.DRAWING && (isCurrentDrawer || hasAlreadyGuessed)) {
             let filtered = filterProfanity(text, room.wordToGuess);
-            filtered = maskWord(filtered, room.wordToGuess);
+            filtered = maskWord(filtered, room.wordToGuess, room.wordAliases);
 
             const chatMsg = {
                 id: uuidv4(),
@@ -266,7 +279,7 @@ function registerChatHandlers(io, socket, safeOn) {
 
         // Standard chat message: filter profanity and mask secret word
         let filtered = filterProfanity(text, room.wordToGuess);
-        filtered = maskWord(filtered, room.wordToGuess);
+        filtered = maskWord(filtered, room.wordToGuess, room.wordAliases);
 
         const chatMsg = {
             id: uuidv4(),

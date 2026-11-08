@@ -1,0 +1,1237 @@
+[
+  {
+    "word": "गणित",
+    "aliases": [
+      "ganit",
+      "गणित",
+      "maths",
+      "mathematics",
+      "hisab"
+    ]
+  },
+  {
+    "word": "विज्ञान",
+    "aliases": [
+      "vigyan",
+      "विज्ञान",
+      "science"
+    ]
+  },
+  {
+    "word": "इतिहास",
+    "aliases": [
+      "itihas",
+      "इतिहास",
+      "history"
+    ]
+  },
+  {
+    "word": "भूगोल",
+    "aliases": [
+      "bhugol",
+      "भूगोल",
+      "geography"
+    ]
+  },
+  {
+    "word": "हिंदी",
+    "aliases": [
+      "hindi",
+      "हिंदी",
+      "hindi language",
+      "sahitya"
+    ]
+  },
+  {
+    "word": "अंग्रेजी",
+    "aliases": [
+      "angrezi",
+      "अंग्रेजी",
+      "english",
+      "english grammar"
+    ]
+  },
+  {
+    "word": "संस्कृत",
+    "aliases": [
+      "sanskrit",
+      "संस्कृत",
+      "sanskrit language"
+    ]
+  },
+  {
+    "word": "चित्रकला",
+    "aliases": [
+      "chitra",
+      "चित्रकला",
+      "drawing",
+      "art"
+    ]
+  },
+  {
+    "word": "संगीत",
+    "aliases": [
+      "sangeet",
+      "संगीत",
+      "music"
+    ]
+  },
+  {
+    "word": "व्यायाम",
+    "aliases": [
+      "vyayam",
+      "व्यायाम",
+      "pt",
+      "physical training",
+      "sports"
+    ]
+  },
+  {
+    "word": "कंप्यूटर",
+    "aliases": [
+      "computer",
+      "कंप्यूटर",
+      "it",
+      "information technology"
+    ]
+  },
+  {
+    "word": "पर्यावरण",
+    "aliases": [
+      "paryavaran",
+      "पर्यावरण",
+      "evs",
+      "environment"
+    ]
+  },
+  {
+    "word": "नागरिक शास्त्र",
+    "aliases": [
+      "nagrik shastra",
+      "नागरिक शास्त्र",
+      "civics"
+    ]
+  },
+  {
+    "word": "अर्थशास्त्र",
+    "aliases": [
+      "artha shastra",
+      "अर्थशास्त्र",
+      "economics"
+    ]
+  },
+  {
+    "word": "भौतिकी",
+    "aliases": [
+      "bhautiki",
+      "भौतिकी",
+      "physics"
+    ]
+  },
+  {
+    "word": "रसायन विज्ञान",
+    "aliases": [
+      "rasayan vigyan",
+      "रसायन विज्ञान",
+      "chemistry"
+    ]
+  },
+  {
+    "word": "जीव विज्ञान",
+    "aliases": [
+      "jeev vigyan",
+      "जीव विज्ञान",
+      "biology"
+    ]
+  },
+  {
+    "word": "पुस्तकालय",
+    "aliases": [
+      "pustakalaya",
+      "पुस्तकालय",
+      "library"
+    ]
+  },
+  {
+    "word": "प्रयोगशाला",
+    "aliases": [
+      "prayogshala",
+      "प्रयोगशाला",
+      "lab",
+      "laboratory"
+    ]
+  },
+  {
+    "word": "कक्षा",
+    "aliases": [
+      "kaksha",
+      "कक्षा",
+      "class",
+      "classroom"
+    ]
+  },
+  {
+    "word": "श्यामपट्ट",
+    "aliases": [
+      "blackboard",
+      "श्यामपट्ट",
+      "black board"
+    ]
+  },
+  {
+    "word": "चाक",
+    "aliases": [
+      "chalk",
+      "चाक",
+      "khariya"
+    ]
+  },
+  {
+    "word": "डस्टर",
+    "aliases": [
+      "duster",
+      "डस्टर",
+      "board eraser"
+    ]
+  },
+  {
+    "word": "व्हाइटबोर्ड",
+    "aliases": [
+      "whiteboard",
+      "व्हाइटबोर्ड",
+      "white board"
+    ]
+  },
+  {
+    "word": "मार्कर",
+    "aliases": [
+      "marker",
+      "मार्कर",
+      "sketch marker"
+    ]
+  },
+  {
+    "word": "बेंच",
+    "aliases": [
+      "bench",
+      "बेंच",
+      "wooden bench"
+    ]
+  },
+  {
+    "word": "डेस्क",
+    "aliases": [
+      "desk",
+      "डेस्क",
+      "study desk"
+    ]
+  },
+  {
+    "word": "कुर्सी",
+    "aliases": [
+      "kursi",
+      "कुर्सी",
+      "chair"
+    ]
+  },
+  {
+    "word": "मेज",
+    "aliases": [
+      "mez",
+      "मेज",
+      "table"
+    ]
+  },
+  {
+    "word": "बस्ता",
+    "aliases": [
+      "basta",
+      "बस्ता",
+      "school bag",
+      "bag"
+    ]
+  },
+  {
+    "word": "कॉपी",
+    "aliases": [
+      "copy",
+      "कॉपी",
+      "notebook"
+    ]
+  },
+  {
+    "word": "किताब",
+    "aliases": [
+      "kitaab",
+      "किताब",
+      "book"
+    ]
+  },
+  {
+    "word": "पाठ्यपुस्तक",
+    "aliases": [
+      "textbook",
+      "पाठ्यपुस्तक",
+      "school book"
+    ]
+  },
+  {
+    "word": "कलम",
+    "aliases": [
+      "kalam",
+      "कलम",
+      "pen"
+    ]
+  },
+  {
+    "word": "पेंसिल",
+    "aliases": [
+      "pencil",
+      "पेंसिल",
+      "lead pencil"
+    ]
+  },
+  {
+    "word": "रबर",
+    "aliases": [
+      "rubber",
+      "रबर",
+      "eraser"
+    ]
+  },
+  {
+    "word": "कटर",
+    "aliases": [
+      "sharpener",
+      "कटर",
+      "pencil sharpener"
+    ]
+  },
+  {
+    "word": "पटरी",
+    "aliases": [
+      "patri",
+      "पटरी",
+      "scale",
+      "ruler"
+    ]
+  },
+  {
+    "word": "परकार",
+    "aliases": [
+      "parkar",
+      "परकार",
+      "compass"
+    ]
+  },
+  {
+    "word": "डिवाइडर",
+    "aliases": [
+      "divider",
+      "डिवाइडर",
+      "math divider"
+    ]
+  },
+  {
+    "word": "चांदा",
+    "aliases": [
+      "chanda",
+      "चांदा",
+      "protractor"
+    ]
+  },
+  {
+    "word": "गुनिया",
+    "aliases": [
+      "set square",
+      "गुनिया",
+      "math triangle"
+    ]
+  },
+  {
+    "word": "ज्यामिति बॉक्स",
+    "aliases": [
+      "geometry box",
+      "ज्यामिति बॉक्स",
+      "geom box"
+    ]
+  },
+  {
+    "word": "पेंसिल बॉक्स",
+    "aliases": [
+      "pencil box",
+      "पेंसिल बॉक्स",
+      "pen case"
+    ]
+  },
+  {
+    "word": "पाउच",
+    "aliases": [
+      "pouch",
+      "पाउच",
+      "zipper pouch"
+    ]
+  },
+  {
+    "word": "रंगीन पेंसिल",
+    "aliases": [
+      "rangeen pencil",
+      "रंगीन पेंसिल",
+      "color pencils"
+    ]
+  },
+  {
+    "word": "मोम रंग",
+    "aliases": [
+      "mom rang",
+      "मोम रंग",
+      "crayons"
+    ]
+  },
+  {
+    "word": "स्केच पेन",
+    "aliases": [
+      "sketch pen",
+      "स्केच पेन",
+      "colored markers"
+    ]
+  },
+  {
+    "word": "जल रंग",
+    "aliases": [
+      "jal rang",
+      "जल रंग",
+      "water colors"
+    ]
+  },
+  {
+    "word": "ब्रश",
+    "aliases": [
+      "toolika",
+      "ब्रश",
+      "paint brush"
+    ]
+  },
+  {
+    "word": "रंग पट्टिका",
+    "aliases": [
+      "palette",
+      "रंग पट्टिका",
+      "color palette"
+    ]
+  },
+  {
+    "word": "चार्ट पेपर",
+    "aliases": [
+      "chart paper",
+      "चार्ट पेपर",
+      "presentation chart"
+    ]
+  },
+  {
+    "word": "ड्राइंग शीट",
+    "aliases": [
+      "drawing sheet",
+      "ड्राइंग शीट",
+      "art sheet"
+    ]
+  },
+  {
+    "word": "क्राफ्ट पेपर",
+    "aliases": [
+      "craft paper",
+      "क्राफ्ट पेपर",
+      "origami paper"
+    ]
+  },
+  {
+    "word": "कैंची",
+    "aliases": [
+      "kainchi",
+      "कैंची",
+      "scissors"
+    ]
+  },
+  {
+    "word": "गोंद",
+    "aliases": [
+      "gond",
+      "गोंद",
+      "glue",
+      "fevicol"
+    ]
+  },
+  {
+    "word": "टेप",
+    "aliases": [
+      "tape",
+      "टेप",
+      "scotch tape"
+    ]
+  },
+  {
+    "word": "स्टेपलर",
+    "aliases": [
+      "stapler",
+      "स्टेपलर",
+      "staple"
+    ]
+  },
+  {
+    "word": "पिन",
+    "aliases": [
+      "all pin",
+      "पिन",
+      "board pin"
+    ]
+  },
+  {
+    "word": "क्लिप",
+    "aliases": [
+      "paper clip",
+      "क्लिप",
+      "binder clip"
+    ]
+  },
+  {
+    "word": "फ़ाइल",
+    "aliases": [
+      "file",
+      "फ़ाइल",
+      "folder file"
+    ]
+  },
+  {
+    "word": "फ़ोल्डर",
+    "aliases": [
+      "folder",
+      "फ़ोल्डर",
+      "document folder"
+    ]
+  },
+  {
+    "word": "रजिस्टर",
+    "aliases": [
+      "register",
+      "रजिस्टर",
+      "attendance register"
+    ]
+  },
+  {
+    "word": "डायरी",
+    "aliases": [
+      "diary",
+      "डायरी",
+      "school diary"
+    ]
+  },
+  {
+    "word": "प्रगति पत्र",
+    "aliases": [
+      "report card",
+      "प्रगति पत्र",
+      "progress report"
+    ]
+  },
+  {
+    "word": "अंकतालिका",
+    "aliases": [
+      "marksheet",
+      "अंकतालिका",
+      "result card"
+    ]
+  },
+  {
+    "word": "प्रमाणपत्र",
+    "aliases": [
+      "certificate",
+      "प्रमाणपत्र",
+      "award certificate"
+    ]
+  },
+  {
+    "word": "पदक",
+    "aliases": [
+      "padak",
+      "पदक",
+      "medal"
+    ]
+  },
+  {
+    "word": "ट्रॉफी",
+    "aliases": [
+      "trophy",
+      "ट्रॉफी",
+      "school cup"
+    ]
+  },
+  {
+    "word": "स्कूल बस",
+    "aliases": [
+      "school bus",
+      "स्कूल बस",
+      "yellow bus"
+    ]
+  },
+  {
+    "word": "स्कूल वैन",
+    "aliases": [
+      "school van",
+      "स्कूल वैन",
+      "pool car"
+    ]
+  },
+  {
+    "word": "वर्दी",
+    "aliases": [
+      "vardi",
+      "वर्दी",
+      "uniform",
+      "school dress"
+    ]
+  },
+  {
+    "word": "टाई",
+    "aliases": [
+      "tie",
+      "टाई",
+      "school tie"
+    ]
+  },
+  {
+    "word": "बेल्ट",
+    "aliases": [
+      "belt",
+      "बेल्ट",
+      "school belt"
+    ]
+  },
+  {
+    "word": "बैज",
+    "aliases": [
+      "badge",
+      "बैज",
+      "house badge"
+    ]
+  },
+  {
+    "word": "पहचान पत्र",
+    "aliases": [
+      "id card",
+      "पहचान पत्र",
+      "identity card"
+    ]
+  },
+  {
+    "word": "जूते",
+    "aliases": [
+      "joote",
+      "जूते",
+      "school shoes"
+    ]
+  },
+  {
+    "word": "मोजे",
+    "aliases": [
+      "moje",
+      "मोजे",
+      "socks"
+    ]
+  },
+  {
+    "word": "पानी की बोतल",
+    "aliases": [
+      "paani bottle",
+      "पानी की बोतल",
+      "water flask"
+    ]
+  },
+  {
+    "word": "टिफिन बॉक्स",
+    "aliases": [
+      "tiffin box",
+      "टिफिन बॉक्स",
+      "lunch box"
+    ]
+  },
+  {
+    "word": "आधी छुट्टी",
+    "aliases": [
+      "lunch break",
+      "आधी छुट्टी",
+      "tiffin time",
+      "recess"
+    ]
+  },
+  {
+    "word": "प्रार्थना सभा",
+    "aliases": [
+      "assembly",
+      "प्रार्थना सभा",
+      "morning prayer"
+    ]
+  },
+  {
+    "word": "राष्ट्रगान",
+    "aliases": [
+      "rashtragan",
+      "राष्ट्रगान",
+      "national anthem",
+      "jana gana mana"
+    ]
+  },
+  {
+    "word": "प्रतिज्ञा",
+    "aliases": [
+      "pratigya",
+      "प्रतिज्ञा",
+      "pledge"
+    ]
+  },
+  {
+    "word": "पीटी",
+    "aliases": [
+      "drill",
+      "पीटी",
+      "morning exercise"
+    ]
+  },
+  {
+    "word": "परेड",
+    "aliases": [
+      "parade",
+      "परेड",
+      "march past"
+    ]
+  },
+  {
+    "word": "स्काउट",
+    "aliases": [
+      "scout",
+      "स्काउट",
+      "scouts and guides"
+    ]
+  },
+  {
+    "word": "घंटी",
+    "aliases": [
+      "ghanti",
+      "घंटी",
+      "school bell"
+    ]
+  },
+  {
+    "word": "पीरियड",
+    "aliases": [
+      "period",
+      "पीरियड",
+      "class period"
+    ]
+  },
+  {
+    "word": "अध्यापक",
+    "aliases": [
+      "adhyapak",
+      "अध्यापक",
+      "teacher",
+      "master ji"
+    ]
+  },
+  {
+    "word": "शिक्षिका",
+    "aliases": [
+      "shikshika",
+      "शिक्षिका",
+      "female teacher",
+      "madam"
+    ]
+  },
+  {
+    "word": "प्रधानाचार्य",
+    "aliases": [
+      "pradhanacharya",
+      "प्रधानाचार्य",
+      "principal"
+    ]
+  },
+  {
+    "word": "मॉनिटर",
+    "aliases": [
+      "monitor",
+      "मॉनिटर",
+      "class monitor"
+    ]
+  },
+  {
+    "word": "प्रिफेक्ट",
+    "aliases": [
+      "prefect",
+      "प्रिफेक्ट",
+      "school prefect"
+    ]
+  },
+  {
+    "word": "छात्र",
+    "aliases": [
+      "chhatra",
+      "छात्र",
+      "student",
+      "boy student"
+    ]
+  },
+  {
+    "word": "छात्रा",
+    "aliases": [
+      "chhatra ladki",
+      "छात्रा",
+      "girl student"
+    ]
+  },
+  {
+    "word": "सहपाठी",
+    "aliases": [
+      "sahpathi",
+      "सहपाठी",
+      "classmate"
+    ]
+  },
+  {
+    "word": "मित्र",
+    "aliases": [
+      "dost",
+      "मित्र",
+      "friend",
+      "yaar"
+    ]
+  },
+  {
+    "word": "गृहकार्य",
+    "aliases": [
+      "grihakarya",
+      "गृहकार्य",
+      "homework"
+    ]
+  },
+  {
+    "word": "कक्षा कार्य",
+    "aliases": [
+      "kaksha karya",
+      "कक्षा कार्य",
+      "classwork"
+    ]
+  },
+  {
+    "word": "टेस्ट",
+    "aliases": [
+      "test",
+      "टेस्ट",
+      "class test",
+      "unit test"
+    ]
+  },
+  {
+    "word": "वार्षिक परीक्षा",
+    "aliases": [
+      "pariksha",
+      "वार्षिक परीक्षा",
+      "exam",
+      "final exam"
+    ]
+  },
+  {
+    "word": "प्रश्न पत्र",
+    "aliases": [
+      "prashna patra",
+      "प्रश्न पत्र",
+      "question paper"
+    ]
+  },
+  {
+    "word": "उत्तर पुस्तिका",
+    "aliases": [
+      "uttar pustika",
+      "उत्तर पुस्तिका",
+      "answer sheet"
+    ]
+  },
+  {
+    "word": "पाठ्यक्रम",
+    "aliases": [
+      "pathyakram",
+      "पाठ्यक्रम",
+      "syllabus"
+    ]
+  },
+  {
+    "word": "समय सारिणी",
+    "aliases": [
+      "samay sarini",
+      "समय सारिणी",
+      "time table"
+    ]
+  },
+  {
+    "word": "छुट्टी",
+    "aliases": [
+      "chhutti",
+      "छुट्टी",
+      "holiday"
+    ]
+  },
+  {
+    "word": "गर्मी की छुट्टी",
+    "aliases": [
+      "garmi chhutti",
+      "गर्मी की छुट्टी",
+      "summer holidays"
+    ]
+  },
+  {
+    "word": "सर्दियों की छुट्टी",
+    "aliases": [
+      "sardi chhutti",
+      "सर्दियों की छुट्टी",
+      "winter holidays"
+    ]
+  },
+  {
+    "word": "पिकनिक",
+    "aliases": [
+      "picnic",
+      "पिकनिक",
+      "school picnic"
+    ]
+  },
+  {
+    "word": "खेल दिवस",
+    "aliases": [
+      "khel divas",
+      "खेल दिवस",
+      "sports day"
+    ]
+  },
+  {
+    "word": "वार्षिक उत्सव",
+    "aliases": [
+      "varshik utsav",
+      "वार्षिक उत्सव",
+      "annual function"
+    ]
+  },
+  {
+    "word": "विज्ञान मेला",
+    "aliases": [
+      "vigyan mela",
+      "विज्ञान मेला",
+      "science exhibition"
+    ]
+  },
+  {
+    "word": "प्रदर्शनी",
+    "aliases": [
+      "pradarshani",
+      "प्रदर्शनी",
+      "exhibition"
+    ]
+  },
+  {
+    "word": "वाद विवाद",
+    "aliases": [
+      "debate",
+      "वाद विवाद",
+      "speech contest"
+    ]
+  },
+  {
+    "word": "प्रश्नोत्तरी",
+    "aliases": [
+      "quiz",
+      "प्रश्नोत्तरी",
+      "gk quiz"
+    ]
+  },
+  {
+    "word": "भाषण",
+    "aliases": [
+      "bhashan",
+      "भाषण",
+      "speech"
+    ]
+  },
+  {
+    "word": "नाटक",
+    "aliases": [
+      "natak",
+      "नाटक",
+      "skit",
+      "drama"
+    ]
+  },
+  {
+    "word": "कविता",
+    "aliases": [
+      "kavita",
+      "कविता",
+      "poem",
+      "poetry"
+    ]
+  },
+  {
+    "word": "निबंध",
+    "aliases": [
+      "nibandh",
+      "निबंध",
+      "essay"
+    ]
+  },
+  {
+    "word": "श्रुतलेख",
+    "aliases": [
+      "shrutlekh",
+      "श्रुतलेख",
+      "dictation"
+    ]
+  },
+  {
+    "word": "वर्तनी",
+    "aliases": [
+      "vartani",
+      "वर्तनी",
+      "spelling"
+    ]
+  },
+  {
+    "word": "सुलेख",
+    "aliases": [
+      "sulekh",
+      "सुलेख",
+      "calligraphy",
+      "good handwriting"
+    ]
+  },
+  {
+    "word": "उपस्थिति",
+    "aliases": [
+      "upasthiti",
+      "उपस्थिति",
+      "attendance"
+    ]
+  },
+  {
+    "word": "हाजिरी",
+    "aliases": [
+      "hajiri",
+      "हाजिरी",
+      "roll call"
+    ]
+  },
+  {
+    "word": "क्रमांक",
+    "aliases": [
+      "kramank",
+      "क्रमांक",
+      "roll number"
+    ]
+  },
+  {
+    "word": "स्टाफ रूम",
+    "aliases": [
+      "staffroom",
+      "स्टाफ रूम",
+      "teachers room"
+    ]
+  },
+  {
+    "word": "खेल का मैदान",
+    "aliases": [
+      "khel maidan",
+      "खेल का मैदान",
+      "sports ground",
+      "playground"
+    ]
+  },
+  {
+    "word": "ग्लोब",
+    "aliases": [
+      "globe",
+      "ग्लोब",
+      "earth model"
+    ]
+  },
+  {
+    "word": "मानचित्र",
+    "aliases": [
+      "manchitra",
+      "मानचित्र",
+      "map"
+    ]
+  },
+  {
+    "word": "एटलस",
+    "aliases": [
+      "atlas",
+      "एटलस",
+      "map book"
+    ]
+  },
+  {
+    "word": "सूक्ष्मदर्शी",
+    "aliases": [
+      "microscope",
+      "सूक्ष्मदर्शी",
+      "lab scope"
+    ]
+  },
+  {
+    "word": "परखनली",
+    "aliases": [
+      "test tube",
+      "परखनली",
+      "glass tube"
+    ]
+  },
+  {
+    "word": "बीकर",
+    "aliases": [
+      "beaker",
+      "बीकर",
+      "lab beaker"
+    ]
+  },
+  {
+    "word": "चुंबक",
+    "aliases": [
+      "magnet",
+      "चुंबक",
+      "chumbak"
+    ]
+  },
+  {
+    "word": "प्रिज्म",
+    "aliases": [
+      "prism",
+      "प्रिज्म",
+      "light glass"
+    ]
+  },
+  {
+    "word": "लेंस",
+    "aliases": [
+      "lens",
+      "लेंस",
+      "glass lens"
+    ]
+  },
+  {
+    "word": "बैटरी",
+    "aliases": [
+      "battery",
+      "बैटरी",
+      "dry cell"
+    ]
+  },
+  {
+    "word": "परिपथ",
+    "aliases": [
+      "paripath",
+      "परिपथ",
+      "circuit"
+    ]
+  },
+  {
+    "word": "थर्मामीटर",
+    "aliases": [
+      "thermometer",
+      "थर्मामीटर",
+      "tapman yantra"
+    ]
+  },
+  {
+    "word": "कमानीदार तराजू",
+    "aliases": [
+      "spring balance",
+      "कमानीदार तराजू",
+      "weight balance"
+    ]
+  },
+  {
+    "word": "बर्नर",
+    "aliases": [
+      "bunsen burner",
+      "बर्नर",
+      "lab fire"
+    ]
+  },
+  {
+    "word": "तिपाई",
+    "aliases": [
+      "tripod stand",
+      "तिपाई",
+      "lab stand"
+    ]
+  },
+  {
+    "word": "कीप",
+    "aliases": [
+      "funnel",
+      "कीप",
+      "cone funnel"
+    ]
+  },
+  {
+    "word": "फिल्टर पेपर",
+    "aliases": [
+      "filter paper",
+      "फिल्टर पेपर",
+      "sieve paper"
+    ]
+  },
+  {
+    "word": "कांच की प्लेट",
+    "aliases": [
+      "watch glass",
+      "कांच की प्लेट",
+      "round glass"
+    ]
+  },
+  {
+    "word": "पिपेट",
+    "aliases": [
+      "pipette",
+      "पिपेट",
+      "liquid dropper"
+    ]
+  },
+  {
+    "word": "ब्यूरेट",
+    "aliases": [
+      "burette",
+      "ब्यूरेट",
+      "titration tube"
+    ]
+  },
+  {
+    "word": "लिटमस पत्र",
+    "aliases": [
+      "litmus paper",
+      "लिटमस पत्र",
+      "acid paper"
+    ]
+  },
+  {
+    "word": "स्वरित्र द्विभुज",
+    "aliases": [
+      "tuning fork",
+      "स्वरित्र द्विभुज",
+      "sound fork"
+    ]
+  },
+  {
+    "word": "लोलक",
+    "aliases": [
+      "pendulum",
+      "लोलक",
+      "clock weight"
+    ]
+  }
+]

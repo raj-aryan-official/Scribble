@@ -41,7 +41,7 @@ export const Landing = () => {
     const { state, dispatch } = useGame();
     const socket = useSocket();
     const { isMuted, toggleMute } = useSound();
-    const { soundHintDismissed, dismissSoundHint, openSettings } = useSettings();
+    const { soundHintDismissed, dismissSoundHint, openSettings, language, setLanguage, strings } = useSettings();
 
     // Form inputs
     const [username, setUsername] = useState('');
@@ -386,6 +386,19 @@ export const Landing = () => {
                     )}
                 </div>
 
+                {/* Language Switcher */}
+                <Tooltip content={language === 'hi' ? 'Switch to English' : 'हिन्दी में बदलें'}>
+                    <button
+                        type="button"
+                        data-testid="language-switcher"
+                        onClick={() => setLanguage(language === 'hi' ? 'en' : 'hi')}
+                        aria-label={language === 'hi' ? 'Switch to English' : 'हिन्दी में बदलें'}
+                        className="min-h-[40px] px-3 py-1.5 bg-card hover:bg-paper border-2 border-ink rounded-[6px] shadow-hard-sm flex items-center justify-center text-xs font-bold font-mono text-ink cursor-pointer active:translate-x-[1px] active:translate-y-[1px] focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none"
+                    >
+                        {language === 'hi' ? 'English' : 'हिन्दी'}
+                    </button>
+                </Tooltip>
+
                 <Tooltip content="Settings">
                     <button
                         type="button"
@@ -436,7 +449,7 @@ export const Landing = () => {
                 >
                     <Wordmark />
                     <p className="text-base sm:text-lg md:text-xl font-bold text-ink-soft max-w-sm">
-                        Draw it. Guess it. Win bragging rights.
+                        {strings?.landing?.heroCopy || 'Draw it. Guess it. Win bragging rights.'}
                     </p>
 
                     {/* Looping Cat Doodle: hidden on phone when screen height < 700px */}
@@ -579,7 +592,7 @@ export const Landing = () => {
                                         <span>Connecting...</span>
                                     </span>
                                 ) : (
-                                    'Start a room'
+                                    strings?.landing?.createRoomButton || 'Start a room'
                                 )}
                             </Button>
                         </div>
@@ -588,7 +601,7 @@ export const Landing = () => {
                         <div className="relative flex items-center justify-center my-0.5 select-none">
                             <div className="w-full border-t-2 border-ink" />
                             <span className="absolute bg-card px-2.5 text-[11px] font-bold uppercase tracking-wider text-ink-soft">
-                                or join with a code
+                                {strings?.landing?.orDivider || 'or join with a code'}
                             </span>
                         </div>
 
@@ -627,7 +640,7 @@ export const Landing = () => {
                                         <span>Connecting...</span>
                                     </span>
                                 ) : (
-                                    'Join Room'
+                                    strings?.landing?.joinRoomButton || 'Join Room'
                                 )}
                             </Button>
                         </div>
@@ -641,7 +654,7 @@ export const Landing = () => {
                             aria-label="Open how to play instructions"
                             className="text-xs sm:text-sm font-bold text-ink-soft hover:text-ink underline underline-offset-4 decoration-ink-soft/40 hover:decoration-ink cursor-pointer focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none rounded-[4px] px-2 py-0.5"
                         >
-                            How to play
+                            {strings?.landing?.howToPlayButton || 'How to play'}
                         </button>
                         <p className="text-xs text-ink-soft text-center font-normal">
                             {CREDIT_LINE}

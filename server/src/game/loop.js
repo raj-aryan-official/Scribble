@@ -2,7 +2,8 @@ const crypto = require('crypto');
 const roomManager = require('../RoomManager');
 const { toPublicRoom, clearRoomTimers } = require('../RoomManager');
 const { EVENTS, GAME_STATES } = require('../../../shared/types.cjs');
-const { getWordChoices } = require('../wordBank');
+const { getWordChoices, getAliases } = require('../wordBank');
+const { getGraphemes } = require('../guess');
 const logger = require('../logger');
 const { flushReactionBatch, getTopReaction } = require('../handlers/reactions');
 const { selectTwistForTurn } = require('./twists');
@@ -544,9 +545,10 @@ const startRoundInterval = (io, room, totalTime = (room.settings?.drawTime || 60
             if (revealTimes.includes(timeLeft) && (currentRoom.revealedIndices?.size || 0) < maxHints) {
                 const currentWord = currentRoom.wordToGuess;
                 if (currentWord) {
+                    const wordGraphemes = getGraphemes(currentWord);
                     const unrevealedIndices = [];
-                    for (let i = 0; i < currentWord.length; i++) {
-                        if (currentWord[i] !== ' ' && !currentRoom.revealedIndices.has(i)) {
+                    for (let i = 0; i < wordGraphemes.length; i++) {
+                        if (wordGraphemes[i] !== ' ' && !currentRoom.revealedIndices.has(i)) {
                             unrevealedIndices.push(i);
                         }
                     }
@@ -556,11 +558,11 @@ const startRoundInterval = (io, room, totalTime = (room.settings?.drawTime || 60
                         currentRoom.revealedIndices.add(randomIndex);
 
                         let newHint = '';
-                        for (let i = 0; i < currentWord.length; i++) {
-                            if (currentWord[i] === ' ') {
+                        for (let i = 0; i < wordGraphemes.length; i++) {
+                            if (wordGraphemes[i] === ' ') {
                                 newHint += '  ';
                             } else if (currentRoom.revealedIndices.has(i)) {
-                                newHint += currentWord[i] + ' ';
+                                newHint += wordGraphemes[i] + ' ';
                             } else {
                                 newHint += '_ ';
                             }
@@ -586,6 +588,7 @@ const startRound = (io, room, word, autoPicked = false) => {
     clearRoomTimers(room);
     snapshotEligibleGuessers(room);
     room.wordToGuess = word;
+    room.wordAliases = getAliases(word) || [];
     if (room.usedWords && typeof room.usedWords.add === 'function') {
         room.usedWords.add(word);
     }
@@ -600,7 +603,8 @@ const startRound = (io, room, word, autoPicked = false) => {
     room.startsAt = null;
     room.selectionEndsAt = null;
 
-    const initialHint = word.split('').map(char => char === ' ' ? '  ' : '_ ').join('').trim();
+    const wordGraphemes = getGraphemes(word);
+    const initialHint = wordGraphemes.map(g => g === ' ' ? '  ' : '_ ').join('').trim();
     room.hint = initialHint;
     room.wordHint = initialHint;
 

@@ -24,6 +24,21 @@ const AVAILABLE_PACKS = [
     { id: 'objects', label: 'Objects' },
     { id: 'actions', label: 'Actions' },
 ];
+const WORD_LANGUAGE_OPTIONS = [
+    { id: 'english', label: 'English' },
+    { id: 'hindi', label: 'हिन्दी' },
+    { id: 'hinglish', label: 'Hinglish' }
+];
+const REGIONAL_PACK_OPTIONS = [
+    { id: 'objects', label: 'Everyday Objects' },
+    { id: 'food', label: 'Desi Food' },
+    { id: 'festivals', label: 'Festivals' },
+    { id: 'cricket', label: 'Cricket' },
+    { id: 'subjects', label: 'School & Work' },
+    { id: 'places', label: 'Cities & Monuments' },
+    { id: 'animals', label: 'Animals' },
+    { id: 'cinema', label: 'Cinema & Bollywood' }
+];
 
 export const SettingsCard = ({
     isHost = false,
@@ -36,6 +51,7 @@ export const SettingsCard = ({
     onDrawTimeChange,
     onDifficultyChange,
     onWordChoiceChange,
+    onWordLanguageChange,
     onTwistsChange,
     onToggleEnabledTwist,
     onTogglePack,
@@ -47,6 +63,8 @@ export const SettingsCard = ({
     validCustomWordCount = 0,
 }) => {
     const currentPacks = settings.packs || [];
+    const isRegional = settings.wordLanguage === 'hindi' || settings.wordLanguage === 'hinglish';
+    const availablePacksList = isRegional ? REGIONAL_PACK_OPTIONS : AVAILABLE_PACKS;
 
     return (
         <Card className="flex flex-col gap-5 shadow-hard bg-card p-4 sm:p-5">
@@ -192,6 +210,33 @@ export const SettingsCard = ({
                         </div>
                     </div>
 
+                    {/* Word Language Selector */}
+                    <div>
+                        <label className="block text-xs font-black uppercase tracking-wider text-ink mb-1.5">
+                            Word Language
+                        </label>
+                        <div className="grid grid-cols-3 gap-1 bg-paper p-1 border-2 border-ink rounded-[6px]">
+                            {WORD_LANGUAGE_OPTIONS.map((opt) => {
+                                const isSelected = (settings.wordLanguage || 'english') === opt.id;
+                                return (
+                                    <button
+                                        key={opt.id}
+                                        type="button"
+                                        data-testid={`word-language-option-${opt.id}`}
+                                        onClick={() => onWordLanguageChange?.(opt.id)}
+                                        className={`py-1.5 text-xs sm:text-sm font-bold rounded-[4px] transition-all cursor-pointer select-none ${
+                                            isSelected
+                                                ? 'bg-tomato text-white border-2 border-ink shadow-hard-sm'
+                                                : 'text-ink hover:bg-card border-2 border-transparent'
+                                        }`}
+                                    >
+                                        {opt.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
                     {/* Rule Twists Selector */}
                     <div>
                         <div className="flex items-center justify-between mb-1.5">
@@ -262,7 +307,7 @@ export const SettingsCard = ({
                             </span>
                         </div>
                         <div className="flex flex-wrap gap-1.5">
-                            {AVAILABLE_PACKS.map((pack) => {
+                            {availablePacksList.map((pack) => {
                                 const isSelected = currentPacks.includes(pack.id);
                                 return (
                                     <Chip
@@ -338,6 +383,12 @@ export const SettingsCard = ({
                                 {currentPacks.length > 0
                                     ? currentPacks.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(', ')
                                     : 'All Packs'}
+                            </span>
+                        </div>
+                        <div className="bg-paper border-2 border-ink p-2.5 rounded-[6px] col-span-2">
+                            <span className="block text-[10px] font-black uppercase text-ink-soft">Word Language</span>
+                            <span className="text-sm font-black text-ink" data-testid="readonly-word-language">
+                                {settings.wordLanguage === 'hindi' ? 'हिन्दी (Devanagari)' : (settings.wordLanguage === 'hinglish' ? 'Hinglish (Roman Hindi)' : 'English')}
                             </span>
                         </div>
                         <div className="bg-paper border-2 border-ink p-2.5 rounded-[6px] col-span-2">
