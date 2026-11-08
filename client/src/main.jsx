@@ -5,7 +5,7 @@ import App from './App';
 import './index.css';
 import { GameProvider } from './context/GameContext';
 import { SocketProvider } from './context/SocketContext';
-import { ErrorBoundary } from './components/UI/ErrorBoundary';
+import { ErrorBoundary } from './components/ui/ErrorBoundary';
 
 // Clear any leftover session data from the old auto-rejoin feature
 localStorage.removeItem('scribble_session');

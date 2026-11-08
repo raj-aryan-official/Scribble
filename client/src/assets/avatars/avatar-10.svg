@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none">
+  <!-- Dino / Monster -->
+  <!-- Crest Spikes -->
+  <polygon points="17,10 20,4 23,10" fill="#E4472B" stroke="#1C1B18" stroke-width="1.5" stroke-linejoin="round" />
+  <polygon points="24,9 27,3 30,9" fill="#E4472B" stroke="#1C1B18" stroke-width="1.5" stroke-linejoin="round" />
+  <circle cx="24" cy="26" r="16" fill="#2E9E6B" stroke="#1C1B18" stroke-width="2" />
+  <circle cx="17" cy="22" r="3.5" fill="#FBF6EA" stroke="#1C1B18" stroke-width="1.5" />
+  <circle cx="17" cy="22" r="2" fill="#1C1B18" />
+  <circle cx="31" cy="22" r="3.5" fill="#FBF6EA" stroke="#1C1B18" stroke-width="1.5" />
+  <circle cx="31" cy="22" r="2" fill="#1C1B18" />
+  <!-- Cute Teeth -->
+  <path d="M 17,29 Q 24,37 31,29" stroke="#1C1B18" stroke-width="2" stroke-linecap="round" fill="none" />
+  <polygon points="21,29 23,33 25,29" fill="#FBF6EA" stroke="#1C1B18" stroke-width="1" />
+  <polygon points="25,29 27,33 29,29" fill="#FBF6EA" stroke="#1C1B18" stroke-width="1" />
+</svg>

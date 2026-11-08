@@ -1,16 +1,55 @@
-@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700&display=swap');
 @import "tailwindcss";
 
-@theme {
-  --color-primary: #1E3A5F;
-  --color-accent: #FF6B6B;
-  --color-secondary: #4ECDC4;
-  --color-success: #2ECC71;
-  --color-warning: #F39C12;
-  --color-background: #F8FAFC;
+@font-face {
+  font-family: 'Bricolage Grotesque';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url('/fonts/bricolage-grotesque-800.woff2') format('woff2');
+}
 
-  --font-heading: "Fredoka One", cursive;
-  --font-body: "Nunito", sans-serif;
+@font-face {
+  font-family: 'Instrument Sans';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('/fonts/instrument-sans.woff2') format('woff2');
+}
+
+@theme {
+  --color-paper: #F3ECDD;
+  --color-card: #FBF6EA;
+  --color-ink: #1C1B18;
+  --color-ink-soft: #5B5649;
+  --color-tomato: #E4472B;
+  --color-tomato-deep: #C93A20;
+  --color-marigold: #F6B72C;
+  --color-cobalt: #2F4FD8;
+  --color-leaf: #2E9E6B;
+  --color-leaf-deep: #1F7A50;
+
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+
+  --font-heading: 'Bricolage Grotesque', sans-serif;
+  --font-body: 'Instrument Sans', sans-serif;
+}
+
+@utility shadow-hard {
+  box-shadow: 4px 4px 0 var(--color-ink);
+}
+
+@utility shadow-hard-sm {
+  box-shadow: 2px 2px 0 var(--color-ink);
+}
+
+@utility shadow-hard-lg {
+  box-shadow: 6px 6px 0 var(--color-ink);
+}
+
+@utility border-ink {
+  border: 2px solid var(--color-ink);
 }
 
 html,
@@ -18,14 +57,17 @@ body,
 #root {
   height: 100%;
   width: 100%;
-  overflow: hidden;
   margin: 0;
   padding: 0;
 }
 
 body {
   font-family: var(--font-body);
-  background-color: var(--color-background);
+  background-color: var(--color-paper);
+  background-image: url('/paper-grain.svg');
+  background-repeat: repeat;
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
 }
 
 h1,
@@ -35,6 +77,13 @@ h4,
 h5,
 h6 {
   font-family: var(--font-heading);
+  font-weight: 800;
+}
+
+/* Accessible cobalt focus ring on every interactive element */
+:focus-visible {
+  outline: 2px solid var(--color-cobalt);
+  outline-offset: 2px;
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */
@@ -45,7 +94,5 @@ h6 {
 /* Hide scrollbar for IE, Edge and Firefox */
 .scrollbar-hide {
   -ms-overflow-style: none;
-  /* IE and Edge */
   scrollbar-width: none;
-  /* Firefox */
 }

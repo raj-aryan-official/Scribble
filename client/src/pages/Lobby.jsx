@@ -1,9 +1,16 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Copy, Check, Share2, ArrowLeft, Settings as SettingsIcon, Crown, Users } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { useSocket } from '../hooks/useSocket';
-import { Copy, Check, Share2, Home, Settings as SettingsIcon } from 'lucide-react';
 import { EVENTS } from '../../../shared/types';
+import Button from '../components/ui/Button';
+import Card from '../components/ui/Card';
+import Chip from '../components/ui/Chip';
+import Avatar from '../components/ui/Avatar';
+import Spinner from '../components/ui/Spinner';
+import Toast from '../components/ui/Toast';
 
 const ROUND_OPTIONS = [2, 3, 5, 7, 10, 12];
 const DRAW_TIME_OPTIONS = [60, 80, 100, 120];
@@ -13,7 +20,7 @@ const AVAILABLE_PACKS = [
     { id: 'food', label: 'Food' },
     { id: 'places', label: 'Places' },
     { id: 'objects', label: 'Objects' },
-    { id: 'actions', label: 'Actions' }
+    { id: 'actions', label: 'Actions' },
 ];
 
 const countValidCustomWords = (text) => {
@@ -33,21 +40,27 @@ const countValidCustomWords = (text) => {
     return Math.min(count, 50);
 };
 
-const Lobby = () => {
+export const Lobby = () => {
     const { code } = useParams();
     const { state, dispatch } = useGame();
     const navigate = useNavigate();
     const socket = useSocket();
 
-    const isHost = state.currentUser?.isHost;
-    const canStart = state.players.filter(p => !p.isDisconnected).length >= 2;
+    const [toastMessage, setToastMessage] = useState('');
+    const [toastVariant, setToastVariant] = useState('info');
+    const [copiedCode, setCopiedCode] = useState(false);
+    const [copiedLink, setCopiedLink] = useState(false);
+
+    const isHost = Boolean(state.currentUser?.isHost);
+    const connectedPlayers = state.players.filter(p => !p.isDisconnected);
+    const canStart = connectedPlayers.length >= 2;
 
     const currentSettings = useMemo(() => state.settings || {
         rounds: 3,
         drawTime: 60,
         difficulty: 'Medium',
         packs: [],
-        customWords: []
+        customWords: [],
     }, [state.settings]);
 
     const [customWordsText, setCustomWordsText] = useState(() => {
@@ -64,20 +77,54 @@ const Lobby = () => {
         }
     }, [currentSettings.customWords]);
 
+    // Navigate to game once started
     useEffect(() => {
         if (state.gameState === 'DRAWING' || state.gameState === 'WORD_SELECTION') {
             navigate(`/game/${code}`);
         }
     }, [state.gameState, code, navigate]);
 
-    useEffect(() => {
-        if (state.error) {
-            const timer = setTimeout(() => {
-                dispatch({ type: 'SET_ERROR', payload: null });
-            }, 4000);
-            return () => clearTimeout(timer);
+    const showToast = (message, variant = 'info') => {
+        setToastMessage(message);
+        setToastVariant(variant);
+    };
+
+    const handleCopyCode = async () => {
+        try {
+            await navigator.clipboard.writeText(code);
+            setCopiedCode(true);
+            showToast(`Room code ${code} copied to clipboard!`, 'success');
+            setTimeout(() => setCopiedCode(false), 2000);
+        } catch {
+            showToast('Failed to copy room code', 'error');
         }
-    }, [state.error, dispatch]);
+    };
+
+    const handleShareOrCopyLink = async () => {
+        const link = `${window.location.origin}/join/${code}`;
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: 'Join my Scribble room!',
+                    text: `Draw and guess with me on Scribble! Use room code ${code}`,
+                    url: link,
+                });
+                return;
+            } catch (err) {
+                if (err.name === 'AbortError') return;
+            }
+        }
+
+        // Fallback to clipboard
+        try {
+            await navigator.clipboard.writeText(link);
+            setCopiedLink(true);
+            showToast('Invite link copied to clipboard!', 'success');
+            setTimeout(() => setCopiedLink(false), 2000);
+        } catch {
+            showToast('Failed to copy link', 'error');
+        }
+    };
 
     const handleStartGame = () => {
         socket.emit(EVENTS.START_GAME, { roomCode: code });
@@ -88,8 +135,8 @@ const Lobby = () => {
             roomCode: code,
             settings: {
                 ...currentSettings,
-                ...updated
-            }
+                ...updated,
+            },
         });
     }, [socket, code, currentSettings]);
 
@@ -130,293 +177,348 @@ const Lobby = () => {
         setCustomWordsText(e.target.value);
     };
 
-    const [copiedCode, setCopiedCode] = useState(false);
-    const [copiedLink, setCopiedLink] = useState(false);
-
-    const handleCopyCode = () => {
-        navigator.clipboard.writeText(code);
-        setCopiedCode(true);
-        setTimeout(() => setCopiedCode(false), 2000);
-    };
-
-    const handleCopyLink = () => {
-        const link = `${window.location.origin}/join/${code}`;
-        navigator.clipboard.writeText(link);
-        setCopiedLink(true);
-        setTimeout(() => setCopiedLink(false), 2000);
-    };
-
     const validCustomWordCount = countValidCustomWords(customWordsText);
 
     return (
-        <div className="flex flex-col items-center h-full p-4 md:p-8 bg-background overflow-y-auto">
-            <div className="bg-white p-6 md:p-8 rounded-xl shadow-lg w-full max-w-2xl">
-                {state.error && (
-                    <div className="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg text-sm font-semibold flex items-center justify-between animate-in fade-in">
-                        <span>⚠️ {state.error}</span>
-                        <button
-                            onClick={() => dispatch({ type: 'SET_ERROR', payload: null })}
-                            className="text-red-500 hover:text-red-700 font-bold ml-2 cursor-pointer"
-                        >
-                            ✕
-                        </button>
-                    </div>
-                )}
+        <div className="flex-1 w-full flex flex-col items-center p-4 sm:p-6 md:p-8 overflow-y-auto">
+            {/* Feedback Toast */}
+            <Toast
+                isOpen={Boolean(toastMessage)}
+                onClose={() => setToastMessage('')}
+                message={toastMessage}
+                variant={toastVariant}
+            />
 
-                <div className="flex flex-row justify-between items-center mb-6 gap-1 md:gap-4 overflow-x-hidden">
-                    <div className="flex items-center gap-1 md:gap-3 shrink-0">
-                        <button
-                            onClick={() => window.location.href = '/'}
-                            className="p-1.5 md:p-2 bg-gray-100 hover:bg-gray-200 rounded-full text-gray-600 transition active:scale-95 shrink-0"
-                            title="Back to Home"
+            {/* Error Toast */}
+            <Toast
+                isOpen={Boolean(state.error)}
+                onClose={() => dispatch({ type: 'SET_ERROR', payload: null })}
+                message={state.error}
+                variant="error"
+            />
+
+            <div className="w-full max-w-3xl flex flex-col gap-6">
+                {/* Top Nav & Room Code Tag Bar */}
+                <header className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-card border-2 border-ink shadow-hard rounded-[12px] p-4">
+                    <div className="flex items-center gap-3">
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => navigate('/')}
+                            aria-label="Back to home"
+                            className="p-2 min-h-[40px] w-[40px]"
                         >
-                            <Home size={18} className="md:w-6 md:h-6" />
-                        </button>
-                        <h1 className="text-xl md:text-3xl font-heading text-primary truncate leading-none">Lobby</h1>
+                            <ArrowLeft className="w-5 h-5 text-ink" />
+                        </Button>
+                        <div>
+                            <h1 className="text-2xl font-black font-heading text-ink leading-tight">
+                                Game Lobby
+                            </h1>
+                            <p className="text-xs text-ink-soft">
+                                Waiting for players to join
+                            </p>
+                        </div>
                     </div>
 
-                    <div className="flex gap-1.5 md:gap-2 items-center shrink-0">
+                    {/* Room Code Tag with Copy and Share */}
+                    <div className="flex items-center gap-2 self-end sm:self-center">
                         <div
-                            className="bg-secondary text-white px-2 py-1.5 md:px-4 md:py-2 rounded-lg font-bold text-xs md:text-lg flex items-center gap-1 md:gap-2 cursor-pointer active:scale-95 transition-transform hover:bg-purple-600 shadow-sm whitespace-nowrap"
+                            className="flex items-center gap-2 bg-paper border-2 border-ink shadow-hard-sm px-3 py-1.5 rounded-[6px]"
+                            title="Room Code"
+                        >
+                            <span className="text-xs font-bold uppercase text-ink-soft">Room</span>
+                            <span className="font-mono font-black text-xl text-ink tracking-wider">
+                                {code}
+                            </span>
+                        </div>
+
+                        <Button
+                            variant="secondary"
+                            size="sm"
                             onClick={handleCopyCode}
-                            title="Copy Room Code"
+                            aria-label="Copy room code"
+                            className="min-h-[40px] px-3 flex items-center gap-1.5 text-xs font-bold uppercase"
                         >
-                            <span className="font-mono">{code}</span>
-                            {copiedCode ? <Check size={14} className="md:w-[18px] md:h-[18px]" /> : <Copy size={14} className="md:w-[18px] md:h-[18px]" />}
-                        </div>
-                        <div
-                            className="bg-accent text-white px-2 py-1.5 md:px-4 md:py-2 rounded-lg font-bold text-xs md:text-lg flex items-center gap-1 md:gap-2 cursor-pointer active:scale-95 transition-transform hover:bg-pink-600 shadow-sm"
-                            onClick={handleCopyLink}
-                            title="Copy Invite Link"
-                        >
-                            <Share2 size={14} className="md:w-[18px] md:h-[18px]" />
-                            {copiedLink ? <Check size={14} className="md:w-[18px] md:h-[18px]" /> : null}
-                        </div>
-                    </div>
-                </div>
+                            {copiedCode ? <Check className="w-4 h-4 text-leaf" /> : <Copy className="w-4 h-4 text-ink" />}
+                            <span>{copiedCode ? 'Copied' : 'Copy'}</span>
+                        </Button>
 
-                {/* GAME SETTINGS CARD */}
-                <div className="mb-8 p-4 md:p-6 bg-gray-50 border border-gray-200 rounded-xl shadow-inner">
-                    <div className="flex items-center justify-between mb-4">
+                        <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={handleShareOrCopyLink}
+                            aria-label="Share invite link"
+                            className="min-h-[40px] px-3 flex items-center gap-1.5 text-xs font-bold uppercase"
+                        >
+                            {copiedLink ? <Check className="w-4 h-4 text-white" /> : <Share2 className="w-4 h-4 text-white" />}
+                            <span>{copiedLink ? 'Copied' : 'Share'}</span>
+                        </Button>
+                    </div>
+                </header>
+
+                {/* Players Section */}
+                <section aria-labelledby="players-heading">
+                    <div className="flex items-center justify-between mb-3 px-1">
                         <div className="flex items-center gap-2">
-                            <SettingsIcon size={20} className="text-primary" />
-                            <h2 className="text-lg md:text-xl font-bold text-gray-800">
+                            <Users className="w-5 h-5 text-ink" />
+                            <h2 id="players-heading" className="text-lg font-bold font-heading text-ink">
+                                Players ({state.players.length})
+                            </h2>
+                        </div>
+                        <span className={`text-xs font-bold ${canStart ? 'text-leaf' : 'text-tomato'}`}>
+                            {canStart ? 'Ready to play' : 'Need at least 2 players'}
+                        </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                        <AnimatePresence mode="popLayout">
+                            {state.players.map((p) => {
+                                const isDisconnected = Boolean(p.isDisconnected);
+                                return (
+                                    <motion.div
+                                        key={p.id}
+                                        layout
+                                        initial={{ opacity: 0, scale: 0.85, y: 15 }}
+                                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                                        exit={{ opacity: 0, scale: 0.85 }}
+                                        transition={{ type: 'spring', stiffness: 300, damping: 24 }}
+                                        className={`flex items-center gap-3 p-3 bg-card border-2 border-ink shadow-hard-sm rounded-[12px] relative transition-opacity ${
+                                            isDisconnected ? 'opacity-50 border-dashed bg-paper' : ''
+                                        }`}
+                                    >
+                                        <Avatar avatarId={p.avatar} size="sm" />
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="font-bold text-ink truncate text-sm sm:text-base">
+                                                    {p.username}
+                                                </span>
+                                                {p.isHost && (
+                                                    <span title="Room Host" aria-label="Room Host">
+                                                        <Crown className="w-4 h-4 text-marigold fill-marigold shrink-0" />
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {isDisconnected && (
+                                                <span className="text-[11px] font-bold text-tomato uppercase tracking-wide">
+                                                    Disconnected
+                                                </span>
+                                            )}
+                                        </div>
+                                    </motion.div>
+                                );
+                            })}
+                        </AnimatePresence>
+                    </div>
+                </section>
+
+                {/* Host Settings Card */}
+                <Card className="flex flex-col gap-5 shadow-hard bg-card">
+                    <div className="flex items-center justify-between border-b-2 border-ink/10 pb-3">
+                        <div className="flex items-center gap-2">
+                            <SettingsIcon className="w-5 h-5 text-ink" />
+                            <h2 className="text-lg font-bold font-heading text-ink">
                                 {isHost ? 'Game Settings' : 'Room Settings'}
                             </h2>
                         </div>
                         {!isHost && (
-                            <span className="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded font-medium">
+                            <Chip variant="default" className="text-[11px]">
                                 Host Controlled
-                            </span>
+                            </Chip>
                         )}
                     </div>
 
                     {isHost ? (
-                        <div className="space-y-4">
-                            {/* Rounds Segmented Control */}
+                        <div className="flex flex-col gap-5">
+                            {/* Rounds Selector */}
                             <div>
-                                <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1.5">
+                                <label className="block text-xs font-bold uppercase tracking-wider text-ink mb-2">
                                     Rounds
                                 </label>
-                                <div className="grid grid-cols-6 gap-1 bg-gray-200 p-1 rounded-lg">
-                                    {ROUND_OPTIONS.map(rounds => (
-                                        <button
-                                            key={rounds}
-                                            type="button"
-                                            onClick={() => handleRoundsChange(rounds)}
-                                            className={`py-1.5 text-xs md:text-sm font-bold rounded-md transition-all cursor-pointer ${
-                                                currentSettings.rounds === rounds
-                                                    ? 'bg-primary text-white shadow-sm'
-                                                    : 'text-gray-700 hover:bg-gray-300'
-                                            }`}
-                                        >
-                                            {rounds}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Draw Time Segmented Control */}
-                            <div>
-                                <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1.5">
-                                    Draw Time
-                                </label>
-                                <div className="grid grid-cols-4 gap-1 bg-gray-200 p-1 rounded-lg">
-                                    {DRAW_TIME_OPTIONS.map(time => (
-                                        <button
-                                            key={time}
-                                            type="button"
-                                            onClick={() => handleDrawTimeChange(time)}
-                                            className={`py-1.5 text-xs md:text-sm font-bold rounded-md transition-all cursor-pointer ${
-                                                currentSettings.drawTime === time
-                                                    ? 'bg-primary text-white shadow-sm'
-                                                    : 'text-gray-700 hover:bg-gray-300'
-                                            }`}
-                                        >
-                                            {time}s
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Difficulty Segmented Control */}
-                            <div>
-                                <label className="block text-xs md:text-sm font-semibold text-gray-700 mb-1.5">
-                                    Word Difficulty
-                                </label>
-                                <div className="grid grid-cols-4 gap-1 bg-gray-200 p-1 rounded-lg">
-                                    {DIFFICULTY_OPTIONS.map(diff => (
-                                        <button
-                                            key={diff}
-                                            type="button"
-                                            onClick={() => handleDifficultyChange(diff)}
-                                            className={`py-1.5 text-xs md:text-sm font-bold rounded-md transition-all cursor-pointer ${
-                                                currentSettings.difficulty === diff
-                                                    ? 'bg-primary text-white shadow-sm'
-                                                    : 'text-gray-700 hover:bg-gray-300'
-                                            }`}
-                                        >
-                                            {diff}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Word Packs Multi-Select Chips */}
-                            <div>
-                                <div className="flex justify-between items-center mb-1.5">
-                                    <label className="text-xs md:text-sm font-semibold text-gray-700">
-                                        Themed Word Packs
-                                    </label>
-                                    <span className="text-xs text-gray-500">
-                                        {(currentSettings.packs && currentSettings.packs.length > 0)
-                                            ? `${currentSettings.packs.length} pack(s) selected`
-                                            : 'All packs active'}
-                                    </span>
-                                </div>
-                                <div className="flex flex-wrap gap-2">
-                                    {AVAILABLE_PACKS.map(pack => {
-                                        const isSelected = currentSettings.packs && currentSettings.packs.includes(pack.id);
+                                <div className="grid grid-cols-6 gap-1.5 bg-paper p-1.5 border-2 border-ink rounded-[6px]">
+                                    {ROUND_OPTIONS.map((num) => {
+                                        const isSelected = currentSettings.rounds === num;
                                         return (
                                             <button
-                                                key={pack.id}
+                                                key={num}
                                                 type="button"
-                                                onClick={() => handleTogglePack(pack.id)}
-                                                className={`px-3 py-1.5 rounded-full text-xs md:text-sm font-medium border transition-all cursor-pointer active:scale-95 ${
+                                                onClick={() => handleRoundsChange(num)}
+                                                className={`py-1.5 text-xs sm:text-sm font-bold rounded-[4px] transition-all cursor-pointer select-none ${
                                                     isSelected
-                                                        ? 'bg-secondary text-white border-secondary shadow-sm'
-                                                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
+                                                        ? 'bg-tomato text-white border-2 border-ink shadow-hard-sm'
+                                                        : 'text-ink hover:bg-card border-2 border-transparent'
                                                 }`}
                                             >
-                                                {isSelected ? '✓ ' : ''}{pack.label}
+                                                {num}
                                             </button>
                                         );
                                     })}
                                 </div>
                             </div>
 
-                            {/* Custom Words Debounced Textarea */}
+                            {/* Draw Time Selector */}
                             <div>
-                                <div className="flex justify-between items-center mb-1.5">
-                                    <label className="text-xs md:text-sm font-semibold text-gray-700">
+                                <label className="block text-xs font-bold uppercase tracking-wider text-ink mb-2">
+                                    Draw Time
+                                </label>
+                                <div className="grid grid-cols-4 gap-1.5 bg-paper p-1.5 border-2 border-ink rounded-[6px]">
+                                    {DRAW_TIME_OPTIONS.map((time) => {
+                                        const isSelected = currentSettings.drawTime === time;
+                                        return (
+                                            <button
+                                                key={time}
+                                                type="button"
+                                                onClick={() => handleDrawTimeChange(time)}
+                                                className={`py-1.5 text-xs sm:text-sm font-bold rounded-[4px] transition-all cursor-pointer select-none ${
+                                                    isSelected
+                                                        ? 'bg-tomato text-white border-2 border-ink shadow-hard-sm'
+                                                        : 'text-ink hover:bg-card border-2 border-transparent'
+                                                }`}
+                                            >
+                                                {time}s
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Word Difficulty Selector */}
+                            <div>
+                                <label className="block text-xs font-bold uppercase tracking-wider text-ink mb-2">
+                                    Difficulty
+                                </label>
+                                <div className="grid grid-cols-4 gap-1.5 bg-paper p-1.5 border-2 border-ink rounded-[6px]">
+                                    {DIFFICULTY_OPTIONS.map((diff) => {
+                                        const isSelected = currentSettings.difficulty === diff;
+                                        return (
+                                            <button
+                                                key={diff}
+                                                type="button"
+                                                onClick={() => handleDifficultyChange(diff)}
+                                                className={`py-1.5 text-xs sm:text-sm font-bold rounded-[4px] transition-all cursor-pointer select-none ${
+                                                    isSelected
+                                                        ? 'bg-tomato text-white border-2 border-ink shadow-hard-sm'
+                                                        : 'text-ink hover:bg-card border-2 border-transparent'
+                                                }`}
+                                            >
+                                                {diff}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Themed Word Packs */}
+                            <div>
+                                <div className="flex items-center justify-between mb-2">
+                                    <label className="text-xs font-bold uppercase tracking-wider text-ink">
+                                        Themed Word Packs
+                                    </label>
+                                    <span className="text-xs font-bold text-ink-soft">
+                                        {currentSettings.packs?.length > 0
+                                            ? `${currentSettings.packs.length} active`
+                                            : 'All packs'}
+                                    </span>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                    {AVAILABLE_PACKS.map((pack) => {
+                                        const isSelected = currentSettings.packs?.includes(pack.id);
+                                        return (
+                                            <Chip
+                                                key={pack.id}
+                                                variant={isSelected ? 'leaf' : 'default'}
+                                                onClick={() => handleTogglePack(pack.id)}
+                                                className="cursor-pointer text-xs py-1.5 px-3"
+                                            >
+                                                {isSelected ? '✓ ' : '+ '}
+                                                {pack.label}
+                                            </Chip>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Custom Words */}
+                            <div>
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <label htmlFor="custom-words-input" className="text-xs font-bold uppercase tracking-wider text-ink">
                                         Custom Words
                                     </label>
-                                    <span className={`text-xs font-semibold ${validCustomWordCount >= 50 ? 'text-amber-600' : 'text-gray-500'}`}>
+                                    <span className={`text-xs font-bold ${validCustomWordCount >= 50 ? 'text-tomato' : 'text-ink-soft'}`}>
                                         {validCustomWordCount} / 50 words
                                     </span>
                                 </div>
                                 <textarea
+                                    id="custom-words-input"
                                     rows={2}
                                     value={customWordsText}
                                     onChange={handleCustomWordsChange}
-                                    placeholder="Add custom words separated by commas (e.g. dinosaur, lighthouse, unicorn)"
-                                    className="w-full p-2.5 bg-white border border-gray-300 rounded-lg text-xs md:text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+                                    placeholder="Add comma-separated words: spaceship, pancake, chameleon..."
+                                    className="w-full p-3 bg-paper text-ink border-2 border-ink rounded-[6px] text-sm font-body placeholder:text-ink-soft/60 focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none resize-none"
                                 />
-                                <p className="text-[11px] text-gray-500 mt-1">
-                                    Custom words will be mixed into word selection (~30% chance). 3-20 characters each.
+                                <p className="text-[11px] text-ink-soft mt-1">
+                                    Custom words have a ~30% chance of appearing. 3-20 characters each.
                                 </p>
                             </div>
                         </div>
                     ) : (
-                        /* Read-Only Summary for Guests */
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
-                            <div className="bg-white p-2.5 rounded-lg border border-gray-200">
-                                <span className="block text-[11px] text-gray-500 font-semibold uppercase">Rounds</span>
-                                <span className="text-base font-bold text-gray-800">{currentSettings.rounds}</span>
+                        /* Read-only view for guests */
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                            <div className="bg-paper border-2 border-ink p-3 rounded-[6px]">
+                                <span className="block text-[11px] font-bold uppercase text-ink-soft">Rounds</span>
+                                <span className="text-lg font-black text-ink">{currentSettings.rounds}</span>
                             </div>
-                            <div className="bg-white p-2.5 rounded-lg border border-gray-200">
-                                <span className="block text-[11px] text-gray-500 font-semibold uppercase">Draw Time</span>
-                                <span className="text-base font-bold text-gray-800">{currentSettings.drawTime}s</span>
+                            <div className="bg-paper border-2 border-ink p-3 rounded-[6px]">
+                                <span className="block text-[11px] font-bold uppercase text-ink-soft">Draw Time</span>
+                                <span className="text-lg font-black text-ink">{currentSettings.drawTime}s</span>
                             </div>
-                            <div className="bg-white p-2.5 rounded-lg border border-gray-200">
-                                <span className="block text-[11px] text-gray-500 font-semibold uppercase">Difficulty</span>
-                                <span className="text-base font-bold text-gray-800">{currentSettings.difficulty}</span>
+                            <div className="bg-paper border-2 border-ink p-3 rounded-[6px]">
+                                <span className="block text-[11px] font-bold uppercase text-ink-soft">Difficulty</span>
+                                <span className="text-lg font-black text-ink">{currentSettings.difficulty}</span>
                             </div>
-                            <div className="bg-white p-2.5 rounded-lg border border-gray-200">
-                                <span className="block text-[11px] text-gray-500 font-semibold uppercase">Packs</span>
-                                <span className="text-base font-bold text-gray-800 truncate block">
-                                    {(currentSettings.packs && currentSettings.packs.length > 0)
+                            <div className="bg-paper border-2 border-ink p-3 rounded-[6px]">
+                                <span className="block text-[11px] font-bold uppercase text-ink-soft">Packs</span>
+                                <span className="text-sm font-bold text-ink truncate block mt-0.5">
+                                    {currentSettings.packs?.length > 0
                                         ? currentSettings.packs.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(', ')
                                         : 'All'}
                                 </span>
                             </div>
-                            {currentSettings.customWords && currentSettings.customWords.length > 0 && (
-                                <div className="col-span-2 md:col-span-4 bg-white p-2 rounded-lg border border-gray-200 text-xs text-gray-600">
-                                    <span className="font-semibold text-gray-800">Custom Words: </span>
-                                    {currentSettings.customWords.length} added by host
+                            {currentSettings.customWords?.length > 0 && (
+                                <div className="col-span-2 sm:col-span-4 bg-paper border-2 border-ink p-2.5 rounded-[6px] text-xs font-bold text-ink text-left">
+                                    <span>Custom words enabled: </span>
+                                    <span className="text-ink-soft font-normal">{currentSettings.customWords.length} words added</span>
                                 </div>
                             )}
                         </div>
                     )}
-                </div>
+                </Card>
 
-                {/* PLAYERS LIST */}
-                <div className="mb-8">
-                    <h2 className="text-xl md:text-2xl mb-4 font-bold text-gray-700 flex items-center justify-between">
-                        <span>Players ({state.players.length})</span>
-                        <span className="text-xs md:text-sm font-semibold text-gray-500">
-                            {canStart ? '✅ Ready to start' : '⚠️ Need at least 2 players'}
-                        </span>
-                    </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                        {state.players.map(p => (
-                            <div key={p.id} className={`flex items-center p-3 md:p-4 rounded-lg border shadow-sm transition-all ${p.isDisconnected ? 'bg-gray-100 opacity-60 border-dashed' : 'bg-gray-50'}`}>
-                                <span className="text-2xl md:text-4xl mr-3 md:mr-4">{p.avatar}</span>
-                                <span className="font-bold text-base md:text-xl text-gray-800 truncate">{p.username}</span>
-                                {p.isDisconnected && (
-                                    <span className="ml-2 px-2 py-0.5 text-xs font-semibold bg-gray-200 text-gray-600 rounded">away</span>
-                                )}
-                                {p.isHost && <span className="ml-auto text-yellow-500 text-base md:text-2xl">👑</span>}
-                            </div>
-                        ))}
-                    </div>
+                {/* Start Game Action / Waiting Status */}
+                <div className="flex flex-col gap-2">
+                    {isHost ? (
+                        <div className="flex flex-col sm:flex-row items-center gap-3">
+                            <Button
+                                variant="primary"
+                                size="lg"
+                                onClick={handleStartGame}
+                                disabled={!canStart}
+                                className="w-full sm:w-auto sm:min-w-[200px] text-lg uppercase tracking-wide"
+                            >
+                                Start Game
+                            </Button>
+                            <span className={`text-sm font-bold text-center sm:text-left ${canStart ? 'text-leaf' : 'text-tomato'}`}>
+                                {canStart
+                                    ? '✓ Ready to begin!'
+                                    : 'Need at least 2 players to start'}
+                            </span>
+                        </div>
+                    ) : (
+                        <div className="flex items-center justify-center gap-3 py-4 bg-card border-2 border-ink shadow-hard-sm rounded-[12px] text-ink font-bold">
+                            <Spinner size="sm" label="Waiting for host" />
+                            <span>Waiting for host to start the game...</span>
+                        </div>
+                    )}
                 </div>
-
-                {/* START GAME / WAITING */}
-                {isHost ? (
-                    <div className="space-y-2">
-                        <button
-                            onClick={handleStartGame}
-                            disabled={!canStart}
-                            className={`w-full py-3 md:py-4 rounded-lg font-bold text-xl md:text-2xl transition shadow-lg ${
-                                canStart
-                                    ? 'bg-accent text-white hover:bg-red-500 active:scale-95 cursor-pointer'
-                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed opacity-80'
-                            }`}
-                        >
-                            {canStart ? 'Start Game' : 'Need 2+ Players to Start'}
-                        </button>
-                        {!canStart && (
-                            <p className="text-center text-xs md:text-sm text-gray-500">
-                                Scribble requires at least 2 players. Copy the invite link and open an <strong>Incognito / Private tab</strong> (or second browser) to join as Player 2.
-                            </p>
-                        )}
-                    </div>
-                ) : (
-                    <div className="text-center text-gray-500 animate-pulse text-base md:text-lg">
-                        Waiting for host to start...
-                    </div>
-                )}
             </div>
         </div>
     );

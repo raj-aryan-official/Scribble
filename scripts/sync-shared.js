@@ -13,3 +13,4 @@ cjsContent += '\nmodule.exports = { EVENTS, GAME_STATES };\n';
 
 fs.writeFileSync(sharedTypesCjsPath, cjsContent, 'utf8');
 console.log('Successfully synced shared/types.js -> shared/types.cjs');
+

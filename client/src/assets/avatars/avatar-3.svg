@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none">
+  <!-- Fox Face -->
+  <polygon points="12,18 7,6 20,12" fill="#E4472B" stroke="#1C1B18" stroke-width="2" stroke-linejoin="round" />
+  <polygon points="12,16 9,8 18,13" fill="#1C1B18" />
+  <polygon points="36,18 41,6 28,12" fill="#E4472B" stroke="#1C1B18" stroke-width="2" stroke-linejoin="round" />
+  <polygon points="36,16 39,8 30,13" fill="#1C1B18" />
+  <path d="M 10,22 L 24,38 L 38,22 Q 40,16 34,16 L 14,16 Q 8,16 10,22 Z" fill="#E4472B" stroke="#1C1B18" stroke-width="2" stroke-linejoin="round" />
+  <path d="M 10,22 L 24,38 L 24,24 Q 16,24 10,22 Z" fill="#FBF6EA" />
+  <path d="M 38,22 L 24,38 L 24,24 Q 32,24 38,22 Z" fill="#FBF6EA" />
+  <circle cx="17" cy="22" r="2.5" fill="#1C1B18" />
+  <circle cx="31" cy="22" r="2.5" fill="#1C1B18" />
+  <circle cx="24" cy="36" r="3" fill="#1C1B18" />
+</svg>

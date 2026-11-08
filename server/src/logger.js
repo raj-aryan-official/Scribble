@@ -28,3 +28,4 @@ module.exports = {
     warn: (msg, ...args) => log('warn', msg, ...args),
     error: (msg, ...args) => log('error', msg, ...args)
 };
+

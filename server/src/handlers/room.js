@@ -5,6 +5,15 @@ const { sanitizeNickname, rejectWithError, getMemberRoom, isHost } = require('./
 const { makeSnapshot, recordChatMessage, handlePlayerLeave, cleanEndGame } = require('../game/loop');
 const logger = require('../logger');
 
+const ALLOWED_AVATARS = new Set(Array.from({ length: 12 }, (_, i) => `avatar-${i + 1}`));
+
+function validateAvatar(avatar) {
+    if (typeof avatar === 'string' && ALLOWED_AVATARS.has(avatar)) {
+        return avatar;
+    }
+    return 'avatar-1';
+}
+
 function registerRoomHandlers(io, socket, safeOn) {
     safeOn(EVENTS.CREATE_ROOM, (payload) => {
         if (!payload || typeof payload !== 'object') {
@@ -14,7 +23,7 @@ function registerRoomHandlers(io, socket, safeOn) {
         if (cleanUsername.length < 1 || cleanUsername.length > 16) {
             return rejectWithError(socket, 'Username must be between 1 and 16 characters');
         }
-        const avatar = typeof payload.avatar === 'string' ? payload.avatar.slice(0, 32) : '👤';
+        const avatar = validateAvatar(payload.avatar);
         const sessionId = typeof payload.sessionId === 'string' ? payload.sessionId : undefined;
         const settings = payload.settings && typeof payload.settings === 'object' ? payload.settings : {};
 
@@ -37,7 +46,7 @@ function registerRoomHandlers(io, socket, safeOn) {
         if (cleanUsername.length < 1 || cleanUsername.length > 16) {
             return rejectWithError(socket, 'Username must be between 1 and 16 characters');
         }
-        const avatar = typeof payload.avatar === 'string' ? payload.avatar.slice(0, 32) : '👤';
+        const avatar = validateAvatar(payload.avatar);
         const sessionId = typeof payload.sessionId === 'string' ? payload.sessionId : undefined;
 
         // Check if player is already in another room

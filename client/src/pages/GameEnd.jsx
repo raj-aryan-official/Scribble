@@ -1,15 +1,18 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useGame } from '../context/GameContext';
-import { useSocket } from '../context/SocketContext';
-import { EVENTS } from '../../../shared/types.js';
 import confetti from 'canvas-confetti';
+import { useGame } from '../context/GameContext';
+import { useSocket } from '../hooks/useSocket';
+import { EVENTS } from '../../../shared/types.js';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
+import Avatar from '../components/ui/Avatar';
 
-const GameEnd = () => {
+export const GameEnd = () => {
     const { code } = useParams();
     const navigate = useNavigate();
     const { state } = useGame();
-    const { socket } = useSocket();
+    const socket = useSocket();
 
     const isHost = state.currentUser?.isHost;
 
@@ -45,47 +48,75 @@ const GameEnd = () => {
     const sortedPlayers = [...state.players].sort((a, b) => (state.scores[b.id] || 0) - (state.scores[a.id] || 0));
 
     return (
-        <div className="h-full bg-gradient-to-b from-primary to-blue-900 flex flex-col items-center justify-center p-4 md:p-8 text-white overflow-y-auto">
-            <div className="animate-in zoom-in duration-500 w-full max-w-2xl flex flex-col items-center">
-                <div className="text-6xl md:text-8xl mb-4 animate-bounce">🏆</div>
-                <h1 className="text-4xl md:text-6xl font-heading mb-8 text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-500 drop-shadow-sm text-center">
+        <div className="flex-1 w-full bg-paper flex flex-col items-center justify-center p-4 md:p-8 text-ink overflow-y-auto">
+            <div className="w-full max-w-xl flex flex-col items-center">
+                <div className="text-6xl md:text-7xl mb-3 select-none">🏆</div>
+                <h1 className="text-4xl md:text-5xl font-black font-heading mb-6 text-ink text-center">
                     Game Over!
                 </h1>
 
-                <div className="bg-white/95 backdrop-blur-sm text-gray-800 rounded-2xl shadow-2xl p-6 md:p-8 w-full border-4 border-yellow-400/30">
-                    <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center border-b pb-4 text-primary uppercase tracking-wider">Leaderboard</h2>
-                    <div className="space-y-3 max-h-[40vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300">
-                        {sortedPlayers.map((p, idx) => (
-                            <div key={p.id} className={`flex items-center p-3 md:p-4 rounded-xl transform transition-all ${idx === 0 ? 'bg-yellow-50 scale-[1.02] border-2 border-yellow-400 shadow-lg' : 'bg-gray-50 border border-gray-100 hover:bg-gray-100'}`}>
-                                <div className={`text-xl md:text-2xl font-black w-10 md:w-12 shrink-0 ${idx === 0 ? 'text-yellow-500' : idx === 1 ? 'text-gray-400' : idx === 2 ? 'text-orange-400' : 'text-gray-300'}`}>
-                                    #{idx + 1}
+                <Card className="w-full p-6 md:p-8 shadow-hard-lg bg-card">
+                    <h2 className="text-xl md:text-2xl font-bold font-heading mb-6 text-center border-b-2 border-ink pb-3 text-ink uppercase tracking-wider">
+                        Final Leaderboard
+                    </h2>
+                    <div className="space-y-3 max-h-[45vh] overflow-y-auto pr-1">
+                        {sortedPlayers.map((p, idx) => {
+                            const isWinner = idx === 0;
+                            return (
+                                <div
+                                    key={p.id}
+                                    className={`flex items-center p-3 rounded-[8px] border-2 border-ink transition-transform ${
+                                        isWinner
+                                            ? 'bg-marigold shadow-hard-sm'
+                                            : 'bg-paper'
+                                    }`}
+                                >
+                                    <div className="text-lg md:text-xl font-black font-mono w-8 shrink-0 text-ink">
+                                        #{idx + 1}
+                                    </div>
+                                    <div className="mr-3 shrink-0">
+                                        <Avatar avatarId={p.avatar} size="sm" />
+                                    </div>
+                                    <div className="flex-grow flex flex-col min-w-0">
+                                        <span className="font-bold text-base md:text-lg truncate text-ink">
+                                            {p.username}
+                                        </span>
+                                        {isWinner && (
+                                            <span className="text-[11px] font-black uppercase text-tomato tracking-wider">
+                                                Winner
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="text-lg md:text-xl font-mono font-black text-ink shrink-0 whitespace-nowrap">
+                                        {state.scores[p.id] || 0} pts
+                                    </div>
+                                    {isWinner && (
+                                        <span className="text-xl ml-2 shrink-0 select-none">👑</span>
+                                    )}
                                 </div>
-                                <div className="text-3xl md:text-4xl mr-3 md:mr-4 shrink-0">{p.avatar}</div>
-                                <div className="flex-grow flex flex-col min-w-0">
-                                    <span className={`font-bold text-base md:text-xl truncate ${idx === 0 ? 'text-primary' : 'text-gray-700'}`}>{p.username}</span>
-                                    {idx === 0 && <span className="text-xs text-yellow-600 font-bold uppercase tracking-wide">Winner</span>}
-                                </div>
-                                <div className="text-xl md:text-2xl font-mono font-bold text-accent shrink-0 whitespace-nowrap">{state.scores[p.id] || 0} pts</div>
-                                {idx === 0 && <span className="text-2xl md:text-3xl ml-2 shrink-0 animate-pulse">👑</span>}
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
 
-                    <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
-                        <button
+                    <div className="mt-8 flex flex-col sm:flex-row justify-center gap-3">
+                        <Button
+                            variant="secondary"
+                            size="md"
                             onClick={() => navigate('/')}
-                            className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-8 py-3 rounded-xl font-bold transition-all shadow-sm hover:shadow active:scale-95 flex items-center justify-center gap-2"
+                            className="flex-1 uppercase font-bold"
                         >
-                            <span>Exit to Home</span>
-                        </button>
-                        <button
+                            Exit to Home
+                        </Button>
+                        <Button
+                            variant="primary"
+                            size="md"
                             onClick={handlePlayAgain}
-                            className="bg-accent hover:bg-red-500 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-md hover:shadow-lg active:scale-95 flex items-center justify-center gap-2"
+                            className="flex-1 uppercase font-bold"
                         >
-                            <span>{isHost ? 'Play Again' : 'Return to Lobby'}</span>
-                        </button>
+                            {isHost ? 'Play Again' : 'Return to Lobby'}
+                        </Button>
                     </div>
-                </div>
+                </Card>
             </div>
         </div>
     );

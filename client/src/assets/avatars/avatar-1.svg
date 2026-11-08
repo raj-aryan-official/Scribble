@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none">
+  <!-- Cat Face -->
+  <polygon points="12,18 8,6 20,12" fill="#F6B72C" stroke="#1C1B18" stroke-width="2" stroke-linejoin="round" />
+  <polygon points="36,18 40,6 28,12" fill="#F6B72C" stroke="#1C1B18" stroke-width="2" stroke-linejoin="round" />
+  <circle cx="24" cy="26" r="16" fill="#F6B72C" stroke="#1C1B18" stroke-width="2" />
+  <circle cx="18" cy="24" r="2.5" fill="#1C1B18" />
+  <circle cx="30" cy="24" r="2.5" fill="#1C1B18" />
+  <polygon points="22,28 26,28 24,31" fill="#E4472B" stroke="#1C1B18" stroke-width="1.5" />
+  <path d="M 21,32 Q 24,35 27,32" stroke="#1C1B18" stroke-width="2" stroke-linecap="round" fill="none" />
+  <line x1="8" y1="26" x2="14" y2="27" stroke="#1C1B18" stroke-width="1.5" stroke-linecap="round" />
+  <line x1="8" y1="30" x2="14" y2="29" stroke="#1C1B18" stroke-width="1.5" stroke-linecap="round" />
+  <line x1="40" y1="26" x2="34" y2="27" stroke="#1C1B18" stroke-width="1.5" stroke-linecap="round" />
+  <line x1="40" y1="30" x2="34" y2="29" stroke="#1C1B18" stroke-width="1.5" stroke-linecap="round" />
+</svg>

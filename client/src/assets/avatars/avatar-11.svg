@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none">
+  <!-- Astronaut / Cosmic Explorer -->
+  <circle cx="24" cy="25" r="17" fill="#FBF6EA" stroke="#1C1B18" stroke-width="2" />
+  <!-- Helmet Visor -->
+  <rect x="13" y="16" width="22" height="15" rx="7.5" fill="#2F4FD8" stroke="#1C1B18" stroke-width="2" />
+  <!-- Reflection -->
+  <path d="M 17,20 Q 22,18 27,20" stroke="#F6B72C" stroke-width="2" stroke-linecap="round" fill="none" />
+  <circle cx="29" cy="21" r="1.5" fill="#F6B72C" />
+  <!-- Cheeks / base -->
+  <rect x="18" y="37" width="12" height="4" rx="2" fill="#E4472B" stroke="#1C1B18" stroke-width="1.5" />
+</svg>

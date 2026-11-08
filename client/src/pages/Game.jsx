@@ -12,7 +12,8 @@ import MobileNavBar from '../components/Game/MobileNavBar';
 import { WordChoice } from '../components/Game/WordChoice';
 import { VoiceControls } from '../components/Chat/VoiceControls';
 import { RemoteAudio } from '../components/Chat/RemoteAudio';
-import { ConfirmationModal } from '../components/UI/ConfirmationModal';
+import { ConfirmationModal } from '../components/ui/ConfirmationModal';
+import Avatar from '../components/ui/Avatar';
 
 const Game = () => {
     const { code } = useParams();
@@ -280,10 +281,10 @@ const Game = () => {
                                             p.isDisconnected ? 'opacity-50 grayscale bg-gray-100' : ''
                                         } ${state.guessedPlayers.includes(p.id) ? 'bg-green-100 text-green-800 border-green-200' : 'hover:bg-gray-100'}`}
                                     >
-                                        <span className={`text-lg transition-all rounded-full ${
-                                            isSpeaking ? 'ring-2 ring-green-500 ring-offset-2 scale-110 shadow-sm' : ''
+                                        <span className={`inline-flex transition-all rounded-full ${
+                                            isSpeaking ? 'ring-2 ring-leaf ring-offset-2 scale-110 shadow-sm' : ''
                                         }`}>
-                                            {p.avatar}
+                                            <Avatar avatarId={p.avatar} size="xs" />
                                         </span>
                                         <span className="ml-2 font-bold truncate max-w-[100px]">{p.username}</span>
                                         {isSpeaking && (
@@ -314,10 +315,10 @@ const Game = () => {
                                             : 'bg-gray-50'
                                     } ${isSpeaking ? 'border-green-500 bg-green-50' : ''}`}
                                 >
-                                    <span className={`text-xl transition-all rounded-full ${
-                                        isSpeaking ? 'ring-2 ring-green-500 ring-offset-1 scale-110' : ''
+                                    <span className={`inline-flex transition-all rounded-full ${
+                                        isSpeaking ? 'ring-2 ring-leaf ring-offset-1 scale-110' : ''
                                     }`}>
-                                        {p.avatar}
+                                        <Avatar avatarId={p.avatar} size="xs" />
                                     </span>
                                     <div className="flex flex-col ml-2 leading-none">
                                         <div className="flex items-center gap-1">
