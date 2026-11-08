@@ -41,3 +41,4 @@ export const AutoPickedBanner = ({ word, onDismiss }) => {
 };
 
 export default AutoPickedBanner;
+

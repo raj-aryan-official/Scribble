@@ -1,18 +1,21 @@
 import React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
+import { Check } from 'lucide-react';
 
 export const HintTiles = ({
     word = '',
     hint = '',
     isDrawer = false,
+    guessedCount = 0,
+    totalGuessers = 0,
     className = '',
 }) => {
     const shouldReduceMotion = useReducedMotion();
 
-    // Drawer sees the full secret word in a marigold chip
+    // Drawer sees the full secret word in a marigold chip + N of M guessed counter
     if (isDrawer && word) {
         return (
-            <div className={`flex items-center justify-center ${className}`}>
+            <div className={`flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 ${className}`}>
                 <div
                     data-testid="drawer-word-chip"
                     className="inline-flex items-center gap-2 bg-marigold text-ink border-2 border-ink shadow-hard-sm px-4 py-1.5 rounded-[6px] font-mono font-black text-lg sm:text-xl md:text-2xl uppercase tracking-wider select-none"
@@ -22,6 +25,22 @@ export const HintTiles = ({
                     </span>
                     <span>{word}</span>
                 </div>
+
+                {totalGuessers > 0 && (
+                    <motion.div
+                        key={guessedCount}
+                        initial={!shouldReduceMotion ? { scale: 1.25 } : { opacity: 0.8 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                        data-testid="drawer-guessed-counter"
+                        className="inline-flex items-center gap-1.5 bg-paper border-2 border-ink shadow-hard-sm px-3 py-1 rounded-[6px] text-xs sm:text-sm font-black text-ink select-none"
+                    >
+                        <Check className="w-3.5 h-3.5 text-leaf-deep stroke-[3]" />
+                        <span>
+                            {guessedCount} of {totalGuessers} guessed
+                        </span>
+                    </motion.div>
+                )}
             </div>
         );
     }

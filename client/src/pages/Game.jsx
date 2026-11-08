@@ -10,7 +10,7 @@ import { EVENTS } from '../../../shared/types';
 import PlayerList from '../components/Game/PlayerList';
 import HintTiles from '../components/Game/HintTiles';
 import TimerBar from '../components/Game/TimerBar';
-import ToolTray from '../components/Game/ToolTray';
+import ToolTray from '../components/Canvas/ToolTray';
 import GuessPanel from '../components/Game/GuessPanel';
 import WordChoice from '../components/Game/WordChoice';
 import RoundEndOverlay from '../components/Game/RoundEndOverlay';
@@ -100,7 +100,32 @@ export const Game = () => {
         tool,
         cursorPos,
         isCursorInside,
+        strokeCount,
     } = useCanvas(code, isDrawer);
+
+    // Prevent accidental pull-to-refresh on mobile while on Game page
+    useEffect(() => {
+        if (typeof document !== 'undefined' && document.body) {
+            document.body.style.overscrollBehaviorY = 'contain';
+            return () => {
+                document.body.style.overscrollBehaviorY = 'auto';
+            };
+        }
+    }, []);
+
+    // Warn drawer before leaving while actively drawing
+    useEffect(() => {
+        if (!isDrawer || state.gameState !== 'DRAWING') return;
+
+        const handleBeforeUnload = (e) => {
+            e.preventDefault();
+            e.returnValue = 'Leave drawing? Your progress will be lost.';
+            return e.returnValue;
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [isDrawer, state.gameState]);
 
     // WebRTC Voice chat
     const {
@@ -137,7 +162,7 @@ export const Game = () => {
         if (!socket) return;
 
         const handleCorrectGuess = (payload) => {
-            play('correct');
+            play('joinPop');
             dispatch({ type: 'CORRECT_GUESS', payload });
         };
 
@@ -190,6 +215,9 @@ export const Game = () => {
 
     const displayRingDiameter = Math.max(4, Math.round(lineWidth * (canvasWidth / 800)));
     const totalDrawTime = state.settings?.drawTime || 60;
+    const totalGuessers = state.players.filter(
+        (p) => !p.isDisconnected && p.id !== state.drawerId
+    ).length;
 
     return (
         <div className="flex-1 w-full max-w-[1280px] mx-auto bg-paper flex flex-col select-none p-2 sm:p-3 md:p-4 gap-2 sm:gap-3">
@@ -245,6 +273,8 @@ export const Game = () => {
                             word={state.wordToGuess}
                             hint={state.wordHint}
                             isDrawer={isDrawer}
+                            guessedCount={state.guessedPlayers?.length || 0}
+                            totalGuessers={totalGuessers}
                         />
                     </div>
 
@@ -285,6 +315,18 @@ export const Game = () => {
                                     }`}
                                     style={{ touchAction: 'none' }}
                                 />
+
+                                {/* Faint Start Drawing Prompt (fades out on first stroke) */}
+                                {isDrawer && strokeCount === 0 && state.gameState === 'DRAWING' && (
+                                    <div
+                                        className="pointer-events-none absolute inset-0 flex items-center justify-center p-4 text-center select-none transition-opacity duration-300"
+                                        data-testid="empty-canvas-prompt"
+                                    >
+                                        <span className="text-sm sm:text-base font-bold font-heading text-ink-soft/40 italic tracking-wide">
+                                            Start drawing. No letters or numbers!
+                                        </span>
+                                    </div>
+                                )}
 
                                 {/* Game Start Countdown ('3, 2, 1' large numerals on paper) */}
                                 {showCountdown && (

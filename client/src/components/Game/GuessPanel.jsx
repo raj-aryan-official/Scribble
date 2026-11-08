@@ -28,13 +28,13 @@ export const GuessPanel = ({
     const isGuessedOrDrawer = isDrawer || hasGuessed;
 
     const inputPlaceholder = isDrawer
-        ? 'You are drawing (chat only)...'
+        ? "Chat with players who've guessed..."
         : hasGuessed
         ? 'You guessed! Chat with winners...'
         : 'Type your guess here...';
 
     const inputLabel = isDrawer
-        ? 'Chat with other players'
+        ? "Chatting with players who've guessed"
         : hasGuessed
         ? 'Chat with players who guessed'
         : 'Type your guess';
@@ -92,14 +92,23 @@ export const GuessPanel = ({
         setMessage('');
     };
 
-    const renderMessageStream = () => (
-        <div
-            tabIndex={0}
-            role="region"
-            aria-label="Chat messages"
-            className="flex-1 overflow-y-auto p-3 space-y-2 bg-paper border-2 border-ink rounded-[8px] min-h-0 text-sm focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none"
-        >
-            {state.messages.slice(-100).map((msg, idx) => {
+    const renderMessageStream = () => {
+        const displayedMessages = state.messages.slice(-100).filter((msg) => {
+            if (isDrawer) {
+                // Drawer chat shows only the guessed-players channel, correct guess announcements, and system messages
+                return msg.type === 'guessed' || msg.type === 'correct' || msg.type === 'system';
+            }
+            return true;
+        });
+
+        return (
+            <div
+                tabIndex={0}
+                role="region"
+                aria-label="Chat messages"
+                className="flex-1 overflow-y-auto p-3 space-y-2 bg-paper border-2 border-ink rounded-[8px] min-h-0 text-sm focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none"
+            >
+                {displayedMessages.map((msg, idx) => {
                 if (msg.type === 'correct') {
                     const gainedText = msg.gained ? ` (+${msg.gained})` : '';
                     return (
@@ -160,6 +169,7 @@ export const GuessPanel = ({
             <div ref={messagesEndRef} />
         </div>
     );
+};
 
     // Mobile View: Pinned input + bottom sheet chat toggle
     if (isMobile) {
@@ -198,7 +208,7 @@ export const GuessPanel = ({
                             >
                                 <div className="flex items-center justify-between border-b-2 border-ink/10 pb-2 mb-2">
                                     <h3 className="font-heading font-black text-sm uppercase text-ink">
-                                        Chat & Guesses
+                                        {isDrawer ? "Chatting with players who've guessed" : 'Chat & Guesses'}
                                     </h3>
                                     <Button
                                         variant="quiet"
@@ -275,14 +285,22 @@ export const GuessPanel = ({
                 <div className="flex items-center gap-2">
                     <MessageSquare className="w-4 h-4 text-ink" />
                     <h3 className="font-heading font-black text-sm uppercase tracking-wider text-ink">
-                        {isGuessedOrDrawer ? 'Winner Chat' : 'Guesses'}
+                        {isDrawer
+                            ? "Chatting with players who've guessed"
+                            : isGuessedOrDrawer
+                            ? 'Winner Chat'
+                            : 'Guesses'}
                     </h3>
                 </div>
-                {isGuessedOrDrawer && (
+                {isDrawer ? (
+                    <span className="text-[10px] font-bold bg-marigold px-2 py-0.5 rounded-[4px] border border-ink text-ink">
+                        Drawer Chat
+                    </span>
+                ) : isGuessedOrDrawer ? (
                     <span className="text-[10px] font-bold bg-marigold px-2 py-0.5 rounded-[4px] border border-ink text-ink">
                         Guessed Room
                     </span>
-                )}
+                ) : null}
             </div>
 
             {/* Close Hint Popover */}

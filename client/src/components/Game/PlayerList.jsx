@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { Pencil, Check, Crown } from 'lucide-react';
 import Avatar from '../ui/Avatar';
 
@@ -49,13 +50,20 @@ export const PlayerList = ({
                                 #{index + 1}
                             </span>
 
-                            <div
-                                className={`rounded-full transition-transform ${
+                            <motion.div
+                                animate={hasGuessed ? { scale: [1, 1.2, 1] } : {}}
+                                transition={{ duration: 0.3 }}
+                                className={`rounded-full relative transition-transform ${
                                     isSpeaking ? 'ring-2 ring-leaf ring-offset-1 scale-110' : ''
                                 }`}
                             >
                                 <Avatar avatarId={player.avatar} size="xs" />
-                            </div>
+                                {hasGuessed && (
+                                    <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-leaf border border-ink flex items-center justify-center text-white shadow-xs">
+                                        <Check className="w-2.5 h-2.5 stroke-[3]" />
+                                    </span>
+                                )}
+                            </motion.div>
 
                             <span className="text-xs font-bold truncate max-w-[70px]">
                                 {player.username}
@@ -120,13 +128,20 @@ export const PlayerList = ({
                                 #{index + 1}
                             </span>
 
-                            <div
-                                className={`rounded-full shrink-0 transition-transform ${
+                            <motion.div
+                                animate={hasGuessed ? { scale: [1, 1.2, 1] } : {}}
+                                transition={{ duration: 0.3 }}
+                                className={`rounded-full shrink-0 relative transition-transform ${
                                     isSpeaking ? 'ring-2 ring-leaf ring-offset-2 scale-110' : ''
                                 }`}
                             >
                                 <Avatar avatarId={player.avatar} size="xs" />
-                            </div>
+                                {hasGuessed && (
+                                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-leaf border border-ink flex items-center justify-center text-white shadow-xs">
+                                        <Check className="w-2.5 h-2.5 stroke-[3]" />
+                                    </span>
+                                )}
+                            </motion.div>
 
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-1">

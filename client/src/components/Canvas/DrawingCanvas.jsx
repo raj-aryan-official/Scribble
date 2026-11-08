@@ -21,6 +21,7 @@ const DrawingCanvasComponent = ({ roomCode, isDrawer }) => {
         tool,
         cursorPos,
         isCursorInside,
+        strokeCount,
     } = useCanvas(roomCode, isDrawer);
 
     const [canvasWidth, setCanvasWidth] = useState(800);
@@ -68,6 +69,18 @@ const DrawingCanvasComponent = ({ roomCode, isDrawer }) => {
                         }`}
                         style={{ touchAction: 'none' }}
                     />
+
+                    {/* Faint Start Drawing Prompt */}
+                    {isDrawer && strokeCount === 0 && (
+                        <div
+                            className="pointer-events-none absolute inset-0 flex items-center justify-center p-4 text-center select-none transition-opacity duration-300"
+                            data-testid="empty-canvas-prompt"
+                        >
+                            <span className="text-sm sm:text-base font-bold font-heading text-ink-soft/40 italic tracking-wide">
+                                Start drawing. No letters or numbers!
+                            </span>
+                        </div>
+                    )}
 
                     {/* Drawer Brush Size Ring Cursor */}
                     {isDrawer && isCursorInside && (

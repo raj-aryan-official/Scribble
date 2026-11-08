@@ -9,6 +9,7 @@ import {
     MAX_POINTS_PER_STROKE,
     HIGH_POINT_THRESHOLD
 } from '../utils/canvasMath';
+import { PRESET_COLORS } from '../components/Canvas/ColorSwatches';
 
 // Backing store dimensions for fixed 4:3 aspect ratio
 const BASE_WIDTH = 1600;
@@ -21,11 +22,16 @@ export const useCanvas = (roomCode, isDrawer) => {
     const offscreenCtxRef = useRef(null);
     const socket = useSocket();
 
-    const [color, setColorState] = useState('#000000');
-    const [lineWidth, setLineWidthState] = useState(5);
+    const [color, setColorState] = useState('#1C1B18');
+    const [lineWidth, setLineWidthState] = useState(6);
     const [tool, setToolState] = useState('pencil'); // 'pencil' | 'eraser'
     const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
     const [isCursorInside, setIsCursorInside] = useState(false);
+    const [strokeCount, setStrokeCount] = useState(0);
+
+    // Palm rejection refs
+    const isPenActiveRef = useRef(false);
+    const penTimerRef = useRef(null);
 
     // Keep active settings in refs to avoid stale closures in event handlers
     const isDrawerRef = useRef(isDrawer);
@@ -264,6 +270,7 @@ export const useCanvas = (roomCode, isDrawer) => {
 
         inProgressStrokesRef.current.delete(id);
         strokesRef.current.push(stroke);
+        setStrokeCount(strokesRef.current.length);
     }, [renderCommands, blitToMainCanvas]);
 
     // Coordinate conversion: screen CSS coords to normalized 0-1 4:3 sheet coordinates
@@ -280,6 +287,15 @@ export const useCanvas = (roomCode, isDrawer) => {
     const onPointerDown = useCallback((e) => {
         if (!isDrawerRef.current) return;
         if (e.pointerType === 'mouse' && e.button !== 0) return;
+
+        // Palm rejection: if pen is active, ignore simultaneous touch input
+        if (e.pointerType === 'pen') {
+            if (penTimerRef.current) clearTimeout(penTimerRef.current);
+            isPenActiveRef.current = true;
+        } else if (e.pointerType === 'touch' && isPenActiveRef.current) {
+            return;
+        }
+
         e.preventDefault();
 
         try {
@@ -307,6 +323,7 @@ export const useCanvas = (roomCode, isDrawer) => {
             lastMidpoint: null
         };
         inProgressStrokesRef.current.set(id, stroke);
+        setStrokeCount((prev) => prev + 1);
 
         // Draw initial dot to offscreen canvas
         const offscreen = offscreenCanvasRef.current;
@@ -344,6 +361,9 @@ export const useCanvas = (roomCode, isDrawer) => {
     }, [getNormalizedPoint, renderCommands, blitToMainCanvas, socket]);
 
     const onPointerMove = useCallback((e) => {
+        // Palm rejection: ignore simultaneous touch when pen is active
+        if (e.pointerType === 'touch' && isPenActiveRef.current) return;
+
         const canvas = canvasRef.current;
         if (canvas) {
             const rect = canvas.getBoundingClientRect();
@@ -372,6 +392,13 @@ export const useCanvas = (roomCode, isDrawer) => {
     }, [getNormalizedPoint, drawIncrementalPoint]);
 
     const onPointerUp = useCallback((e) => {
+        if (e.pointerType === 'pen') {
+            if (penTimerRef.current) clearTimeout(penTimerRef.current);
+            penTimerRef.current = setTimeout(() => {
+                isPenActiveRef.current = false;
+            }, 300);
+        }
+
         if (!isDrawingRef.current || !isDrawerRef.current) return;
         isDrawingRef.current = false;
 
@@ -420,20 +447,71 @@ export const useCanvas = (roomCode, isDrawer) => {
         }
     }, [socket]);
 
-    // Keyboard shortcut for drawer: Ctrl/Cmd + Z
+    // Keyboard shortcuts for drawer: P (pencil), E (eraser), [ / ] (size), 1-9 (colors), Ctrl/Cmd+Z (undo)
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (!isDrawer) return;
+
+            // Ignore when typing inside input or textarea
+            const target = e.target;
+            if (
+                target &&
+                (target.tagName === 'INPUT' ||
+                    target.tagName === 'TEXTAREA' ||
+                    target.isContentEditable)
+            ) {
+                return;
+            }
+
             const isCtrlOrCmd = e.ctrlKey || e.metaKey;
+
+            // Undo: Ctrl/Cmd + Z
             if (isCtrlOrCmd && e.key.toLowerCase() === 'z' && !e.shiftKey) {
                 e.preventDefault();
                 undo();
+                return;
+            }
+
+            if (isCtrlOrCmd) return;
+
+            // Tool toggle: P (pencil), E (eraser)
+            if (e.key.toLowerCase() === 'p') {
+                e.preventDefault();
+                setTool('pencil');
+                return;
+            }
+            if (e.key.toLowerCase() === 'e') {
+                e.preventDefault();
+                setTool('eraser');
+                return;
+            }
+
+            // Size: [ (decrease), ] (increase)
+            if (e.key === '[') {
+                e.preventDefault();
+                setLineWidth((prev) => Math.max(2, prev - 2));
+                return;
+            }
+            if (e.key === ']') {
+                e.preventDefault();
+                setLineWidth((prev) => Math.min(40, prev + 2));
+                return;
+            }
+
+            // Colors: 1 through 9
+            if (e.key >= '1' && e.key <= '9') {
+                const colorIndex = parseInt(e.key, 10) - 1;
+                const swatch = PRESET_COLORS[colorIndex];
+                if (swatch) {
+                    e.preventDefault();
+                    setColor(swatch.hex);
+                }
             }
         };
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isDrawer, undo]);
+    }, [isDrawer, undo, setTool, setLineWidth, setColor]);
 
     // ResizeObserver debounced to one animation frame
     useEffect(() => {
@@ -508,6 +586,7 @@ export const useCanvas = (roomCode, isDrawer) => {
             const exists = strokesRef.current.some(s => s.id === stroke.id);
             if (!exists) {
                 strokesRef.current.push(stroke);
+                setStrokeCount(strokesRef.current.length);
                 const offscreen = offscreenCanvasRef.current;
                 const offCtx = offscreenCtxRef.current;
                 if (offscreen && offCtx) {
@@ -522,6 +601,7 @@ export const useCanvas = (roomCode, isDrawer) => {
             if (Array.isArray(history)) {
                 strokesRef.current = history;
                 inProgressStrokesRef.current.clear();
+                setStrokeCount(history.length);
                 redraw();
             }
         };
@@ -530,6 +610,7 @@ export const useCanvas = (roomCode, isDrawer) => {
             if (snapshot?.strokes && Array.isArray(snapshot.strokes)) {
                 strokesRef.current = snapshot.strokes;
                 inProgressStrokesRef.current.clear();
+                setStrokeCount(snapshot.strokes.length);
                 redraw();
             }
         };
@@ -537,6 +618,7 @@ export const useCanvas = (roomCode, isDrawer) => {
         const handleCleared = () => {
             strokesRef.current = [];
             inProgressStrokesRef.current.clear();
+            setStrokeCount(0);
             redraw();
         };
 
@@ -546,6 +628,7 @@ export const useCanvas = (roomCode, isDrawer) => {
             } else if (strokesRef.current.length > 0) {
                 strokesRef.current.pop();
             }
+            setStrokeCount(strokesRef.current.length);
             redraw();
         };
 
@@ -589,6 +672,7 @@ export const useCanvas = (roomCode, isDrawer) => {
         lineWidth,
         tool,
         cursorPos,
-        isCursorInside
+        isCursorInside,
+        strokeCount
     };
 };
