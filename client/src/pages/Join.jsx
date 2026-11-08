@@ -54,6 +54,44 @@ export const Join = () => {
     const [showJoiningSpinner, setShowJoiningSpinner] = useState(false);
     const [serverUnreachable, setServerUnreachable] = useState(false);
 
+    // Seat Claim States (E19)
+    const [seatClaimData, setSeatClaimData] = useState(null);
+    const [seatClaimStatus, setSeatClaimStatus] = useState(null); // 'prompt' | 'waiting' | 'accepted' | 'declined'
+    const [seatClaimMessage, setSeatClaimMessage] = useState('');
+
+    useEffect(() => {
+        if (!socket) return;
+
+        const onClaimAvailable = (data) => {
+            setSeatClaimData(data);
+            setSeatClaimStatus('prompt');
+            setIsJoining(false);
+            setShowJoiningSpinner(false);
+        };
+
+        const onClaimAccepted = () => {
+            setSeatClaimStatus('accepted');
+            setSeatClaimMessage('The host let you back in');
+        };
+
+        const onClaimDeclined = (data) => {
+            setSeatClaimStatus('declined');
+            setSeatClaimMessage(data?.reason || 'The host said no');
+            setIsJoining(false);
+            setShowJoiningSpinner(false);
+        };
+
+        socket.on(EVENTS.SEAT_CLAIM_AVAILABLE, onClaimAvailable);
+        socket.on(EVENTS.SEAT_CLAIM_ACCEPTED, onClaimAccepted);
+        socket.on(EVENTS.SEAT_CLAIM_DECLINED, onClaimDeclined);
+
+        return () => {
+            socket.off(EVENTS.SEAT_CLAIM_AVAILABLE, onClaimAvailable);
+            socket.off(EVENTS.SEAT_CLAIM_ACCEPTED, onClaimAccepted);
+            socket.off(EVENTS.SEAT_CLAIM_DECLINED, onClaimDeclined);
+        };
+    }, [socket]);
+
     const [placeholderName, setPlaceholderName] = useState('Sleepy Otter');
     const nicknameInputRef = useRef(null);
 
@@ -344,8 +382,151 @@ export const Join = () => {
                         </div>
                     )}
 
+                    {/* STATE 3.5: Seat Claim Flow (E19) */}
+                    {!isLoadingPreview && seatClaimStatus && (
+                        <div data-testid="seat-claim-flow" className="flex flex-col gap-4 py-2">
+                            {seatClaimStatus === 'prompt' && (
+                                <div className="flex flex-col gap-4 text-center">
+                                    <div className="w-12 h-12 rounded-full bg-marigold/20 border-2 border-ink flex items-center justify-center mx-auto text-ink shadow-hard-sm">
+                                        <Sparkles className="w-6 h-6" />
+                                    </div>
+                                    <div>
+                                        <h2 data-testid="seat-claim-prompt-heading" className="font-heading font-black text-lg text-ink">
+                                            {seatClaimData?.username} is away. Ask to take back that seat?
+                                        </h2>
+                                        <p className="text-xs text-ink-soft mt-1">
+                                            A player with this name was in the room and disconnected. You can ask the host to restore the seat or join as a new player.
+                                        </p>
+                                    </div>
+                                    <div className="flex flex-col gap-2 pt-2">
+                                        <Button
+                                            variant="primary"
+                                            size="md"
+                                            data-testid="seat-claim-ask-host-btn"
+                                            onClick={() => {
+                                                if (socket && seatClaimData) {
+                                                    socket.emit(EVENTS.CLAIM_SEAT, {
+                                                        roomCode: cleanCode,
+                                                        playerId: seatClaimData.playerId,
+                                                    });
+                                                    setSeatClaimStatus('waiting');
+                                                }
+                                            }}
+                                            className="w-full font-bold uppercase min-h-[44px]"
+                                        >
+                                            Ask the host
+                                        </Button>
+                                        <Button
+                                            variant="secondary"
+                                            size="md"
+                                            data-testid="seat-claim-join-new-btn"
+                                            onClick={() => {
+                                                setSeatClaimStatus(null);
+                                                setSeatClaimData(null);
+                                                const validName = validateNickname() || username.trim() || 'Player';
+                                                const sessionId = getSessionId();
+                                                setIsJoining(true);
+                                                socket.emit(EVENTS.JOIN_ROOM, {
+                                                    roomCode: cleanCode,
+                                                    username: validName,
+                                                    avatar,
+                                                    sessionId,
+                                                    bypassSeatClaim: true,
+                                                });
+                                            }}
+                                            className="w-full font-bold uppercase min-h-[44px]"
+                                        >
+                                            Join as a new player
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {seatClaimStatus === 'waiting' && (
+                                <div className="flex flex-col items-center justify-center py-6 gap-3 text-center">
+                                    <Spinner size="lg" label="Waiting for host..." />
+                                    <h2 data-testid="seat-claim-waiting-heading" className="font-heading font-black text-base text-ink">
+                                        Waiting for the host...
+                                    </h2>
+                                    <p className="text-xs text-ink-soft">
+                                        The host has 20 seconds to accept or decline.
+                                    </p>
+                                    <Button
+                                        variant="quiet"
+                                        size="sm"
+                                        onClick={() => {
+                                            setSeatClaimStatus(null);
+                                            setSeatClaimData(null);
+                                            const validName = validateNickname() || username.trim() || 'Player';
+                                            const sessionId = getSessionId();
+                                            setIsJoining(true);
+                                            socket.emit(EVENTS.JOIN_ROOM, {
+                                                roomCode: cleanCode,
+                                                username: validName,
+                                                avatar,
+                                                sessionId,
+                                                bypassSeatClaim: true,
+                                            });
+                                        }}
+                                        className="mt-2 text-xs font-bold text-ink-soft hover:text-ink"
+                                    >
+                                        Join as a new player instead
+                                    </Button>
+                                </div>
+                            )}
+
+                            {seatClaimStatus === 'accepted' && (
+                                <div className="flex flex-col items-center justify-center py-6 gap-3 text-center">
+                                    <span className="text-leaf font-black text-3xl">✓</span>
+                                    <h2 data-testid="seat-claim-accepted-heading" className="font-heading font-black text-lg text-ink">
+                                        The host let you back in
+                                    </h2>
+                                    <p className="text-xs text-ink-soft">
+                                        Restoring your seat and points...
+                                    </p>
+                                </div>
+                            )}
+
+                            {seatClaimStatus === 'declined' && (
+                                <div className="flex flex-col items-center justify-center py-4 gap-3 text-center">
+                                    <div className="w-10 h-10 rounded-full bg-tomato/10 border border-tomato flex items-center justify-center text-tomato">
+                                        <AlertTriangle className="w-5 h-5" />
+                                    </div>
+                                    <h2 data-testid="seat-claim-declined-heading" className="font-heading font-black text-base text-ink">
+                                        {seatClaimMessage || 'The host said no'}
+                                    </h2>
+                                    <p className="text-xs text-ink-soft">
+                                        You can still join the room as a new player.
+                                    </p>
+                                    <Button
+                                        variant="primary"
+                                        size="md"
+                                        data-testid="seat-claim-declined-join-btn"
+                                        onClick={() => {
+                                            setSeatClaimStatus(null);
+                                            setSeatClaimData(null);
+                                            const validName = validateNickname() || username.trim() || 'Player';
+                                            const sessionId = getSessionId();
+                                            setIsJoining(true);
+                                            socket.emit(EVENTS.JOIN_ROOM, {
+                                                roomCode: cleanCode,
+                                                username: validName,
+                                                avatar,
+                                                sessionId,
+                                                bypassSeatClaim: true,
+                                            });
+                                        }}
+                                        className="w-full font-bold uppercase min-h-[44px] mt-2"
+                                    >
+                                        Join as a new player
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     {/* STATE 4, 5, 6: Room Exists (Lobby, In-Progress, or Full) */}
-                    {!isLoadingPreview && !previewError && preview && preview.exists && (
+                    {!isLoadingPreview && !previewError && preview && preview.exists && !seatClaimStatus && (
                         <>
                             {/* Host Banner & Status Line */}
                             <div className="flex items-center gap-3 p-3 bg-paper border-2 border-ink rounded-[8px] shadow-hard-sm">

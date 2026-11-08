@@ -5,7 +5,7 @@ import { Users, ChevronDown, ChevronUp, Settings as SettingsIcon } from 'lucide-
 import { useGame } from '../context/GameContext';
 import { useSocket } from '../hooks/useSocket';
 import { useSound } from '../hooks/useSound';
-import { EVENTS } from '../../../shared/types';
+import { EVENTS, TWIST_IDS } from '../../../shared/types';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import Toast from '../components/ui/Toast';
@@ -243,6 +243,16 @@ export const Lobby = () => {
     const handleRoundsChange = (rounds) => emitUpdateSettings({ rounds });
     const handleDrawTimeChange = (drawTime) => emitUpdateSettings({ drawTime });
     const handleDifficultyChange = (difficulty) => emitUpdateSettings({ difficulty });
+    const handleWordChoiceChange = (wordChoice) => emitUpdateSettings({ wordChoice });
+    const handleTwistsChange = (twists) => emitUpdateSettings({ twists });
+    const handleToggleEnabledTwist = (twistId) => {
+        const active = currentSettings.enabledTwists || TWIST_IDS;
+        const isSelected = active.includes(twistId);
+        const nextEnabled = isSelected
+            ? (active.length > 1 ? active.filter((t) => t !== twistId) : active)
+            : [...active, twistId];
+        emitUpdateSettings({ enabledTwists: nextEnabled });
+    };
 
     const handleTogglePack = (packId) => {
         const active = currentSettings.packs || [];
@@ -444,6 +454,9 @@ export const Lobby = () => {
                                     onRoundsChange={handleRoundsChange}
                                     onDrawTimeChange={handleDrawTimeChange}
                                     onDifficultyChange={handleDifficultyChange}
+                                    onWordChoiceChange={handleWordChoiceChange}
+                                    onTwistsChange={handleTwistsChange}
+                                    onToggleEnabledTwist={handleToggleEnabledTwist}
                                     onTogglePack={handleTogglePack}
                                     validCustomWordCount={validCustomWordCount}
                                 />
@@ -492,6 +505,9 @@ export const Lobby = () => {
                         onRoundsChange={handleRoundsChange}
                         onDrawTimeChange={handleDrawTimeChange}
                         onDifficultyChange={handleDifficultyChange}
+                        onWordChoiceChange={handleWordChoiceChange}
+                        onTwistsChange={handleTwistsChange}
+                        onToggleEnabledTwist={handleToggleEnabledTwist}
                         onTogglePack={handleTogglePack}
                         validCustomWordCount={validCustomWordCount}
                     />

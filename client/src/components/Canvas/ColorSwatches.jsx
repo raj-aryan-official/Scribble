@@ -1,4 +1,5 @@
 import React from 'react';
+import { useSettings } from '../../context/SettingsContext';
 
 export const PRESET_COLORS = [
     { name: 'Ink Black', hex: '#1C1B18' },
@@ -15,11 +16,30 @@ export const PRESET_COLORS = [
     { name: 'Violet Purple', hex: '#8D4BE5' },
 ];
 
-export const ColorSwatches = ({ color = '#1C1B18', setColor, className = '' }) => {
+export const COLORBLIND_PALETTE = [
+    { name: 'Black', hex: '#000000' },
+    { name: 'Graphite', hex: '#555555' },
+    { name: 'Paper White', hex: '#FFFFFF' },
+    { name: 'Amber', hex: '#D55E00' },
+    { name: 'Rust', hex: '#8C510A' },
+    { name: 'Yellow', hex: '#F0E442' },
+    { name: 'Orange', hex: '#E69F00' },
+    { name: 'Bluish Green', hex: '#009E73' },
+    { name: 'Dark Teal', hex: '#014636' },
+    { name: 'Sky Blue', hex: '#56B4E9' },
+    { name: 'Blue', hex: '#0072B2' },
+    { name: 'Reddish Purple', hex: '#CC79A7' },
+];
+
+export const ColorSwatches = ({ color = '#1C1B18', setColor, lockedColor = null, className = '' }) => {
+    const { settings } = useSettings();
+    const activePalette = settings?.colorBlindPalette ? COLORBLIND_PALETTE : PRESET_COLORS;
+
     return (
         <div
             role="group"
             aria-label="Color palette"
+            data-palette={settings?.colorBlindPalette ? 'colorblind' : 'standard'}
             className={`flex items-center gap-1.5 ${className}`}
             data-testid="color-swatches"
         >
@@ -29,33 +49,40 @@ export const ColorSwatches = ({ color = '#1C1B18', setColor, className = '' }) =
                 aria-label="Color swatches"
                 className="flex md:grid md:grid-cols-6 md:grid-rows-2 items-center gap-1.5 overflow-x-auto snap-x snap-mandatory scrollbar-hide py-1 max-w-full"
             >
-                {PRESET_COLORS.map(({ name, hex }, index) => {
+                {activePalette.map(({ name, hex }, index) => {
                     const isSelected = color.toLowerCase() === hex.toLowerCase();
+                    const isLockedOut = Boolean(lockedColor && hex.toLowerCase() !== lockedColor.toLowerCase());
                     return (
                         <button
                             key={hex}
                             type="button"
                             aria-pressed={isSelected}
                             tabIndex={isSelected ? 0 : -1}
+                            disabled={isLockedOut}
                             aria-label={`Select ${name} color (Key ${index < 9 ? index + 1 : ''})`}
-                            title={`${name} ${index < 9 ? `(${index + 1})` : ''}`}
-                            onClick={() => setColor?.(hex)}
+                            title={isLockedOut ? `${name} (Locked)` : `${name} ${index < 9 ? `(${index + 1})` : ''}`}
+                            onClick={() => {
+                                if (!isLockedOut) setColor?.(hex);
+                            }}
                             onKeyDown={(e) => {
+                                if (lockedColor) return;
                                 let nextIndex = null;
                                 if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
                                     e.preventDefault();
-                                    nextIndex = (index + 1) % PRESET_COLORS.length;
+                                    nextIndex = (index + 1) % activePalette.length;
                                 } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
                                     e.preventDefault();
-                                    nextIndex = (index - 1 + PRESET_COLORS.length) % PRESET_COLORS.length;
+                                    nextIndex = (index - 1 + activePalette.length) % activePalette.length;
                                 }
                                 if (nextIndex !== null) {
-                                    const nextColor = PRESET_COLORS[nextIndex];
+                                    const nextColor = activePalette[nextIndex];
                                     setColor?.(nextColor.hex);
                                     e.currentTarget.parentElement?.children[nextIndex]?.focus();
                                 }
                             }}
-                            className="min-w-[44px] min-h-[44px] snap-center flex items-center justify-center cursor-pointer p-1 rounded-full focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none shrink-0"
+                            className={`min-w-[44px] min-h-[44px] snap-center flex items-center justify-center p-1 rounded-full focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none shrink-0 ${
+                                isLockedOut ? 'opacity-25 cursor-not-allowed' : 'cursor-pointer'
+                            }`}
                         >
                             <span
                                 className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-ink transition-all ${
@@ -97,4 +124,3 @@ export const ColorSwatches = ({ color = '#1C1B18', setColor, className = '' }) =
 };
 
 export default ColorSwatches;
-

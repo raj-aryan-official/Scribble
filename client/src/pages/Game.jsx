@@ -5,7 +5,9 @@ import { useSocket } from '../hooks/useSocket';
 import { useVoiceChat } from '../hooks/useVoiceChat';
 import { useCanvas } from '../hooks/useCanvas';
 import { useSound } from '../hooks/useSound';
+import { useSettings } from '../context/SettingsContext';
 import { EVENTS } from '../../../shared/types';
+import { EyeOff, Zap } from 'lucide-react';
 
 import PlayerList from '../components/Game/PlayerList';
 import GameBar from '../components/Game/GameBar';
@@ -15,6 +17,7 @@ import GuessPanel from '../components/Game/GuessPanel';
 import WordChoice from '../components/Game/WordChoice';
 import RoundEndOverlay from '../components/Game/RoundEndOverlay';
 import TurnWaitOverlay from '../components/Game/TurnWaitOverlay';
+import PausedOverlay from '../components/Game/PausedOverlay';
 import GameStartCountdown from '../components/Game/GameStartCountdown';
 import TurnIntro from '../components/Game/TurnIntro';
 import ScoringCoachmark from '../components/Game/ScoringCoachmark';
@@ -23,6 +26,9 @@ import MidRoundBanner from '../components/Game/MidRoundBanner';
 import EdgeState, { mapErrorToEdgeState } from '../components/Game/EdgeState';
 import { RemoteAudio } from '../components/Chat/RemoteAudio';
 import { audioManager } from '../audio/manager';
+import { Heart } from 'lucide-react';
+import FloatingReactions from '../components/Reactions/FloatingReactions';
+import ReactionBar from '../components/Reactions/ReactionBar';
 
 export const Game = () => {
     const { code } = useParams();
@@ -30,6 +36,7 @@ export const Game = () => {
     const navigate = useNavigate();
     const socket = useSocket();
     const { play } = useSound();
+    const { settings } = useSettings();
 
     const [canvasWidth, setCanvasWidth] = useState(800);
     const lastTickSecondRef = useRef(null);
@@ -52,6 +59,35 @@ export const Game = () => {
             socket.emit(EVENTS.SKIP_ROUND_END, { roomCode: code });
         }
     }, [isHost, socket, code]);
+
+    const [localReaction, setLocalReaction] = useState(null);
+    const [localLike, setLocalLike] = useState(false);
+
+    // Reset local reaction/like on new turn
+    useEffect(() => {
+        setLocalReaction(null);
+        setLocalLike(false);
+    }, [state.turnId]);
+
+    const handleReact = useCallback((kind) => {
+        if (!socket || !code || isDrawer) return;
+        socket.emit(EVENTS.REACT, {
+            roomCode: code,
+            turnId: state.turnId,
+            kind
+        });
+        setLocalReaction({ kind, ts: Date.now() });
+    }, [socket, code, isDrawer, state.turnId]);
+
+    const handleLike = useCallback(() => {
+        if (!socket || !code || isDrawer || state.hasLiked) return;
+        socket.emit(EVENTS.LIKE_DRAWING, {
+            roomCode: code,
+            turnId: state.turnId
+        });
+        dispatch({ type: 'SET_LOCAL_LIKED' });
+        setLocalLike(true);
+    }, [socket, code, isDrawer, state.hasLiked, state.turnId, dispatch]);
 
     // Sync countdown when startsAt is set
     useEffect(() => {
@@ -112,7 +148,20 @@ export const Game = () => {
         cursorPos,
         isCursorInside,
         strokeCount,
-    } = useCanvas(code, isDrawer);
+        inkRemaining,
+    } = useCanvas(code, isDrawer, state.currentTwist);
+
+    const [showBlindfold, setShowBlindfold] = useState(false);
+    useEffect(() => {
+        if (!isDrawer || state.currentTwist?.id !== 'blindfold' || state.gameState !== 'DRAWING') {
+            setShowBlindfold(false);
+            return;
+        }
+        const timer = setTimeout(() => {
+            setShowBlindfold(true);
+        }, 3000);
+        return () => clearTimeout(timer);
+    }, [isDrawer, state.currentTwist?.id, state.gameState]);
 
     // Prevent accidental pull-to-refresh on mobile while on Game page
     useEffect(() => {
@@ -282,7 +331,11 @@ export const Game = () => {
             />
 
             {/* Main In-Game Area: Responsive flex layout for Portrait, Landscape, and Desktop */}
-            <div className="flex-1 w-full min-h-0 flex flex-col md:flex-row landscape:flex-row gap-1.5 sm:gap-3 p-1 sm:p-2 md:p-3 overflow-hidden">
+            <div
+                data-testid="game-main-area"
+                data-layout={settings.leftHandedLayout ? 'left-handed' : 'right-handed'}
+                className="flex-1 w-full min-h-0 flex flex-col md:flex-row landscape:flex-row gap-1.5 sm:gap-3 p-1 sm:p-2 md:p-3 overflow-hidden"
+            >
                 {/* Desktop Left Column: Ranked Player Scoreboard */}
                 <div className="hidden md:flex landscape:hidden md:landscape:flex w-56 lg:w-64 h-full shrink-0">
                     <PlayerList
@@ -326,6 +379,29 @@ export const Game = () => {
                                 timeLeft={state.timer}
                             />
 
+                            {/* Limited Ink Bar for Drawer */}
+                            {isDrawer && state.currentTwist?.id === 'limited-ink' && (
+                                <div
+                                    data-testid="ink-bar"
+                                    className="w-full flex items-center gap-2 px-3 py-1 bg-paper border-b-2 border-ink shadow-hard-xs shrink-0 select-none z-10"
+                                >
+                                    <span className="text-[11px] font-black uppercase tracking-wider text-ink shrink-0 flex items-center gap-1">
+                                        <Zap className="w-3.5 h-3.5 text-cobalt" />
+                                        Ink: {Math.max(0, Math.round(((inkRemaining ?? 1200) / 1200) * 100))}%
+                                    </span>
+                                    <div className="flex-1 h-2 bg-card border border-ink/40 rounded-full overflow-hidden p-0.5">
+                                        <div
+                                            className={`h-full rounded-full transition-all duration-150 ${
+                                                (inkRemaining ?? 1200) <= 300 ? 'bg-tomato' : 'bg-cobalt'
+                                            }`}
+                                            style={{
+                                                width: `${Math.max(0, Math.min(100, ((inkRemaining ?? 1200) / 1200) * 100))}%`
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Canvas Element with touch-action: none */}
                             <div className="relative flex-1 w-full min-h-0 flex items-center justify-center">
                                 <canvas
@@ -346,8 +422,25 @@ export const Game = () => {
                                     className={`w-full h-full block touch-none select-none canvas-paper ${
                                         isDrawer ? 'cursor-none' : 'cursor-default'
                                     }`}
-                                    style={{ touchAction: 'none' }}
+                                    style={{
+                                        touchAction: 'none',
+                                        transform: (isDrawer && state.currentTwist?.id === 'upside-down') ? 'rotate(180deg)' : undefined
+                                    }}
                                 />
+
+                                {/* Paper Grid Overlay */}
+                                {settings.paperGrid && (
+                                    <div
+                                        data-testid="paper-grid"
+                                        aria-hidden="true"
+                                        className="pointer-events-none absolute inset-0 z-0 opacity-15"
+                                        style={{
+                                            backgroundImage:
+                                                'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)',
+                                            backgroundSize: '24px 24px',
+                                        }}
+                                    />
+                                )}
 
                                 {/* Faint Start Drawing Prompt (fades out on first stroke) */}
                                 {isDrawer && strokeCount === 0 && state.gameState === 'DRAWING' && (
@@ -359,6 +452,21 @@ export const Game = () => {
                                         <span className="text-sm sm:text-base font-bold font-heading text-ink-soft italic tracking-wide">
                                             Start drawing. No letters or numbers!
                                         </span>
+                                    </div>
+                                )}
+
+                                {/* Blindfold Overlay for Drawer */}
+                                {isDrawer && showBlindfold && state.currentTwist?.id === 'blindfold' && (
+                                    <div
+                                        data-testid="blindfold-overlay"
+                                        aria-hidden="true"
+                                        className="pointer-events-none absolute inset-0 bg-ink/95 z-20 flex flex-col items-center justify-center p-6 text-center select-none animate-fadeIn"
+                                    >
+                                        <EyeOff className="w-12 h-12 text-marigold mb-2" />
+                                        <h3 className="text-xl font-heading font-black text-paper">Blindfold Active!</h3>
+                                        <p className="text-xs font-bold text-paper/80 mt-1 max-w-xs">
+                                            Keep drawing from memory! Your strokes are streaming to the guessers.
+                                        </p>
                                     </div>
                                 )}
 
@@ -379,6 +487,7 @@ export const Game = () => {
                                         round={state.currentRound || 1}
                                         totalRounds={state.totalRounds || state.settings?.rounds || 3}
                                         drawer={drawer}
+                                        twist={state.currentTwist}
                                         onOverlap={() => setCardsReady(true)}
                                         onComplete={() => setShowTurnIntro(false)}
                                     />
@@ -401,7 +510,7 @@ export const Game = () => {
                                 )}
 
                                 {/* Drawer Brush Size Ring Cursor */}
-                                {isDrawer && isCursorInside && (
+                                {isDrawer && isCursorInside && !showBlindfold && (
                                     <div
                                         className="pointer-events-none absolute rounded-full border-2 border-ink -translate-x-1/2 -translate-y-1/2 z-cursor transition-none"
                                         style={{
@@ -415,6 +524,24 @@ export const Game = () => {
                                                     : `${color}33`,
                                         }}
                                     />
+                                )}
+
+                                {/* Floating Reactions Overlay */}
+                                <FloatingReactions
+                                    incomingBatch={state.incomingReactionBatch}
+                                    localReaction={localReaction}
+                                    localLike={localLike}
+                                />
+
+                                {/* Drawer Live Likes Counter */}
+                                {isDrawer && state.gameState === 'DRAWING' && (
+                                    <div
+                                        data-testid="drawer-likes-counter"
+                                        className="absolute top-2.5 right-2.5 z-30 pointer-events-none flex items-center gap-1.5 bg-paper/95 border-2 border-ink shadow-hard-xs rounded-full px-2.5 py-1 font-heading font-black text-xs text-ink select-none"
+                                    >
+                                        <Heart className="w-3.5 h-3.5 fill-tomato text-tomato animate-pulse" />
+                                        <span>Likes {state.likesCount || 0}</span>
+                                    </div>
                                 )}
 
                                 {/* Round End Overlay (Dims the paper, shows secret word & point counts) */}
@@ -436,6 +563,8 @@ export const Game = () => {
                                         isHost={isHost}
                                         reason={state.roundEndData?.reason}
                                         departedDrawerName={state.roundEndData?.drawerName}
+                                        likesCount={state.roundEndData?.likesCount ?? state.likesCount ?? 0}
+                                        topReaction={state.roundEndData?.topReaction ?? state.topReaction}
                                         onSkip={handleSkipRoundEnd}
                                     />
                                 )}
@@ -445,6 +574,22 @@ export const Game = () => {
                                     <TurnWaitOverlay
                                         waitingFor={state.turnWait?.waitingFor || drawer?.username || 'Player'}
                                         endsAt={state.turnWait?.endsAt}
+                                    />
+                                )}
+
+                                {/* PAUSED Phase ('Waiting for players to return.') */}
+                                {(state.gameState === 'PAUSED' || state.isPaused) && (
+                                    <PausedOverlay
+                                        endsAt={state.pausedData?.endsAt}
+                                        timeout={state.pausedData?.timeout || 60}
+                                        players={state.players}
+                                        scores={state.scores}
+                                        isHost={isHost}
+                                        onEndGame={() => {
+                                            if (socket && code) {
+                                                socket.emit(EVENTS.END_GAME_EARLY, { roomCode: code });
+                                            }
+                                        }}
                                     />
                                 )}
                             </div>
@@ -464,8 +609,8 @@ export const Game = () => {
                         />
                     </div>
 
-                    {/* 5. Bottom Area (Portrait only: Drawer ToolTray or Guesser GuessPanel) */}
-                    <div className="flex md:hidden landscape:hidden w-full shrink-0 flex-col">
+                    {/* 5. Bottom Area (Portrait only: Drawer ToolTray or Guesser ReactionBar + GuessPanel) */}
+                    <div className="flex md:hidden landscape:hidden w-full shrink-0 flex-col gap-1.5">
                         {isDrawer ? (
                             <ToolTray
                                 tool={tool}
@@ -476,14 +621,25 @@ export const Game = () => {
                                 setColor={setColor}
                                 undo={undo}
                                 clearCanvas={clearCanvas}
+                                twist={state.currentTwist}
                             />
                         ) : (
-                            <GuessPanel roomCode={code} isMobile={true} />
+                            <>
+                                {state.gameState === 'DRAWING' && (
+                                    <ReactionBar
+                                        onReact={handleReact}
+                                        onLike={handleLike}
+                                        hasLiked={state.hasLiked}
+                                        disabled={state.gameState !== 'DRAWING'}
+                                    />
+                                )}
+                                <GuessPanel roomCode={code} isMobile={true} />
+                            </>
                         )}
                     </div>
 
-                    {/* Drawer Tool Tray on Desktop / Landscape (docked under paper) */}
-                    {isDrawer && (
+                    {/* Docked under paper on Desktop / Landscape: Drawer ToolTray or Guesser ReactionBar */}
+                    {isDrawer ? (
                         <div className="hidden md:block landscape:block w-full shrink-0">
                             <ToolTray
                                 tool={tool}
@@ -494,8 +650,20 @@ export const Game = () => {
                                 setColor={setColor}
                                 undo={undo}
                                 clearCanvas={clearCanvas}
+                                twist={state.currentTwist}
                             />
                         </div>
+                    ) : (
+                        state.gameState === 'DRAWING' && (
+                            <div className="hidden md:block landscape:block w-full shrink-0">
+                                <ReactionBar
+                                    onReact={handleReact}
+                                    onLike={handleLike}
+                                    hasLiked={state.hasLiked}
+                                    disabled={state.gameState !== 'DRAWING'}
+                                />
+                            </div>
+                        )
                     )}
                 </main>
 

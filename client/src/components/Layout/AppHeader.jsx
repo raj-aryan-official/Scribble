@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { Volume2, VolumeX, Mic, MicOff, MoreVertical, HelpCircle, LogOut, OctagonAlert } from 'lucide-react';
+import { Volume2, VolumeX, Mic, MicOff, MoreVertical, HelpCircle, LogOut, OctagonAlert, Settings } from 'lucide-react';
 import { useSound } from '../../hooks/useSound';
 import { useVoice } from '../../context/VoiceContext';
 import { useGame } from '../../context/GameContext';
+import { useSettings } from '../../context/SettingsContext';
 import { useSocket } from '../../hooks/useSocket';
 import { EVENTS } from '../../../../shared/types';
 import Tooltip from '../ui/Tooltip';
 import Modal from '../ui/Modal';
 import ConfirmationModal from '../ui/ConfirmationModal';
 import Button from '../ui/Button';
+import SoundHint from '../Settings/SoundHint';
 
 export const AppHeader = ({
     roomCode = '',
@@ -17,6 +19,7 @@ export const AppHeader = ({
     className = '',
 }) => {
     const { isMuted, toggleMute } = useSound();
+    const { soundHintDismissed, dismissSoundHint, openSettings } = useSettings();
     const gameContext = useGame();
     const state = gameContext?.state || {};
     const socket = useSocket();
@@ -115,21 +118,42 @@ export const AppHeader = ({
                 )}
             </div>
 
-            {/* Right: Sound Toggle, Voice Button, Menu */}
+            {/* Right: Sound Toggle, Settings, Voice Button, Menu */}
             <div className="flex items-center gap-1 md:gap-2">
                 {/* Sound Toggle */}
-                <Tooltip content={isMuted ? 'Unmute sounds' : 'Mute sounds'}>
+                <div className="relative inline-flex">
+                    <Tooltip content={isMuted ? 'Unmute sounds (M)' : 'Mute sounds (M)'}>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                dismissSoundHint?.();
+                                toggleMute();
+                            }}
+                            aria-label={isMuted ? 'Unmute sounds' : 'Mute sounds'}
+                            aria-pressed={isMuted}
+                            className="min-w-[44px] min-h-[44px] p-2 bg-paper hover:bg-card border-2 border-ink rounded-[6px] shadow-hard-sm flex items-center justify-center text-ink cursor-pointer active:translate-x-[1px] active:translate-y-[1px] focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none"
+                        >
+                            {isMuted ? (
+                                <VolumeX className="w-5 h-5 text-tomato" />
+                            ) : (
+                                <Volume2 className="w-5 h-5 text-ink" />
+                            )}
+                        </button>
+                    </Tooltip>
+                    {!soundHintDismissed && !isMuted && (
+                        <SoundHint onDismiss={dismissSoundHint} />
+                    )}
+                </div>
+
+                {/* Settings Button */}
+                <Tooltip content="Settings">
                     <button
                         type="button"
-                        onClick={toggleMute}
-                        aria-label={isMuted ? 'Unmute sounds' : 'Mute sounds'}
+                        onClick={openSettings}
+                        aria-label="Settings"
                         className="min-w-[44px] min-h-[44px] p-2 bg-paper hover:bg-card border-2 border-ink rounded-[6px] shadow-hard-sm flex items-center justify-center text-ink cursor-pointer active:translate-x-[1px] active:translate-y-[1px] focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none"
                     >
-                        {isMuted ? (
-                            <VolumeX className="w-5 h-5 text-tomato" />
-                        ) : (
-                            <Volume2 className="w-5 h-5 text-ink" />
-                        )}
+                        <Settings className="w-5 h-5" />
                     </button>
                 </Tooltip>
 
@@ -195,6 +219,19 @@ export const AppHeader = ({
                                 >
                                     <HelpCircle className="w-4 h-4 text-cobalt" />
                                     <span>How to play</span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    role="menuitem"
+                                    onClick={() => {
+                                        setShowMenu(false);
+                                        openSettings();
+                                    }}
+                                    className="flex items-center gap-2 px-3 py-2 text-sm font-bold text-ink hover:bg-paper rounded-[4px] cursor-pointer text-left focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none"
+                                >
+                                    <Settings className="w-4 h-4 text-cobalt" />
+                                    <span>Settings</span>
                                 </button>
 
                                 {isHost && isInGame && (

@@ -14,6 +14,9 @@ export default defineConfig({
       url: 'http://localhost:3000/healthz',
       reuseExistingServer: true,
       timeout: 30000,
+      env: {
+        FAST_TIMERS: 'true',
+      },
     },
     {
       command: 'npm run dev --prefix client -- --port 5173',

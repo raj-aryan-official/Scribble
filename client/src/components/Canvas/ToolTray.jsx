@@ -4,6 +4,7 @@ import ColorSwatches from './ColorSwatches';
 import BrushSize from './BrushSize';
 import ShortcutHelp from './ShortcutHelp';
 import ConfirmationModal from '../ui/ConfirmationModal';
+import { useSettings } from '../../context/SettingsContext';
 
 export const ToolTray = ({
     tool = 'pencil',
@@ -14,9 +15,16 @@ export const ToolTray = ({
     setColor,
     undo,
     clearCanvas,
+    twist = null,
     className = '',
 }) => {
+    const { settings } = useSettings();
+    const isLeftHanded = Boolean(settings?.leftHandedLayout);
     const [showClearConfirm, setShowClearConfirm] = useState(false);
+
+    const isNoUndoEraser = twist?.id === 'no-undo-eraser';
+    const isThinLine = twist?.id === 'thin-line';
+    const lockedColor = twist?.id === 'one-colour' ? twist.color : null;
 
     const handleClearConfirm = () => {
         clearCanvas?.();
@@ -26,11 +34,16 @@ export const ToolTray = ({
     return (
         <section
             aria-label="Drawing tools"
-            className={`w-full flex flex-col sm:flex-row items-center justify-between gap-1.5 sm:gap-3 p-1.5 sm:p-2.5 bg-card border-2 border-ink shadow-hard rounded-[12px] select-none ${className}`}
             data-testid="tool-tray"
+            data-layout={isLeftHanded ? 'left-handed' : 'right-handed'}
+            className={`w-full flex flex-col ${
+                isLeftHanded ? 'sm:flex-row-reverse' : 'sm:flex-row'
+            } items-center justify-between gap-1.5 sm:gap-3 p-1.5 sm:p-2.5 bg-card border-2 border-ink shadow-hard rounded-[12px] select-none ${className}`}
         >
             {/* Row 1 on mobile (Tools & Size + Actions) / Left group on desktop */}
-            <div className="w-full sm:w-auto flex items-center justify-between sm:justify-start gap-2">
+            <div className={`w-full sm:w-auto flex items-center justify-between sm:justify-start gap-2 ${
+                isLeftHanded ? 'flex-row-reverse sm:flex-row' : ''
+            }`}>
                 <div className="flex items-center gap-1.5">
                     {/* Tools: Pencil & Eraser with roving tabindex */}
                     <div
@@ -64,20 +77,24 @@ export const ToolTray = ({
                             type="button"
                             aria-pressed={tool === 'eraser'}
                             tabIndex={tool === 'eraser' ? 0 : -1}
+                            disabled={isNoUndoEraser}
                             aria-label="Eraser tool (E)"
-                            title="Eraser tool (E)"
-                            onClick={() => setTool?.('eraser')}
+                            title={isNoUndoEraser ? 'Eraser disabled in this twist' : 'Eraser tool (E)'}
+                            onClick={() => !isNoUndoEraser && setTool?.('eraser')}
                             onKeyDown={(e) => {
+                                if (isNoUndoEraser) return;
                                 if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
                                     e.preventDefault();
                                     setTool?.('pencil');
                                     e.currentTarget.previousElementSibling?.focus();
                                 }
                             }}
-                            className={`min-w-[44px] min-h-[44px] p-2 rounded-[4px] font-bold flex items-center justify-center transition-transform cursor-pointer focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none ${
-                                tool === 'eraser'
-                                    ? 'bg-card text-ink border-2 border-ink shadow-hard-sm'
-                                    : 'text-ink-soft hover:text-ink hover:bg-card/50'
+                            className={`min-w-[44px] min-h-[44px] p-2 rounded-[4px] font-bold flex items-center justify-center transition-transform focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none ${
+                                isNoUndoEraser
+                                    ? 'opacity-40 cursor-not-allowed text-ink-soft'
+                                    : tool === 'eraser'
+                                    ? 'bg-card text-ink border-2 border-ink shadow-hard-sm cursor-pointer'
+                                    : 'text-ink-soft hover:text-ink hover:bg-card/50 cursor-pointer'
                             }`}
                         >
                             <Eraser className="w-5 h-5" />
@@ -88,6 +105,7 @@ export const ToolTray = ({
                     <BrushSize
                         lineWidth={lineWidth}
                         setLineWidth={setLineWidth}
+                        isLockedSize={isThinLine}
                     />
                 </div>
 
@@ -96,9 +114,14 @@ export const ToolTray = ({
                     <button
                         type="button"
                         aria-label="Undo stroke (Ctrl+Z)"
-                        title="Undo (Ctrl+Z)"
-                        onClick={undo}
-                        className="min-w-[44px] min-h-[44px] p-2 bg-paper hover:bg-card border-2 border-ink rounded-[6px] shadow-hard-sm flex items-center justify-center text-ink cursor-pointer active:translate-x-[1px] active:translate-y-[1px] focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none transition-all"
+                        title={isNoUndoEraser ? 'Undo disabled in this twist' : 'Undo (Ctrl+Z)'}
+                        disabled={isNoUndoEraser}
+                        onClick={() => !isNoUndoEraser && undo?.()}
+                        className={`min-w-[44px] min-h-[44px] p-2 border-2 border-ink rounded-[6px] shadow-hard-sm flex items-center justify-center focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none transition-all ${
+                            isNoUndoEraser
+                                ? 'opacity-40 cursor-not-allowed bg-paper text-ink-soft'
+                                : 'bg-paper hover:bg-card text-ink cursor-pointer active:translate-x-[1px] active:translate-y-[1px]'
+                        }`}
                     >
                         <Undo2 className="w-5 h-5" />
                     </button>
@@ -106,9 +129,14 @@ export const ToolTray = ({
                     <button
                         type="button"
                         aria-label="Clear drawing"
-                        title="Clear drawing"
-                        onClick={() => setShowClearConfirm(true)}
-                        className="min-w-[44px] min-h-[44px] p-2 bg-paper hover:bg-tomato/15 text-tomato border-2 border-ink rounded-[6px] shadow-hard-sm flex items-center justify-center cursor-pointer active:translate-x-[1px] active:translate-y-[1px] focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none transition-all"
+                        title={isNoUndoEraser ? 'Clear disabled in this twist' : 'Clear drawing'}
+                        disabled={isNoUndoEraser}
+                        onClick={() => !isNoUndoEraser && setShowClearConfirm(true)}
+                        className={`min-w-[44px] min-h-[44px] p-2 border-2 border-ink rounded-[6px] shadow-hard-sm flex items-center justify-center focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none transition-all ${
+                            isNoUndoEraser
+                                ? 'opacity-40 cursor-not-allowed bg-paper text-ink-soft'
+                                : 'bg-paper hover:bg-tomato/15 text-tomato cursor-pointer active:translate-x-[1px] active:translate-y-[1px]'
+                        }`}
                     >
                         <Trash2 className="w-5 h-5" />
                     </button>
@@ -122,6 +150,7 @@ export const ToolTray = ({
                 <ColorSwatches
                     color={color}
                     setColor={setColor}
+                    lockedColor={lockedColor}
                 />
             </div>
 
@@ -130,9 +159,14 @@ export const ToolTray = ({
                 <button
                     type="button"
                     aria-label="Undo stroke (Ctrl+Z)"
-                    title="Undo (Ctrl+Z)"
-                    onClick={undo}
-                    className="min-w-[44px] min-h-[44px] p-2 bg-paper hover:bg-card border-2 border-ink rounded-[6px] shadow-hard-sm flex items-center justify-center text-ink cursor-pointer active:translate-x-[1px] active:translate-y-[1px] focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none transition-all"
+                    title={isNoUndoEraser ? 'Undo disabled in this twist' : 'Undo (Ctrl+Z)'}
+                    disabled={isNoUndoEraser}
+                    onClick={() => !isNoUndoEraser && undo?.()}
+                    className={`min-w-[44px] min-h-[44px] p-2 border-2 border-ink rounded-[6px] shadow-hard-sm flex items-center justify-center focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none transition-all ${
+                        isNoUndoEraser
+                            ? 'opacity-40 cursor-not-allowed bg-paper text-ink-soft'
+                            : 'bg-paper hover:bg-card text-ink cursor-pointer active:translate-x-[1px] active:translate-y-[1px]'
+                    }`}
                 >
                     <Undo2 className="w-5 h-5" />
                 </button>
@@ -140,9 +174,14 @@ export const ToolTray = ({
                 <button
                     type="button"
                     aria-label="Clear drawing"
-                    title="Clear drawing"
-                    onClick={() => setShowClearConfirm(true)}
-                    className="min-w-[44px] min-h-[44px] p-2 bg-paper hover:bg-tomato/15 text-tomato border-2 border-ink rounded-[6px] shadow-hard-sm flex items-center justify-center cursor-pointer active:translate-x-[1px] active:translate-y-[1px] focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none transition-all"
+                    title={isNoUndoEraser ? 'Clear disabled in this twist' : 'Clear drawing'}
+                    disabled={isNoUndoEraser}
+                    onClick={() => !isNoUndoEraser && setShowClearConfirm(true)}
+                    className={`min-w-[44px] min-h-[44px] p-2 border-2 border-ink rounded-[6px] shadow-hard-sm flex items-center justify-center focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none transition-all ${
+                        isNoUndoEraser
+                            ? 'opacity-40 cursor-not-allowed bg-paper text-ink-soft'
+                            : 'bg-paper hover:bg-tomato/15 text-tomato cursor-pointer active:translate-x-[1px] active:translate-y-[1px]'
+                    }`}
                 >
                     <Trash2 className="w-5 h-5" />
                 </button>

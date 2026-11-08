@@ -88,11 +88,50 @@ export const EDGE_STATES = {
             onClick: () => window.location.reload(),
         },
     },
+    SUPERSEDED: {
+        title: "You're playing in another tab.",
+        sentence: "This session was opened in another window or tab.",
+        illustration: lostSvg,
+        primaryAction: {
+            label: 'Take over here',
+        },
+        secondaryAction: {
+            label: 'Leave',
+            href: '/',
+        },
+    },
+    SERVER_BUSY: {
+        title: 'The server is busy.',
+        sentence: 'Try again in a minute.',
+        illustration: errorSvg,
+        primaryAction: {
+            label: 'Try again',
+            onClick: () => window.location.reload(),
+        },
+    },
+    RATE_LIMITED: {
+        title: 'Too many tries.',
+        sentence: 'Wait a moment.',
+        illustration: errorSvg,
+        primaryAction: {
+            label: 'Try again',
+            onClick: () => window.location.reload(),
+        },
+    },
 };
 
 export const mapErrorToEdgeState = (errorString) => {
     if (!errorString || typeof errorString !== 'string') return null;
     const lower = errorString.toLowerCase();
+    if (lower.includes('superseded') || lower.includes('another tab') || lower.includes('another window')) {
+        return 'SUPERSEDED';
+    }
+    if (lower.includes('busy') || lower.includes('capacity')) {
+        return 'SERVER_BUSY';
+    }
+    if (lower.includes('too many tries') || lower.includes('too many requests')) {
+        return 'RATE_LIMITED';
+    }
     if (
         lower.includes('closed') ||
         lower.includes('not found') ||

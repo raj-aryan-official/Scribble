@@ -20,6 +20,8 @@ const { registerGameHandlers } = require('./handlers/game');
 const { registerDrawingHandlers } = require('./handlers/drawing');
 const { registerChatHandlers } = require('./handlers/chat');
 const { registerVoiceHandlers } = require('./handlers/voice');
+const { registerModerationHandlers } = require('./handlers/moderation');
+const { registerReactionHandlers } = require('./handlers/reactions');
 
 /**
  * Register all Socket.IO event handlers on a newly connected socket.
@@ -50,6 +52,8 @@ function registerHandlers(io, socket) {
     registerDrawingHandlers(io, socket, safeOn);
     registerChatHandlers(io, socket, safeOn);
     registerVoiceHandlers(io, socket, safeOn);
+    registerModerationHandlers(io, socket, safeOn);
+    registerReactionHandlers(io, socket, safeOn);
 }
 
 // Preserve helper references for testing and backward compatibility

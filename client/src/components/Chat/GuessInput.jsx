@@ -1,7 +1,9 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Check, Sparkles } from 'lucide-react';
+import { Send, Check, Sparkles, Smile } from 'lucide-react';
 import Button from '../ui/Button';
+import { EmojiPicker } from './EmojiPicker';
+import { replaceShortcodes } from '../../utils/shortcodes';
 
 export const GuessInput = ({
     message = '',
@@ -17,20 +19,64 @@ export const GuessInput = ({
     className = '',
 }) => {
     const inputRef = useRef(null);
+    const [isSending, setIsSending] = useState(false);
+    const [isEmojiOpen, setIsEmojiOpen] = useState(false);
+    const cooldownRef = useRef(null);
 
-    // Keep focus after submission
+    useEffect(() => {
+        return () => {
+            if (cooldownRef.current) clearTimeout(cooldownRef.current);
+        };
+    }, []);
+
+    // Handle emoji selection from picker
+    const handleEmojiSelect = (emoji) => {
+        setMessage((prev) => (prev ? `${prev} ${emoji}` : emoji));
+        setIsEmojiOpen(false);
+        setTimeout(() => {
+            inputRef.current?.focus();
+        }, 10);
+    };
+
+    // Text input change with shortcode replacement
+    const handleInputChange = (e) => {
+        const val = e.target.value;
+        setMessage(replaceShortcodes(val));
+    };
+
+    // Keep focus after submission and prevent double submit
     const handleFormSubmit = (e) => {
         e.preventDefault();
-        const trimmed = message.trim();
-        if (!trimmed) return;
+        if (e.nativeEvent?.isComposing) return;
+        if (isSending) return;
 
-        onSubmit?.(trimmed);
+        const converted = replaceShortcodes(message.trim());
+        if (!converted) return;
+
+        // Clear input BEFORE emitting
         setMessage('');
+        setIsEmojiOpen(false);
+
+        // Disable sending for 250 ms after a send
+        setIsSending(true);
+        if (cooldownRef.current) clearTimeout(cooldownRef.current);
+        cooldownRef.current = setTimeout(() => {
+            setIsSending(false);
+        }, 250);
+
+        onSubmit?.(converted);
 
         // Maintain focus on the input so keyboard flow is seamless
         setTimeout(() => {
             inputRef.current?.focus();
         }, 10);
+    };
+
+    const handleKeyDown = (e) => {
+        // Ignore Enter while event.nativeEvent.isComposing is true (IME composition)
+        if (e.key === 'Enter' && e.nativeEvent?.isComposing) {
+            e.preventDefault();
+        }
     };
 
     // Autofocus on desktop only on mount
@@ -61,7 +107,12 @@ export const GuessInput = ({
                 </motion.div>
 
                 {/* Chatting with winners input */}
-                <form onSubmit={handleFormSubmit} className="flex items-center gap-2">
+                <form onSubmit={handleFormSubmit} className="flex items-center gap-2 relative">
+                    <EmojiPicker
+                        isOpen={isEmojiOpen}
+                        onClose={() => setIsEmojiOpen(false)}
+                        onSelect={handleEmojiSelect}
+                    />
                     <label htmlFor={`${idPrefix}-winner-chat`} className="sr-only">
                         Chatting with players who've guessed
                     </label>
@@ -70,17 +121,27 @@ export const GuessInput = ({
                         id={`${idPrefix}-winner-chat`}
                         type="text"
                         value={message}
-                        onChange={(e) => setMessage(e.target.value)}
+                        onChange={handleInputChange}
+                        onKeyDown={handleKeyDown}
                         placeholder="Chat with players who've guessed..."
                         maxLength={100}
                         autoComplete="off"
                         className="flex-1 min-h-[44px] px-3 py-2 text-sm font-body bg-paper text-ink placeholder:text-ink-soft/60 border-2 border-ink rounded-[6px] focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none"
                     />
+                    <button
+                        type="button"
+                        onClick={() => setIsEmojiOpen(prev => !prev)}
+                        aria-label="Choose emoji"
+                        data-testid="emoji-picker-btn"
+                        className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-[6px] border-2 border-ink bg-paper hover:bg-neutral-100 active:scale-95 transition-all text-ink focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none shrink-0"
+                    >
+                        <Smile className="w-5 h-5 text-ink" />
+                    </button>
                     <Button
                         type="submit"
                         variant="primary"
                         size="md"
-                        disabled={!message.trim()}
+                        disabled={!message.trim() || isSending}
                         aria-label="Send message"
                         className="min-h-[44px] px-3.5"
                     >
@@ -94,7 +155,12 @@ export const GuessInput = ({
     // Drawer mode: chat with guessed players only
     if (isDrawer) {
         return (
-            <form onSubmit={handleFormSubmit} className={`flex items-center gap-2 ${className}`}>
+            <form onSubmit={handleFormSubmit} className={`flex items-center gap-2 relative ${className}`}>
+                <EmojiPicker
+                    isOpen={isEmojiOpen}
+                    onClose={() => setIsEmojiOpen(false)}
+                    onSelect={handleEmojiSelect}
+                />
                 <label htmlFor={`${idPrefix}-drawer-chat`} className="sr-only">
                     Chatting with players who've guessed
                 </label>
@@ -103,17 +169,27 @@ export const GuessInput = ({
                     id={`${idPrefix}-drawer-chat`}
                     type="text"
                     value={message}
-                    onChange={(e) => setMessage(e.target.value)}
+                    onChange={handleInputChange}
+                    onKeyDown={handleKeyDown}
                     placeholder="Chat with players who've guessed..."
                     maxLength={100}
                     autoComplete="off"
                     className="flex-1 min-h-[44px] px-3 py-2 text-sm font-body bg-paper text-ink placeholder:text-ink-soft/60 border-2 border-ink rounded-[6px] focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none"
                 />
+                <button
+                    type="button"
+                    onClick={() => setIsEmojiOpen(prev => !prev)}
+                    aria-label="Choose emoji"
+                    data-testid="emoji-picker-btn"
+                    className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-[6px] border-2 border-ink bg-paper hover:bg-neutral-100 active:scale-95 transition-all text-ink focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none shrink-0"
+                >
+                    <Smile className="w-5 h-5 text-ink" />
+                </button>
                 <Button
                     type="submit"
                     variant="primary"
                     size="md"
-                    disabled={!message.trim()}
+                    disabled={!message.trim() || isSending}
                     aria-label="Send message"
                     className="min-h-[44px] px-3.5"
                 >
@@ -130,6 +206,11 @@ export const GuessInput = ({
                 onSubmit={handleFormSubmit}
                 className="flex items-center gap-2 w-full relative"
             >
+                <EmojiPicker
+                    isOpen={isEmojiOpen}
+                    onClose={() => setIsEmojiOpen(false)}
+                    onSelect={handleEmojiSelect}
+                />
                 <label htmlFor={`${idPrefix}-guess-input`} className="sr-only">
                     Type your guess
                 </label>
@@ -139,7 +220,8 @@ export const GuessInput = ({
                         id={`${idPrefix}-guess-input`}
                         type="text"
                         value={message}
-                        onChange={(e) => setMessage(e.target.value)}
+                        onChange={handleInputChange}
+                        onKeyDown={handleKeyDown}
                         placeholder="Type your guess"
                         maxLength={100}
                         autoFocus={!isMobile}
@@ -158,11 +240,21 @@ export const GuessInput = ({
                     )}
                 </div>
 
+                <button
+                    type="button"
+                    onClick={() => setIsEmojiOpen(prev => !prev)}
+                    aria-label="Choose emoji"
+                    data-testid="emoji-picker-btn"
+                    className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-[6px] border-2 border-ink bg-paper hover:bg-neutral-100 active:scale-95 transition-all text-ink focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none shrink-0"
+                >
+                    <Smile className="w-5 h-5 text-ink" />
+                </button>
+
                 <Button
                     type="submit"
                     variant="primary"
                     size="md"
-                    disabled={!message.trim()}
+                    disabled={!message.trim() || isSending}
                     aria-label="Submit guess"
                     className="min-h-[44px] px-3.5 sm:px-4"
                 >

@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Pencil, Check, Crown } from 'lucide-react';
+import { Pencil, Check, Crown, MoreVertical } from 'lucide-react';
 import Avatar from '../ui/Avatar';
+import { useGame } from '../../context/GameContext';
+import { useSocket } from '../../context/SocketContext';
+import { EVENTS } from '../../../../shared/types';
+import PlayerMenu from './PlayerMenu';
 
 export const PlayerList = ({
     players = [],
@@ -12,7 +16,50 @@ export const PlayerList = ({
     turnInfo = null,
     variant = 'desktop', // 'desktop' | 'mobile'
     className = '',
+    currentUserId: propCurrentUserId,
+    currentUserPlayerId: propCurrentUserPlayerId,
+    isCurrentUserHost: propIsCurrentUserHost,
+    onStartVoteKick: propOnStartVoteKick,
+    onDirectKick: propOnDirectKick,
 }) => {
+    const gameContext = useGame?.();
+    const state = gameContext?.state || {};
+    const socket = useSocket?.();
+    const [activeMenuPlayer, setActiveMenuPlayer] = useState(null);
+
+    const currentUserId = propCurrentUserId !== undefined ? propCurrentUserId : state.currentUser?.id;
+    const currentUserPlayerId = propCurrentUserPlayerId !== undefined ? propCurrentUserPlayerId : state.currentUser?.playerId;
+    const isCurrentUserHost = propIsCurrentUserHost !== undefined ? propIsCurrentUserHost : Boolean(state.currentUser?.isHost);
+    const voteState = state.voteState;
+    const connectedCount = players.filter(
+        (p) => !p.isDisconnected && p.status !== 'away' && p.status !== 'left'
+    ).length;
+
+    const handleStartVoteKick = (targetId, reason) => {
+        if (propOnStartVoteKick) {
+            propOnStartVoteKick(targetId, reason);
+        } else {
+            socket?.emit(EVENTS.START_VOTE_KICK, {
+                roomCode: state.roomCode,
+                targetId,
+                reason,
+            });
+        }
+        setActiveMenuPlayer(null);
+    };
+
+    const handleDirectKick = (targetId) => {
+        if (propOnDirectKick) {
+            propOnDirectKick(targetId);
+        } else {
+            socket?.emit(EVENTS.KICK_PLAYER, {
+                roomCode: state.roomCode,
+                targetId,
+            });
+        }
+        setActiveMenuPlayer(null);
+    };
+
     const queue = Array.isArray(turnInfo?.queue) ? turnInfo.queue : [];
     // Sort players by score descending
     const rankedPlayers = [...players].sort(
@@ -45,28 +92,35 @@ export const PlayerList = ({
 
     if (variant === 'mobile') {
         return (
-            <div
-                data-testid="player-list-mobile"
+            <>
+                <div
+                    data-testid="player-list-mobile"
                 role="region"
                 aria-label="Player scoreboard"
                 tabIndex={0}
                 className={`h-[56px] min-h-[56px] max-h-[56px] flex items-center gap-2 overflow-x-auto py-1 px-1 scrollbar-hide max-w-full select-none focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none ${className}`}
             >
                 {rankedPlayers.map((player, index) => {
+                    const isAway = Boolean(player.isDisconnected || player.status === 'away');
                     const isDrawer = player.id === drawerId || player.playerId === drawerId;
                     const hasGuessed = guessedPlayerIds.includes(player.id) || (player.playerId && guessedPlayerIds.includes(player.playerId));
                     const isSpeaking = Boolean(speakingPeers[player.id]);
-                    const score = scores[player.id] || 0;
+                    const score = scores[player.id] !== undefined ? scores[player.id] : (player.score || 0);
                     const gain = floatingGains[player.id];
                     const queueIndex = queue.findIndex(id => id === player.id || id === player.playerId);
+
                     let drawOrderLabel = null;
-                    if (!isDrawer && !hasGuessed) {
+                    if (!isDrawer && !hasGuessed && !isAway) {
                         if (queueIndex === 0) {
                             drawOrderLabel = 'Draws next';
                         } else if (queueIndex > 0) {
                             drawOrderLabel = `Draws in ${queueIndex + 1}`;
                         }
                     }
+
+                    const hasMissed = Boolean(player.missedDraws && player.missedDraws.length > 0 && !isDrawer);
+                    const isMakeUp = Boolean(player.isMakeUpTurn || (hasMissed && !isAway && queueIndex >= 0));
+                    const isJoinedLate = Boolean(player.joinedMidRound && (!turnInfo?.round || turnInfo.round === 1));
 
                     return (
                         <div
@@ -78,7 +132,7 @@ export const PlayerList = ({
                             data-draw-order={drawOrderLabel || undefined}
                             className={`min-h-[44px] flex items-center gap-1.5 px-2.5 py-1 rounded-full border-2 border-ink shadow-hard-sm shrink-0 relative transition-transform ${
                                 player.isDisconnected
-                                    ? 'bg-paper opacity-50 border-dashed'
+                                    ? 'bg-paper border-dashed text-ink'
                                     : hasGuessed
                                     ? 'bg-leaf-deep text-white'
                                     : isDrawer
@@ -90,13 +144,20 @@ export const PlayerList = ({
                                 #{index + 1}
                             </span>
 
-                            {/* Avatar with burst effect on guess */}
+                            {/* Avatar with burst effect on guess or soft pulse on drawer like */}
                             <motion.div
-                                animate={hasGuessed ? { scale: [1, 1.3, 1] } : {}}
+                                key={`avatar-pulse-${isDrawer ? state.likesCount : (hasGuessed ? 'guessed' : 'none')}`}
+                                animate={
+                                    hasGuessed
+                                        ? { scale: [1, 1.3, 1] }
+                                        : isDrawer && state.likesCount > 0
+                                        ? { scale: [1, 1.15, 1] }
+                                        : {}
+                                }
                                 transition={{ duration: 0.35 }}
                                 className={`rounded-full relative transition-transform ${
                                     isSpeaking ? 'ring-2 ring-leaf ring-offset-1 scale-110' : ''
-                                }`}
+                                } ${isDrawer && state.likesCount > 0 ? 'animate-pulse' : ''}`}
                             >
                                 <Avatar avatarId={player.avatar} size="xs" />
                                 {hasGuessed && (
@@ -118,12 +179,32 @@ export const PlayerList = ({
                                 {player.username}
                             </span>
 
+                            {isAway && (
+                                <span className="text-[9px] font-bold text-tomato-deep uppercase bg-paper/80 px-1 py-0.5 rounded border border-tomato/30 shrink-0">
+                                    Away
+                                </span>
+                            )}
                             {drawOrderLabel && (
                                 <span
                                     data-testid="draw-order-label"
                                     className="text-[9px] font-bold text-ink-soft bg-paper/80 px-1 py-0.5 rounded border border-ink/20 shrink-0"
                                 >
                                     {drawOrderLabel}
+                                </span>
+                            )}
+                            {isMakeUp && (
+                                <span className="text-[9px] font-bold text-leaf-deep bg-paper/80 px-1 py-0.5 rounded border border-leaf/30 shrink-0">
+                                    Make-up turn
+                                </span>
+                            )}
+                            {hasMissed && !isMakeUp && (
+                                <span className="text-[9px] font-bold text-tomato-deep bg-paper/80 px-1 py-0.5 rounded border border-tomato/30 shrink-0">
+                                    Missed turn
+                                </span>
+                            )}
+                            {isJoinedLate && (
+                                <span className="text-[9px] font-medium text-ink-soft bg-paper/60 px-1 py-0.5 rounded border border-ink/20 shrink-0">
+                                    joined late
                                 </span>
                             )}
 
@@ -160,12 +241,50 @@ export const PlayerList = ({
                                     )}
                                 </AnimatePresence>
                             </div>
+
+                            {/* Player actions menu button */}
+                            <button
+                                type="button"
+                                aria-label={`Player actions for ${player.username}`}
+                                data-testid={`player-menu-btn-${player.id}`}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveMenuPlayer(player);
+                                }}
+                                className="p-0.5 rounded hover:bg-ink/10 text-ink-soft hover:text-ink transition-colors cursor-pointer shrink-0"
+                                title={`Player actions for ${player.username}`}
+                            >
+                                <MoreVertical className="w-3 h-3" />
+                            </button>
                         </div>
                     );
                 })}
             </div>
-        );
-    }
+            {activeMenuPlayer && (
+                <div
+                    role="presentation"
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 backdrop-blur-xs p-4"
+                    onClick={() => setActiveMenuPlayer(null)}
+                >
+                    <div onClick={(e) => e.stopPropagation()}>
+                        <PlayerMenu
+                            player={activeMenuPlayer}
+                            currentUserId={currentUserId}
+                            currentUserPlayerId={currentUserPlayerId}
+                            currentUser={state.currentUser}
+                            isCurrentUserHost={isCurrentUserHost}
+                            connectedCount={connectedCount}
+                            voteState={voteState}
+                            onStartVoteKick={handleStartVoteKick}
+                            onDirectKick={handleDirectKick}
+                            onClose={() => setActiveMenuPlayer(null)}
+                        />
+                    </div>
+                </div>
+            )}
+        </>
+    );
+}
 
     return (
         <aside
@@ -192,13 +311,17 @@ export const PlayerList = ({
                     const gain = floatingGains[player.id];
                     const queueIndex = queue.findIndex(id => id === player.id || id === player.playerId);
                     let drawOrderLabel = null;
-                    if (!isDrawer && !hasGuessed) {
+                    if (!isDrawer && !hasGuessed && !isAway) {
                         if (queueIndex === 0) {
                             drawOrderLabel = 'Draws next';
                         } else if (queueIndex > 0) {
                             drawOrderLabel = `Draws in ${queueIndex + 1}`;
                         }
                     }
+
+                    const hasMissed = Boolean(player.missedDraws && player.missedDraws.length > 0 && !isDrawer);
+                    const isMakeUp = Boolean(player.isMakeUpTurn || (hasMissed && !isAway && queueIndex >= 0));
+                    const isJoinedLate = Boolean(player.joinedMidRound && (!turnInfo?.round || turnInfo.round === 1));
 
                     return (
                         <div
@@ -210,7 +333,7 @@ export const PlayerList = ({
                             data-draw-order={drawOrderLabel || undefined}
                             className={`flex items-center gap-2.5 p-2 rounded-[8px] border-2 border-ink shadow-hard-sm transition-all ${
                                 isAway
-                                    ? 'bg-paper opacity-50 border-dashed'
+                                    ? 'bg-paper border-dashed text-ink'
                                     : hasGuessed
                                     ? 'bg-leaf-deep text-white'
                                     : isDrawer
@@ -222,13 +345,20 @@ export const PlayerList = ({
                                 #{index + 1}
                             </span>
 
-                            {/* Avatar with burst effect on guess */}
+                            {/* Avatar with burst effect on guess or soft pulse on drawer like */}
                             <motion.div
-                                animate={hasGuessed ? { scale: [1, 1.3, 1] } : {}}
+                                key={`avatar-pulse-${isDrawer ? state.likesCount : (hasGuessed ? 'guessed' : 'none')}`}
+                                animate={
+                                    hasGuessed
+                                        ? { scale: [1, 1.3, 1] }
+                                        : isDrawer && state.likesCount > 0
+                                        ? { scale: [1, 1.15, 1] }
+                                        : {}
+                                }
                                 transition={{ duration: 0.35 }}
                                 className={`rounded-full shrink-0 relative transition-transform ${
                                     isSpeaking ? 'ring-2 ring-leaf ring-offset-2 scale-110' : ''
-                                }`}
+                                } ${isDrawer && state.likesCount > 0 ? 'animate-pulse' : ''}`}
                             >
                                 <Avatar avatarId={player.avatar} size="xs" />
                                 {hasGuessed && (
@@ -257,16 +387,31 @@ export const PlayerList = ({
                                 </div>
                                 <div className="flex items-center gap-1.5 flex-wrap">
                                     {isAway && (
-                                        <span className="text-[10px] font-bold text-tomato uppercase tracking-wide">
-                                            away
+                                        <span className="text-[10px] font-bold text-tomato-deep uppercase tracking-wide">
+                                            Away
                                         </span>
                                     )}
                                     {drawOrderLabel && (
                                         <span
                                             data-testid="draw-order-label"
-                                            className="text-[10px] font-bold text-ink-soft leading-none"
+                                            className={`text-[10px] font-bold leading-none ${hasGuessed ? 'text-white/90' : 'text-ink-soft'}`}
                                         >
                                             {isAway ? `• ${drawOrderLabel}` : drawOrderLabel}
+                                        </span>
+                                    )}
+                                    {isMakeUp && (
+                                        <span className={`text-[10px] font-bold leading-none ${hasGuessed ? 'text-white' : 'text-leaf-deep'}`}>
+                                            • Make-up turn
+                                        </span>
+                                    )}
+                                    {hasMissed && !isMakeUp && (
+                                        <span className={`text-[10px] font-bold leading-none ${hasGuessed ? 'text-white' : 'text-tomato-deep'}`}>
+                                            • Missed turn
+                                        </span>
+                                    )}
+                                    {isJoinedLate && (
+                                        <span className="text-[10px] font-medium text-ink-soft bg-paper/60 px-1 py-0.5 rounded border border-ink/20 leading-none">
+                                            joined late
                                         </span>
                                     )}
                                 </div>
@@ -307,11 +452,49 @@ export const PlayerList = ({
                                         )}
                                     </AnimatePresence>
                                 </div>
+
+                                {/* Player actions menu button */}
+                                <button
+                                    type="button"
+                                    aria-label={`Player actions for ${player.username}`}
+                                    data-testid={`player-menu-btn-${player.id}`}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setActiveMenuPlayer(player);
+                                    }}
+                                    className="p-1 rounded hover:bg-ink/10 text-ink-soft hover:text-ink transition-colors cursor-pointer shrink-0"
+                                    title={`Player actions for ${player.username}`}
+                                >
+                                    <MoreVertical className="w-3.5 h-3.5" />
+                                </button>
                             </div>
                         </div>
                     );
                 })}
             </div>
+
+            {activeMenuPlayer && (
+                <div
+                    role="presentation"
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 backdrop-blur-xs p-4"
+                    onClick={() => setActiveMenuPlayer(null)}
+                >
+                    <div onClick={(e) => e.stopPropagation()}>
+                        <PlayerMenu
+                            player={activeMenuPlayer}
+                            currentUserId={currentUserId}
+                            currentUserPlayerId={currentUserPlayerId}
+                            currentUser={state.currentUser}
+                            isCurrentUserHost={isCurrentUserHost}
+                            connectedCount={connectedCount}
+                            voteState={voteState}
+                            onStartVoteKick={handleStartVoteKick}
+                            onDirectKick={handleDirectKick}
+                            onClose={() => setActiveMenuPlayer(null)}
+                        />
+                    </div>
+                </div>
+            )}
         </aside>
     );
 };

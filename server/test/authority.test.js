@@ -158,7 +158,7 @@ describe('Server Authority & Security Tests', () => {
         const publicRoom = toPublicRoom(rawRoom);
 
         // Allow-list keys check
-        const allowedKeys = ['code', 'hostId', 'settings', 'gameState', 'currentRound', 'scores', 'players'];
+        const allowedKeys = ['code', 'hostId', 'settings', 'gameState', 'currentRound', 'scores', 'players', 'actingHostId', 'actingHostName', 'originalHostId', 'originalHostName'];
         assert.deepEqual(Object.keys(publicRoom).sort(), allowedKeys.sort());
 
         // Forbidden fields must not exist

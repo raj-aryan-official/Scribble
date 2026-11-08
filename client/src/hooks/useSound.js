@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { audioManager } from '../audio/manager';
+import { useSettings } from '../context/SettingsContext';
 
 export const useSound = () => {
+    const { settings, toggleMute: settingsToggleMute } = useSettings();
     const [soundState, setSoundState] = useState(() => ({
-        isMuted: audioManager.isMuted,
+        isMuted: settings?.isMuted ?? audioManager.isMuted,
         isDucked: audioManager.isDucked,
     }));
 
@@ -16,8 +18,12 @@ export const useSound = () => {
     }, []);
 
     const toggleMute = useCallback(() => {
+        if (settingsToggleMute) {
+            settingsToggleMute();
+            return !settings?.isMuted;
+        }
         return audioManager.toggleMute();
-    }, []);
+    }, [settingsToggleMute, settings?.isMuted]);
 
     const play = useCallback((name) => {
         audioManager.play(name);
@@ -28,7 +34,7 @@ export const useSound = () => {
     }, []);
 
     return {
-        isMuted: soundState.isMuted,
+        isMuted: settings?.isMuted ?? soundState.isMuted,
         isDucked: soundState.isDucked,
         toggleMute,
         play,

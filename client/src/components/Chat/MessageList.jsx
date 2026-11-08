@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, ArrowDown } from 'lucide-react';
+import { isOnlyEmoji } from '../../utils/shortcodes';
 
 export const MessageList = ({
     messages = [],
@@ -102,12 +103,13 @@ export const MessageList = ({
                 className="flex-1 overflow-y-auto p-3 space-y-2 bg-paper border-2 border-ink rounded-[8px] min-h-0 text-sm focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none"
             >
                 {displayedMessages.map((msg, idx) => {
+                    const msgKey = msg.id || `msg-${idx}`;
                     // Correct Guess Message: leaf tint with ink text + check icon
                     if (msg.type === 'correct') {
                         const gainedText = msg.gained ? ` (+${msg.gained})` : '';
                         return (
                             <div
-                                key={idx}
+                                key={msgKey}
                                 data-testid="correct-message-item"
                                 className="p-2 rounded-[6px] bg-leaf/20 text-ink border border-leaf/40 flex items-center justify-between font-bold text-xs sm:text-sm select-none"
                             >
@@ -128,7 +130,7 @@ export const MessageList = ({
                     if (msg.type === 'system') {
                         return (
                             <div
-                                key={idx}
+                                key={msgKey}
                                 data-testid="system-message-item"
                                 className="text-center text-xs font-bold text-ink-soft italic py-1 select-none"
                             >
@@ -139,32 +141,38 @@ export const MessageList = ({
 
                     // Guessed channel message (winners chat)
                     if (msg.type === 'guessed') {
+                        const emojiOnly = isOnlyEmoji(msg.text);
                         return (
                             <div
-                                key={idx}
+                                key={msgKey}
                                 data-testid="guessed-channel-message-item"
                                 className="p-1.5 rounded-[6px] bg-marigold/20 border border-ink text-xs sm:text-sm"
                             >
                                 <span className="font-bold text-ink mr-1.5">
                                     {msg.username}:
                                 </span>
-                                <span className="text-ink-soft">{msg.text}</span>
+                                <span className={emojiOnly ? 'text-2xl sm:text-3xl inline-block leading-tight my-0.5' : 'text-ink-soft'}>
+                                    {msg.text}
+                                </span>
                             </div>
                         );
                     }
 
                     // Standard wrong guess or lobby/spectator chat line:
-                    // Name in ink, text in ink-soft
+                    // Name in ink, text in ink-soft (larger if only emojis)
+                    const emojiOnly = isOnlyEmoji(msg.text);
                     return (
                         <div
-                            key={idx}
+                            key={msgKey}
                             data-testid="chat-message-item"
                             className="text-xs sm:text-sm leading-relaxed"
                         >
                             <span className="font-bold text-ink mr-1.5">
                                 {msg.username}:
                             </span>
-                            <span className="text-ink-soft">{msg.text}</span>
+                            <span className={emojiOnly ? 'text-2xl sm:text-3xl inline-block leading-tight my-0.5' : 'text-ink-soft'}>
+                                {msg.text}
+                            </span>
                         </div>
                     );
                 })}

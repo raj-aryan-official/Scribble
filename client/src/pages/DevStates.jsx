@@ -6,6 +6,14 @@ import VoiceControls from '../components/Chat/VoiceControls';
 import GuessInput from '../components/Chat/GuessInput';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
+import Spinner from '../components/ui/Spinner';
+import Toast from '../components/ui/Toast';
+import TurnWaitOverlay from '../components/Game/TurnWaitOverlay';
+import PausedOverlay from '../components/Game/PausedOverlay';
+import SeatClaimModal from '../components/Game/SeatClaimModal';
+import MidRoundBanner from '../components/Game/MidRoundBanner';
+import PlayerList from '../components/Game/PlayerList';
+import { Sparkles, AlertTriangle } from 'lucide-react';
 
 // Spot illustrations
 import lostSvg from '../assets/states/lost.svg';
@@ -82,7 +90,7 @@ export const DevStates = () => {
             name: '4. Back Online Toast',
             description: 'Non-blocking toast displayed for 2.5s when socket restores connection.',
             render: () => (
-                <div className="bg-leaf text-white px-4 py-2 text-sm flex items-center justify-center gap-2 border-2 border-ink shadow-hard-sm rounded-[8px] font-bold max-w-xs mx-auto">
+                <div className="bg-leaf-deep text-white px-4 py-2 text-sm flex items-center justify-center gap-2 border-2 border-ink shadow-hard-sm rounded-[8px] font-bold max-w-xs mx-auto">
                     <span>Back online</span>
                 </div>
             ),
@@ -284,6 +292,240 @@ export const DevStates = () => {
                     primaryAction={{ label: 'Reload', onClick: () => {} }}
                     className="min-h-0 p-0"
                 />
+            ),
+        },
+        {
+            id: 'turn-wait',
+            name: '16. TURN_WAIT Banner & Skip',
+            description: "Banner over paper: 'Waiting for Maya to reconnect...' with shrinking ring, and skipped state.",
+            render: () => (
+                <div className="flex flex-col gap-4">
+                    <div className="relative w-full h-[200px] bg-paper border-2 border-ink rounded-[8px] overflow-hidden flex items-center justify-center">
+                        <TurnWaitOverlay
+                            waitingFor="Maya"
+                            endsAt={Date.now() + 8000}
+                            timeout={8}
+                            className="relative inset-0"
+                        />
+                    </div>
+                    <div className="relative w-full h-[180px] bg-paper border-2 border-ink rounded-[8px] overflow-hidden flex items-center justify-center">
+                        <TurnWaitOverlay
+                            waitingFor="Maya"
+                            isSkipped={true}
+                            className="relative inset-0"
+                        />
+                    </div>
+                </div>
+            ),
+        },
+        {
+            id: 'acting-host',
+            name: '17. Acting Host Chip & Return Toast',
+            description: "Bar chip 'Raj is hosting while Maya is away' and Toast 'Maya is the host again'.",
+            render: () => (
+                <div className="flex flex-col gap-4 items-center justify-center py-2">
+                    <div className="p-3 bg-paper border-2 border-ink rounded-[8px] shadow-hard-sm w-full flex items-center justify-center">
+                        <span
+                            data-testid="dev-acting-host-chip"
+                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-card border-2 border-ink text-xs font-bold text-ink shadow-hard-xs"
+                        >
+                            Raj is hosting while Maya is away
+                        </span>
+                    </div>
+                    <div className="p-3 bg-paper border-2 border-ink rounded-[8px] shadow-hard-sm w-full flex items-center justify-center">
+                        <div className="flex items-center gap-2 px-4 py-2 bg-card border-2 border-ink rounded-[8px] shadow-hard text-xs font-bold text-ink">
+                            <span className="w-2 h-2 rounded-full bg-leaf" />
+                            <span>Maya is the host again</span>
+                        </div>
+                    </div>
+                </div>
+            ),
+        },
+        {
+            id: 'superseded',
+            name: '18. Superseded Tab (E6)',
+            description: "StatusScreen: 'You're playing in another tab.' with 'Take over here' and 'Leave'.",
+            render: () => (
+                <StatusScreen
+                    role="alert"
+                    illustration={lostSvg}
+                    title="You're playing in another tab."
+                    sentence="This session was opened in another window or tab."
+                    primaryAction={{ label: 'Take over here', onClick: () => {} }}
+                    secondaryAction={{ label: 'Leave', onClick: () => {} }}
+                    className="min-h-0 p-0"
+                />
+            ),
+        },
+        {
+            id: 'seat-claim-joiner',
+            name: '19. Seat Claim Flow (Joiner)',
+            description: "Prompt, waiting, accepted, and declined states when reclaiming an away player's seat.",
+            render: () => (
+                <div className="flex flex-col gap-4">
+                    {/* Prompt */}
+                    <div className="p-4 bg-paper border-2 border-ink rounded-[8px] shadow-hard-sm flex flex-col gap-3 text-center">
+                        <div className="w-10 h-10 rounded-full bg-marigold/20 border-2 border-ink flex items-center justify-center mx-auto text-ink">
+                            <Sparkles className="w-5 h-5" />
+                        </div>
+                        <h3 className="font-heading font-black text-sm text-ink">
+                            Maya is away. Ask to take back that seat?
+                        </h3>
+                        <div className="flex flex-col gap-1.5 pt-1">
+                            <Button variant="primary" size="sm" className="font-bold uppercase">
+                                Ask the host
+                            </Button>
+                            <Button variant="secondary" size="sm" className="font-bold uppercase">
+                                Join as a new player
+                            </Button>
+                        </div>
+                    </div>
+
+                    {/* Waiting */}
+                    <div className="p-4 bg-paper border-2 border-ink rounded-[8px] shadow-hard-sm flex flex-col items-center gap-2 text-center">
+                        <Spinner size="md" label="Waiting for host..." />
+                        <h3 className="font-heading font-bold text-sm text-ink">
+                            Waiting for the host...
+                        </h3>
+                    </div>
+
+                    {/* Accepted & Declined */}
+                    <div className="grid grid-cols-2 gap-2 text-center text-xs font-bold">
+                        <div className="p-2.5 bg-paper border-2 border-leaf rounded-[8px] text-leaf-deep flex flex-col items-center gap-1">
+                            <span>✓</span>
+                            <span>The host let you back in</span>
+                        </div>
+                        <div className="p-2.5 bg-paper border-2 border-tomato rounded-[8px] text-tomato-deep flex flex-col items-center gap-1">
+                            <AlertTriangle className="w-4 h-4 text-tomato" />
+                            <span>The host said no</span>
+                        </div>
+                    </div>
+                </div>
+            ),
+        },
+        {
+            id: 'seat-claim-host',
+            name: '20. Seat Claim Modal (Host View)',
+            description: "Host modal: 'Maya wants to take back their seat' with Accept, Decline, and 20s countdown.",
+            render: () => (
+                <div className="p-4 bg-paper border-2 border-ink rounded-[8px] shadow-hard-sm flex flex-col gap-3">
+                    <h3 className="font-heading font-black text-base text-ink text-center">
+                        Maya wants to take back their seat
+                    </h3>
+                    <div className="flex items-center gap-2 justify-center text-xs text-ink-soft">
+                        <span className="font-mono font-bold text-marigold bg-ink px-2 py-0.5 rounded-full">
+                            18s
+                        </span>
+                        <span>They disconnected earlier and want to resume.</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 pt-2">
+                        <Button variant="primary" size="sm" className="font-bold uppercase">
+                            Accept
+                        </Button>
+                        <Button variant="secondary" size="sm" className="font-bold uppercase">
+                            Decline
+                        </Button>
+                    </div>
+                </div>
+            ),
+        },
+        {
+            id: 'paused-game',
+            name: '21. Paused Game Overlay (E15)',
+            description: "Overlay: 'Waiting for players to return.' with countdown, current running scores, and 'End game'.",
+            render: () => (
+                <div className="relative w-full min-h-[340px] bg-paper border-2 border-ink rounded-[8px] overflow-hidden flex items-center justify-center">
+                    <PausedOverlay
+                        timeout={60}
+                        endsAt={Date.now() + 45000}
+                        players={[
+                            { id: 'p1', username: 'Maya', avatar: 'avatar-1', status: 'connected' },
+                            { id: 'p2', username: 'Raj', avatar: 'avatar-2', status: 'away', isDisconnected: true },
+                        ]}
+                        scores={{ p1: 420, p2: 310 }}
+                        isHost={true}
+                        onEndGame={() => {}}
+                        className="relative inset-0"
+                    />
+                </div>
+            ),
+        },
+        {
+            id: 'player-list-labels',
+            name: '22. Player List Labels',
+            description: "'Away', 'Draws next', 'Draws in 3', 'Missed turn', 'Make-up turn', and quiet 'joined late' tag.",
+            render: () => (
+                <div className="flex flex-col gap-4">
+                    <PlayerList
+                        players={[
+                            { id: 'p1', username: 'Maya', avatar: 'avatar-1', status: 'connected', missedDraws: [1] },
+                            { id: 'p2', username: 'Raj', avatar: 'avatar-2', status: 'away', isDisconnected: true },
+                            { id: 'p3', username: 'Alex', avatar: 'avatar-3', status: 'connected', isMakeUpTurn: true },
+                            { id: 'p4', username: 'Jordan', avatar: 'avatar-4', status: 'connected', joinedMidRound: true },
+                        ]}
+                        scores={{ p1: 450, p2: 300, p3: 200, p4: 100 }}
+                        drawerId="p1"
+                        guessedPlayerIds={['p3']}
+                        turnInfo={{ queue: ['p3', 'p4'], round: 1, totalRounds: 3 }}
+                        variant="desktop"
+                    />
+                </div>
+            ),
+        },
+        {
+            id: 'join-rejoin-notices',
+            name: '23. Late Join & Rejoin Notices',
+            description: "Late join: 'You joined mid-round. You\\'ll draw in turn 4.' Rejoin: 'Welcome back. You have 420 points.'",
+            render: () => (
+                <div className="flex flex-col gap-3">
+                    <MidRoundBanner turnNumber={4} onDismiss={() => {}} />
+                    <div className="flex items-center gap-2 p-3 bg-card border-2 border-ink shadow-hard rounded-[8px] text-xs font-bold text-ink">
+                        <span className="w-2.5 h-2.5 rounded-full bg-cobalt" />
+                        <span>Welcome back. You have 420 points.</span>
+                    </div>
+                </div>
+            ),
+        },
+        {
+            id: 'afk-nudge',
+            name: '24. AFK Nudge Toast & Skipped Notice (E14)',
+            description: "Toast: 'Pick a word, or your turns will be skipped.' and announcement: 'Maya is away from the keyboard. Skipping their turns.'",
+            render: () => (
+                <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-2 p-3 bg-card border-2 border-tomato shadow-hard rounded-[8px] text-xs font-bold text-tomato-deep">
+                        <AlertTriangle className="w-4 h-4 text-tomato shrink-0" />
+                        <span>Pick a word, or your turns will be skipped.</span>
+                    </div>
+                    <div className="flex items-center gap-2 p-3 bg-paper border-2 border-ink rounded-[8px] text-xs font-bold text-ink-soft">
+                        <span className="w-2 h-2 rounded-full bg-tomato shrink-0" />
+                        <span>Maya is away from the keyboard. Skipping their turns.</span>
+                    </div>
+                </div>
+            ),
+        },
+        {
+            id: 'server-busy-rate-limits',
+            name: '25. Server Busy & Rate Limits (E21, E22)',
+            description: "StatusScreens: 'The server is busy. Try again in a minute.' and 'Too many tries. Wait a moment.'",
+            render: () => (
+                <div className="flex flex-col gap-6">
+                    <StatusScreen
+                        role="alert"
+                        illustration={errorSvg}
+                        title="The server is busy."
+                        sentence="Try again in a minute."
+                        primaryAction={{ label: 'Try again', onClick: () => {} }}
+                        className="min-h-0 p-0"
+                    />
+                    <StatusScreen
+                        role="alert"
+                        illustration={errorSvg}
+                        title="Too many tries."
+                        sentence="Wait a moment."
+                        primaryAction={{ label: 'Wait a moment', onClick: () => {} }}
+                        className="min-h-0 p-0"
+                    />
+                </div>
             ),
         },
     ];

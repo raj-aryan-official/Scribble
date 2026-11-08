@@ -3,6 +3,7 @@ import { Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion, MotionConfig, useReducedMotion } from 'framer-motion';
 import { useGame } from './context/GameContext';
 import { useSocket } from './hooks/useSocket';
+import { useSettings } from './context/SettingsContext';
 import Landing from './pages/Landing';
 import Join from './pages/Join';
 import Lobby from './pages/Lobby';
@@ -14,16 +15,24 @@ import AppHeader from './components/Layout/AppHeader';
 import ReconnectBanner from './components/ui/ReconnectBanner';
 import StatusScreen from './components/ui/StatusScreen';
 import ConnectingScreen from './components/ui/ConnectingScreen';
+import Toast from './components/ui/Toast';
+import SeatClaimModal from './components/Game/SeatClaimModal';
+import SettingsModal from './components/Settings/SettingsModal';
+import { getRejoinData, clearRejoinData } from './context/SocketContext';
+import { EVENTS } from '../../shared/types';
 import { LobbyGuard, GameGuard, EndGuard } from './components/Routing/RouteGuards';
 import { checkBrowserSupport } from './utils/browserSupport';
 import { PAGE_TRANSITION } from './constants/layout';
 import errorSvg from './assets/states/error.svg';
+import lostSvg from './assets/states/lost.svg';
 import unsupportedSvg from './assets/states/unsupported.svg';
 
 function App() {
   const location = useLocation();
-  const shouldReduceMotion = useReducedMotion();
-  const { state } = useGame();
+  const { settings, isSettingsOpen, closeSettings } = useSettings();
+  const osReducedMotion = useReducedMotion();
+  const shouldReduceMotion = settings.reducedMotion ? true : osReducedMotion;
+  const { state, dispatch } = useGame();
   const socket = useSocket();
 
   // 1. Browser compatibility check (Canvas, WebRTC, Pointer Events)
@@ -91,6 +100,35 @@ function App() {
     }
   }, [topLevelRoute, currentRoomCode, state.currentRound, state.totalRounds, state.settings?.rounds]);
 
+  // Tab-title flash when it's your turn to draw and tab is in background
+  const myId = state.currentUser?.id;
+  const isDrawer = Boolean(myId && myId === state.drawerId);
+  const isDrawingTurn = isDrawer && (state.gameState === 'WORD_SELECTION' || state.gameState === 'DRAWING');
+
+  useEffect(() => {
+    if (!settings.tabTitleFlash || !isDrawingTurn) return;
+
+    let isFlash = false;
+    let baseTitle = document.title;
+
+    const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.hidden) {
+        document.title = isFlash ? '🎨 YOUR TURN! · Scribble' : baseTitle;
+        isFlash = !isFlash;
+      }
+    }, 1000);
+
+    const handleFocus = () => {
+      document.title = baseTitle;
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [settings.tabTitleFlash, isDrawingTurn]);
+
   // 5. Route change: move focus to page's h1 (tabIndex={-1})
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -152,8 +190,42 @@ function App() {
     return <ConnectingScreen />;
   }
 
+  // Superseded tab: another tab took over this session (E6)
+  if (state.isSuperseded) {
+    return (
+      <StatusScreen
+        role="alert"
+        illustration={lostSvg}
+        title="You're playing in another tab."
+        sentence="This session was opened in another window or tab."
+        primaryAction={{
+          label: 'Take over here',
+          onClick: () => {
+            const rejoin = getRejoinData();
+            if (socket) {
+              socket.connect();
+              socket.emit(EVENTS.TAKE_OVER, {
+                roomCode: rejoin?.roomCode,
+                rejoinToken: rejoin?.rejoinToken,
+              });
+              dispatch({ type: 'SET_SUPERSEDED', payload: false });
+            }
+          },
+        }}
+        secondaryAction={{
+          label: 'Leave',
+          onClick: () => {
+            clearRejoinData();
+            dispatch({ type: 'SET_SUPERSEDED', payload: false });
+            window.location.href = '/';
+          },
+        }}
+      />
+    );
+  }
+
   return (
-    <MotionConfig reducedMotion="user">
+    <MotionConfig reducedMotion={settings.reducedMotion ? 'always' : 'user'}>
       <div className="min-h-[100dvh] bg-paper text-ink font-body flex flex-col selection:bg-marigold selection:text-ink relative">
         {/* Skip to Content link for accessibility */}
         <a
@@ -239,6 +311,49 @@ function App() {
             </motion.div>
           </AnimatePresence>
         </main>
+
+        {/* Host Seat Claim Request Modal */}
+        {state.seatClaimRequest && (
+          <SeatClaimModal
+            isOpen={Boolean(state.seatClaimRequest)}
+            username={state.seatClaimRequest.username}
+            timeout={state.seatClaimRequest.timeout || 20}
+            endsAt={state.seatClaimRequest.endsAt}
+            onAccept={() => {
+              if (socket) {
+                socket.emit(EVENTS.RESOLVE_SEAT_CLAIM, {
+                  claimId: state.seatClaimRequest.claimId,
+                  accepted: true,
+                });
+              }
+              dispatch({ type: 'SET_SEAT_CLAIM_REQUEST', payload: null });
+            }}
+            onDecline={() => {
+              if (socket) {
+                socket.emit(EVENTS.RESOLVE_SEAT_CLAIM, {
+                  claimId: state.seatClaimRequest.claimId,
+                  accepted: false,
+                });
+              }
+              dispatch({ type: 'SET_SEAT_CLAIM_REQUEST', payload: null });
+            }}
+          />
+        )}
+
+        {/* Global Toast */}
+        <Toast
+          isOpen={Boolean(state.toast)}
+          message={state.toast?.message || ''}
+          variant={state.toast?.variant || 'info'}
+          duration={state.toast?.duration || 3500}
+          onClose={() => dispatch({ type: 'HIDE_TOAST' })}
+        />
+
+        {/* Global Settings Modal */}
+        <SettingsModal
+          isOpen={isSettingsOpen}
+          onClose={closeSettings}
+        />
       </div>
     </MotionConfig>
   );

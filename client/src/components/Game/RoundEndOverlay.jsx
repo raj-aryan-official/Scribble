@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { Zap } from 'lucide-react';
+import { Zap, Heart } from 'lucide-react';
 import Avatar from '../ui/Avatar';
 import Button from '../ui/Button';
 import { useSound } from '../../hooks/useSound';
+import { ReactionIcon } from '../Reactions/ReactionStickers';
 
 export const RoundEndOverlay = ({
     word = '',
@@ -22,6 +23,8 @@ export const RoundEndOverlay = ({
     isHost = false,
     reason = null,
     departedDrawerName = null,
+    likesCount = 0,
+    topReaction = null,
     onSkip,
     onComplete,
 }) => {
@@ -293,6 +296,28 @@ export const RoundEndOverlay = ({
                         <p className="text-xs sm:text-sm font-bold text-tomato mt-1">
                             Nobody got it this time.
                         </p>
+                    )}
+
+                    {/* Reactions & Likes summary */}
+                    {(likesCount > 0 || topReaction) && (
+                        <div
+                            data-testid="round-end-reactions"
+                            className="mt-2 inline-flex items-center justify-center gap-3 py-1 px-3 bg-neutral-100 rounded-lg border border-ink/20 text-xs font-bold"
+                        >
+                            {likesCount > 0 && (
+                                <span className="flex items-center gap-1 text-tomato" data-testid="round-end-likes">
+                                    <Heart className="w-3.5 h-3.5 fill-tomato text-tomato" />
+                                    <span>{likesCount} {likesCount === 1 ? 'like' : 'likes'}</span>
+                                </span>
+                            )}
+                            {topReaction && (
+                                <span className="flex items-center gap-1 text-ink" data-testid="round-end-top-reaction">
+                                    <span className="text-ink-soft">Top:</span>
+                                    <ReactionIcon kind={topReaction.kind} size={16} />
+                                    <span className="font-mono">{topReaction.count}</span>
+                                </span>
+                            )}
+                        </div>
                     )}
                 </div>
 

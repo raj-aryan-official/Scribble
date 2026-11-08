@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Dices } from 'lucide-react';
 import { useGame } from '../../context/GameContext';
 import { useSocket } from '../../hooks/useSocket';
+import { useSettings } from '../../context/SettingsContext';
 import { EVENTS } from '../../../../shared/types';
 import { getWordDifficulty } from '../../utils/wordDifficulty';
 import Avatar from '../ui/Avatar';
 import Card from '../ui/Card';
+import Button from '../ui/Button';
 
 const TIPS = [
     'Tip: guess early for more points',
@@ -18,9 +21,11 @@ const TIPS = [
 export const WordChoice = ({ roomCode, cardsReady = true }) => {
     const { state } = useGame();
     const socket = useSocket();
+    const { settings } = useSettings();
 
     const [now, setNow] = useState(Date.now());
-    const [focusedIndex, setFocusedIndex] = useState(1); // middle card focused by default
+    const defaultIndex = typeof state.defaultChoice === 'number' ? state.defaultChoice : 0;
+    const [focusedIndex, setFocusedIndex] = useState(defaultIndex);
     const [pickedWord, setPickedWord] = useState(null);
     const cardRefs = useRef([]);
     const hasPulsedRef = useRef(false);
@@ -28,6 +33,14 @@ export const WordChoice = ({ roomCode, cardsReady = true }) => {
     const isWordSelection = state.gameState === 'WORD_SELECTION';
     const isDrawer = Boolean(state.currentUser?.id && state.currentUser.id === state.drawerId);
     const drawer = state.players.find((p) => p.id === state.drawerId);
+    const isRandomMode = state.wordChoiceMode === 'random' || state.settings?.wordChoice === 'random';
+
+    // Synchronize focusedIndex with defaultChoice whenever defaultChoice changes
+    useEffect(() => {
+        if (typeof state.defaultChoice === 'number') {
+            setFocusedIndex(state.defaultChoice);
+        }
+    }, [state.defaultChoice]);
 
     // Pick one deterministic tip per turn
     const currentTip = useMemo(() => {
@@ -57,8 +70,9 @@ export const WordChoice = ({ roomCode, cardsReady = true }) => {
 
     // Calculate remaining time from server selectionEndsAt
     const selectionEndsAt = state.selectionEndsAt;
-    const remainingMs = selectionEndsAt ? Math.max(0, selectionEndsAt - now) : 10000;
-    const progressPercent = Math.max(0, Math.min(100, (remainingMs / 10000) * 100));
+    const totalDuration = isRandomMode ? 3000 : 10000;
+    const remainingMs = selectionEndsAt ? Math.max(0, selectionEndsAt - now) : totalDuration;
+    const progressPercent = Math.max(0, Math.min(100, (remainingMs / totalDuration) * 100));
     const isLast3Seconds = remainingMs > 0 && remainingMs <= 3000;
 
     // Pulse cards once in last 3 seconds
@@ -75,23 +89,43 @@ export const WordChoice = ({ roomCode, cardsReady = true }) => {
     }, [state.drawerId, state.currentRound]);
 
     const handlePick = useCallback((index) => {
-        console.log('HANDLE PICK CALLED:', index, 'choices:', state.wordChoices, 'pickedWord:', pickedWord);
         if (!state.wordChoices || !state.wordChoices[index] || pickedWord) return;
         const choice = state.wordChoices[index];
         const wordText = typeof choice === 'string' ? choice : choice.word;
-        console.log('HANDLE PICK WORD:', wordText, 'roomCode:', roomCode);
         setPickedWord({ word: wordText, index });
 
         // Slide up into word chip and emit after 300ms
         setTimeout(() => {
-            console.log('EMITTING CHOOSE_WORD:', wordText, 'roomCode:', roomCode);
-            socket.emit(EVENTS.CHOOSE_WORD, { roomCode, word: wordText });
+            const turnId = state.turnId || state.turnInfo?.turnId;
+            socket.emit(EVENTS.CHOOSE_WORD, { roomCode, word: wordText, turnId });
         }, 300);
-    }, [state.wordChoices, pickedWord, socket, roomCode]);
+    }, [state.wordChoices, pickedWord, socket, roomCode, state.turnId, state.turnInfo?.turnId]);
 
-    // Keyboard controls for drawer: 1, 2, 3, ArrowLeft, ArrowRight, Enter
+    // Surprise me button: pick random word immediately
+    const handleSurpriseMe = useCallback(() => {
+        if (!state.wordChoices || state.wordChoices.length === 0 || pickedWord) return;
+        const randomIndex = Math.floor(Math.random() * state.wordChoices.length);
+        handlePick(randomIndex);
+    }, [state.wordChoices, pickedWord, handlePick]);
+
+    // Per-player setting: "Always pick randomly for me"
+    // On player's turn as drawer in pick mode, auto-confirm default card after 1s
     useEffect(() => {
-        if (!isWordSelection || !isDrawer || pickedWord) return;
+        if (!isWordSelection || !isDrawer || pickedWord || isRandomMode) return;
+        if (settings?.alwaysPickRandomly && state.wordChoices && state.wordChoices.length > 0) {
+            const timer = setTimeout(() => {
+                const targetIdx = (typeof state.defaultChoice === 'number' && state.defaultChoice < state.wordChoices.length)
+                    ? state.defaultChoice
+                    : 0;
+                handlePick(targetIdx);
+            }, 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [isWordSelection, isDrawer, pickedWord, isRandomMode, settings?.alwaysPickRandomly, state.wordChoices, state.defaultChoice, handlePick]);
+
+    // Keyboard controls for drawer: 1, 2, 3, ArrowLeft, ArrowRight, Enter, Space
+    useEffect(() => {
+        if (!isWordSelection || !isDrawer || pickedWord || isRandomMode) return;
 
         const handleKeyDown = (e) => {
             if (!state.wordChoices || state.wordChoices.length === 0) return;
@@ -133,8 +167,8 @@ export const WordChoice = ({ roomCode, cardsReady = true }) => {
                 return;
             }
 
-            // Enter key confirms focused card
-            if (e.key === 'Enter') {
+            // Enter key or Space key confirms focused card
+            if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
                 handlePick(focusedIndex);
             }
@@ -142,11 +176,87 @@ export const WordChoice = ({ roomCode, cardsReady = true }) => {
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isWordSelection, isDrawer, pickedWord, cardsReady, state.wordChoices, focusedIndex, handlePick]);
+    }, [isWordSelection, isDrawer, pickedWord, isRandomMode, state.wordChoices, focusedIndex, handlePick]);
 
     if (!isWordSelection) return null;
 
-    // SPECTATOR VIEW (Everyone Else) - No black overlay!
+    // RANDOM MODE VIEW (No choice screen, 3s preview)
+    if (isRandomMode) {
+        if (!isDrawer) {
+            // Spectator view in random mode
+            return (
+                <div
+                    className="absolute inset-0 z-20 flex items-center justify-center p-4 pointer-events-none select-none"
+                    data-testid="word-choice-spectator"
+                >
+                    <div aria-live="polite" aria-atomic="true" className="sr-only">
+                        {drawer?.username || 'Maya'} is getting a word
+                    </div>
+                    <Card className="flex flex-col items-center justify-center p-6 sm:p-8 max-w-sm w-full text-center shadow-hard bg-card border-2 border-ink gap-4 pointer-events-auto">
+                        <div className="relative inline-flex items-center justify-center">
+                            <motion.div
+                                animate={{ y: [0, -6, 0] }}
+                                transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
+                                className="relative"
+                            >
+                                <Avatar avatarId={drawer?.avatar || 'avatar-1'} size="xl" />
+                            </motion.div>
+                        </div>
+                        <div>
+                            <h2 className="text-xl sm:text-2xl font-black font-heading text-ink">
+                                {drawer?.username || 'Maya'} is getting a word
+                            </h2>
+                            <p className="text-xs sm:text-sm font-bold text-ink-soft mt-1">
+                                Round starting soon...
+                            </p>
+                        </div>
+                        {/* Draining 3s ink line */}
+                        <div className="w-full h-2.5 bg-paper border-2 border-ink rounded-full overflow-hidden shadow-hard-sm mt-1">
+                            <div
+                                className="h-full bg-ink transition-all duration-75 ease-linear"
+                                style={{ width: `${progressPercent}%` }}
+                            />
+                        </div>
+                    </Card>
+                </div>
+            );
+        }
+
+        // Drawer view in random mode
+        const displayWord = (state.wordToGuess || '').toUpperCase();
+        return (
+            <div
+                className="absolute inset-0 z-20 flex items-center justify-center p-4 pointer-events-none select-none"
+                data-testid="word-choice-random-drawer"
+            >
+                <div aria-live="polite" aria-atomic="true" className="sr-only">
+                    Your word: {displayWord}
+                </div>
+                <Card className="flex flex-col items-center justify-center p-6 sm:p-8 max-w-md w-full text-center shadow-hard bg-card border-2 border-ink gap-4 pointer-events-auto">
+                    <span className="text-xs font-black uppercase tracking-widest text-ink-soft bg-paper border border-ink/30 px-3 py-1 rounded-[6px]">
+                        Random Word Mode
+                    </span>
+                    <div>
+                        <h2 className="text-2xl sm:text-3xl font-black font-heading text-ink">
+                            Your word: <span className="text-tomato underline decoration-2 underline-offset-4">{displayWord}</span>
+                        </h2>
+                        <p className="text-xs sm:text-sm font-bold text-ink-soft mt-1">
+                            Get ready to draw! Round begins in 3s
+                        </p>
+                    </div>
+                    {/* Draining 3s ink line */}
+                    <div className="w-full h-2.5 bg-paper border-2 border-ink rounded-full overflow-hidden shadow-hard-sm mt-1">
+                        <div
+                            className="h-full bg-tomato transition-all duration-75 ease-linear"
+                            style={{ width: `${progressPercent}%` }}
+                        />
+                    </div>
+                </Card>
+            </div>
+        );
+    }
+
+    // PICK MODE: SPECTATOR VIEW (Everyone Else) - No black overlay!
     if (!isDrawer) {
         return (
             <div
@@ -204,7 +314,7 @@ export const WordChoice = ({ roomCode, cardsReady = true }) => {
         );
     }
 
-    // DRAWER VIEW: 3 fanned index cards at -4, 0, 4 degrees
+    // PICK MODE: DRAWER VIEW (3 fanned index cards at -4, 0, 4 degrees)
     const rotations = ['rotate-[-4deg]', 'rotate-0', 'rotate-[4deg]'];
 
     return (
@@ -264,6 +374,8 @@ export const WordChoice = ({ roomCode, cardsReady = true }) => {
                                 const rotationClass = rotations[idx] || 'rotate-0';
                                 const isPicked = pickedWord?.index === idx;
                                 const isUnpicked = pickedWord !== null && !isPicked;
+                                const isDefault = typeof state.defaultChoice === 'number' && idx === state.defaultChoice;
+                                const isFocused = focusedIndex === idx;
 
                                 return (
                                     <motion.button
@@ -284,14 +396,26 @@ export const WordChoice = ({ roomCode, cardsReady = true }) => {
                                                 : { scale: 1, opacity: 1 }
                                         }
                                         transition={{ duration: 0.3 }}
-                                        className={`group transform ${rotationClass} hover:rotate-0 hover:-translate-y-2 hover:shadow-hard-lg focus-visible:rotate-0 focus-visible:-translate-y-2 focus-visible:shadow-hard-lg focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none transition-all duration-150 cursor-pointer text-center bg-card border-2 border-ink shadow-hard rounded-[12px] p-5 w-48 sm:w-52 min-h-[140px] flex flex-col justify-between items-center select-none ${
-                                            focusedIndex === idx ? 'ring-2 ring-cobalt/60' : ''
+                                        className={`group transform ${rotationClass} hover:rotate-0 hover:-translate-y-2 hover:shadow-hard-lg focus-visible:rotate-0 focus-visible:-translate-y-2 focus-visible:shadow-hard-lg focus-visible:outline-none transition-all duration-150 cursor-pointer text-center bg-card border-2 border-ink shadow-hard rounded-[12px] p-5 w-48 sm:w-52 min-h-[140px] flex flex-col justify-between items-center select-none ${
+                                            isDefault ? 'ring-2 ring-cobalt' : ''
+                                        } ${
+                                            isFocused ? 'ring-2 ring-cobalt ring-offset-2' : ''
                                         }`}
                                     >
                                         <div className="flex items-center justify-between w-full">
-                                            <span className="text-[10px] font-black uppercase text-ink-soft bg-paper border border-ink/20 px-1.5 py-0.5 rounded-[4px]">
-                                                Key {idx + 1}
-                                            </span>
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="text-[10px] font-black uppercase text-ink-soft bg-paper border border-ink/20 px-1.5 py-0.5 rounded-[4px]">
+                                                    Key {idx + 1}
+                                                </span>
+                                                {isDefault && (
+                                                    <span
+                                                        data-testid="default-choice-tag"
+                                                        className="text-[10px] font-black uppercase text-cobalt bg-cobalt/10 border border-cobalt/30 px-1.5 py-0.5 rounded-[4px]"
+                                                    >
+                                                        Default
+                                                    </span>
+                                                )}
+                                            </div>
                                             <div
                                                 className="flex items-center gap-1"
                                                 title={`Difficulty: ${difficulty}`}
@@ -324,6 +448,19 @@ export const WordChoice = ({ roomCode, cardsReady = true }) => {
                             })}
                     </AnimatePresence>
                 </div>
+
+                {/* Surprise me button */}
+                <Button
+                    type="button"
+                    variant="paper"
+                    size="sm"
+                    data-testid="surprise-me-button"
+                    onClick={handleSurpriseMe}
+                    className="flex items-center gap-2 mt-2 text-xs font-bold shadow-hard-sm"
+                >
+                    <Dices className="w-4 h-4 text-ink" />
+                    <span>Surprise me</span>
+                </Button>
             </div>
         </div>
     );

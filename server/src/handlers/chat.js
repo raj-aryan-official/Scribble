@@ -1,3 +1,4 @@
+const { v4: uuidv4 } = require('uuid');
 const { EVENTS, GAME_STATES } = require('../../../shared/types.cjs');
 const { normalize, isCorrect, isClose } = require('../guess');
 const blocklist = require('../blocklist');
@@ -8,6 +9,12 @@ const { isGuesserEligibleForBonus } = require('../game/turns');
 
 // Per-socket message rate-limiting store (socketId -> Array<timestamp>)
 const socketMessageTimestamps = new Map();
+// Per-socket clientMsgId store for deduplicating double submits (socketId -> Array<clientMsgId>)
+const socketClientMsgIds = new Map();
+
+const escapeRegExp = (string) => {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+};
 
 const filterProfanity = (text, secretWord) => {
     if (!text) return '';
@@ -18,7 +25,8 @@ const filterProfanity = (text, secretWord) => {
         if (normSecret && normalize(badWord) === normSecret) {
             continue;
         }
-        const regex = new RegExp(`\\b${badWord}\\b`, 'gi');
+        const escaped = escapeRegExp(badWord);
+        const regex = new RegExp(`\\b${escaped}\\b`, 'gi');
         result = result.replace(regex, (match) => '*'.repeat(match.length));
     }
     return result;
@@ -28,12 +36,18 @@ const maskWord = (text, secretWord) => {
     if (!text || !secretWord) return text;
     const normWord = secretWord.trim();
     if (!normWord) return text;
-    const escaped = normWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // Build RegExp from escaped string, fresh instance, no reuse of global RegExp with .test()
+    const escaped = escapeRegExp(normWord);
     const regex = new RegExp(escaped, 'gi');
     return text.replace(regex, (match) => '*'.repeat(match.length));
 };
 
 function registerChatHandlers(io, socket, safeOn) {
+    socket.on('disconnect', () => {
+        socketMessageTimestamps.delete(socket.id);
+        socketClientMsgIds.delete(socket.id);
+    });
+
     safeOn(EVENTS.SEND_MESSAGE, (payload) => {
         if (!payload || typeof payload !== 'object') {
             return rejectWithError(socket, 'Invalid payload');
@@ -41,6 +55,22 @@ function registerChatHandlers(io, socket, safeOn) {
         const room = getMemberRoom(socket, payload.roomCode);
         if (!room) {
             return rejectWithError(socket, 'Not a member of this room');
+        }
+
+        // Double submit protection: drop if clientMsgId was seen in last 20 messages for this socket
+        if (payload.clientMsgId) {
+            let seenIds = socketClientMsgIds.get(socket.id);
+            if (!seenIds) {
+                seenIds = [];
+                socketClientMsgIds.set(socket.id, seenIds);
+            }
+            if (seenIds.includes(payload.clientMsgId)) {
+                return; // Drop repeat
+            }
+            seenIds.push(payload.clientMsgId);
+            if (seenIds.length > 20) {
+                seenIds.shift();
+            }
         }
 
         // Rate-limit: 5 messages per 3 seconds per socket
@@ -59,6 +89,12 @@ function registerChatHandlers(io, socket, safeOn) {
             return;
         }
 
+        // Limit emoji count per message (maximum 10 emojis to prevent spam/abuse)
+        const emojiMatches = text.match(/\p{Extended_Pictographic}/ug) || [];
+        if (emojiMatches.length > 10) {
+            return rejectWithError(socket, 'Too many emojis in message (maximum 10)');
+        }
+
         const player = room.players.find(p => p.id === socket.id);
         const drawer = room.players[room.currentDrawerIndex];
         const isCurrentDrawer = drawer && drawer.id === socket.id;
@@ -71,6 +107,8 @@ function registerChatHandlers(io, socket, safeOn) {
             filtered = maskWord(filtered, room.wordToGuess);
 
             const chatMsg = {
+                id: uuidv4(),
+                ts: Date.now(),
                 username: player?.username || 'Unknown',
                 text: filtered,
                 type: 'guessed',
@@ -95,13 +133,19 @@ function registerChatHandlers(io, socket, safeOn) {
                 const drawerId = room.drawerId || drawer?.id;
                 if (drawerId && !room.scores[drawerId]) room.scores[drawerId] = 0;
 
-                const totalTime = room.settings?.drawTime || 60;
+                const rawDrawTime = room.settings?.drawTime || 60;
+                const totalTime = room.currentTwist?.id === 'speed' ? Math.max(15, Math.round(rawDrawTime / 2)) : rawDrawTime;
                 const timeLeft = getTimeLeft(room);
                 const isFirstGuesser = room.guessedPlayers.size === 1;
                 if (isFirstGuesser) {
                     room.fastestGuesserId = socket.id;
                 }
-                const gained = calculateGuessScore(timeLeft, totalTime, isFirstGuesser);
+                let gained = calculateGuessScore(timeLeft, totalTime, isFirstGuesser);
+                if (room.currentTwist?.id === 'speed') {
+                    gained = gained * 2;
+                } else if (room.currentTwist?.id === 'first-guesser-bonus' && isFirstGuesser) {
+                    gained = gained * 2;
+                }
 
                 const guessDuration = Math.max(0.5, (Date.now() - (room.roundStartTime || Date.now())) / 1000);
                 if (!room.playerGuessTimes) room.playerGuessTimes = {};
@@ -183,6 +227,8 @@ function registerChatHandlers(io, socket, safeOn) {
                 });
 
                 const correctMsg = {
+                    id: uuidv4(),
+                    ts: Date.now(),
                     username: player?.username || 'Unknown',
                     text: `Guessed the word! (+${gained})`,
                     type: 'correct',
@@ -213,6 +259,8 @@ function registerChatHandlers(io, socket, safeOn) {
         filtered = maskWord(filtered, room.wordToGuess);
 
         const chatMsg = {
+            id: uuidv4(),
+            ts: Date.now(),
             username: player?.username || 'Unknown',
             text: filtered,
             type: 'chat',

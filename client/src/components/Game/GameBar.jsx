@@ -8,17 +8,21 @@ import {
     MoreVertical,
     HelpCircle,
     OctagonAlert,
+    Settings,
+    Zap,
 } from 'lucide-react';
 import { useGame } from '../../context/GameContext';
 import { useSound } from '../../hooks/useSound';
 import { useSocket } from '../../hooks/useSocket';
 import { useVoice } from '../../context/VoiceContext';
+import { useSettings } from '../../context/SettingsContext';
 import { EVENTS } from '../../../../shared/types';
 import Tooltip from '../ui/Tooltip';
 import ConfirmationModal from '../ui/ConfirmationModal';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import HintTiles from './HintTiles';
+import SoundHint from '../Settings/SoundHint';
 
 /**
  * TimerRing: Circular draining timer SVG with tabular numbers
@@ -103,6 +107,9 @@ export const GameBar = ({
     onExit: propOnExit,
     onEndGameEarly: propOnEndGameEarly,
     voiceState: propVoiceState,
+    actingHostName: propActingHostName,
+    originalHostName: propOriginalHostName,
+    twist: propTwist,
     initialShowExitModal = false,
     initialShowEndGameModal = false,
     className = '',
@@ -111,6 +118,7 @@ export const GameBar = ({
     const state = gameContext?.state || {};
     const socket = useSocket();
     const { isMuted, toggleMute } = useSound();
+    const { soundHintDismissed, dismissSoundHint, openSettings } = useSettings();
     const contextVoice = useVoice?.() || null;
     const activeVoice = propVoiceState !== undefined ? propVoiceState : contextVoice;
 
@@ -142,6 +150,9 @@ export const GameBar = ({
     const timer = propTimer ?? state.timer ?? 0;
     const totalDrawTime = propTotalDrawTime ?? state.settings?.drawTime ?? 60;
     const gameState = state.gameState || 'DRAWING';
+    const actingHostName = propActingHostName !== undefined ? propActingHostName : state.publicRoom?.actingHostName;
+    const originalHostName = propOriginalHostName !== undefined ? propOriginalHostName : state.publicRoom?.originalHostName;
+    const twist = propTwist !== undefined ? propTwist : state.currentTwist;
 
     // Throttled timer screen reader announcements: every 15s and at 10, 5, 0
     useEffect(() => {
@@ -220,6 +231,7 @@ export const GameBar = ({
     const isSpeakerOn = !isDeafened && !isMuted;
 
     const handleToggleSpeaker = () => {
+        dismissSoundHint?.();
         if (activeVoice?.toggleDeafen) {
             activeVoice.toggleDeafen();
         }
@@ -235,7 +247,12 @@ export const GameBar = ({
     } else if (gameState === 'TURN_WAIT' || state.turnWait) {
         statusText = `Waiting for ${waitingForName} to reconnect`;
     } else if (gameState === 'WORD_SELECTION') {
-        statusText = isDrawer ? 'You are choosing a word' : `${drawerName} is choosing a word`;
+        const isRandomMode = (state.wordChoiceMode === 'random' || state.settings?.wordChoice === 'random');
+        if (isRandomMode) {
+            statusText = isDrawer ? `Your word: ${(wordToGuess || '').toUpperCase()}` : `${drawerName} is getting a word`;
+        } else {
+            statusText = isDrawer ? 'You are choosing a word' : `${drawerName} is choosing a word`;
+        }
     } else if (isDrawer) {
         statusText = 'You are drawing!';
     } else if (hasGuessed) {
@@ -307,6 +324,31 @@ export const GameBar = ({
                             Round {currentRound}/{totalRounds} · Turn {turnInRound}/{turnsInRound}
                         </span>
                     </div>
+
+                    {/* Twist Badge on phone left cluster */}
+                    {twist && (
+                        <div className="md:hidden mt-0.5">
+                            <span
+                                data-testid="twist-badge-mobile"
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wide bg-marigold text-ink border border-ink shadow-hard-xs"
+                            >
+                                <Zap className="w-2.5 h-2.5" />
+                                {twist.badge || twist.name}
+                            </span>
+                        </div>
+                    )}
+
+                    {/* Acting Host Chip */}
+                    {actingHostName && originalHostName && (
+                        <div className="mt-0.5">
+                            <span
+                                data-testid="acting-host-chip"
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-paper border border-ink/30 text-[9px] md:text-[11px] font-bold text-ink-soft select-none"
+                            >
+                                {`${actingHostName} is hosting while ${originalHostName} is away`}
+                            </span>
+                        </div>
+                    )}
                 </div>
 
                 {/*
@@ -328,7 +370,7 @@ export const GameBar = ({
                     <div
                         className={`${
                             isDrawer ? 'flex' : 'hidden md:flex'
-                        } h-5 min-h-[20px] items-center justify-center font-bold text-xs sm:text-sm text-ink-soft select-none overflow-hidden`}
+                        } h-5 min-h-[20px] items-center justify-center font-bold text-xs sm:text-sm text-ink-soft select-none overflow-hidden gap-1.5`}
                     >
                         <span
                             className={`truncate ${
@@ -341,6 +383,17 @@ export const GameBar = ({
                         >
                             {statusText}
                         </span>
+                        {twist && (
+                            <Tooltip content={twist.rule || twist.name}>
+                                <span
+                                    data-testid="twist-badge"
+                                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wide bg-marigold text-ink border border-ink shadow-hard-xs shrink-0 select-none cursor-help"
+                                >
+                                    <Zap className="w-2.5 h-2.5" />
+                                    {twist.badge || twist.name}
+                                </span>
+                            </Tooltip>
+                        )}
                     </div>
 
                     {/* Word chip for drawer OR Hint tiles for guesser (rendered ONCE) */}
@@ -422,24 +475,41 @@ export const GameBar = ({
                                 </button>
                             </Tooltip>
 
-                            {/* Speaker Toggle Button */}
-                            <Tooltip content={isSpeakerOn ? 'Mute audio' : 'Unmute audio'}>
+                            {/* Speaker Toggle Button with One-Time Hint */}
+                            <div className="relative inline-flex">
+                                <Tooltip content={isSpeakerOn ? 'Mute audio (M)' : 'Unmute audio (M)'}>
+                                    <button
+                                        type="button"
+                                        onClick={handleToggleSpeaker}
+                                        aria-label={isSpeakerOn ? 'Mute audio' : 'Unmute audio'}
+                                        aria-pressed={!isSpeakerOn}
+                                        className={`w-10 h-10 min-w-[40px] min-h-[40px] rounded-[6px] border-2 border-ink shadow-hard-xs flex items-center justify-center transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none active:translate-x-[1px] active:translate-y-[1px] ${
+                                            isSpeakerOn
+                                                ? 'bg-cobalt/15 text-cobalt hover:bg-cobalt/25'
+                                                : 'bg-paper text-ink-soft hover:bg-card'
+                                        }`}
+                                    >
+                                        {isSpeakerOn ? (
+                                            <Volume2 size={20} strokeWidth={2} />
+                                        ) : (
+                                            <VolumeX size={20} strokeWidth={2} />
+                                        )}
+                                    </button>
+                                </Tooltip>
+                                {!soundHintDismissed && isSpeakerOn && (
+                                    <SoundHint onDismiss={dismissSoundHint} />
+                                )}
+                            </div>
+
+                            {/* Settings Gear Button */}
+                            <Tooltip content="Settings">
                                 <button
                                     type="button"
-                                    onClick={handleToggleSpeaker}
-                                    aria-label={isSpeakerOn ? 'Mute audio' : 'Unmute audio'}
-                                    aria-pressed={isSpeakerOn}
-                                    className={`w-10 h-10 min-w-[40px] min-h-[40px] rounded-[6px] border-2 border-ink shadow-hard-xs flex items-center justify-center transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none active:translate-x-[1px] active:translate-y-[1px] ${
-                                        isSpeakerOn
-                                            ? 'bg-cobalt/15 text-cobalt hover:bg-cobalt/25'
-                                            : 'bg-paper text-ink-soft hover:bg-card'
-                                    }`}
+                                    onClick={openSettings}
+                                    aria-label="Settings"
+                                    className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-[6px] border-2 border-ink shadow-hard-xs bg-paper hover:bg-card text-ink flex items-center justify-center transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none active:translate-x-[1px] active:translate-y-[1px]"
                                 >
-                                    {isSpeakerOn ? (
-                                        <Volume2 size={20} strokeWidth={2} />
-                                    ) : (
-                                        <VolumeX size={20} strokeWidth={2} />
-                                    )}
+                                    <Settings size={20} strokeWidth={2} />
                                 </button>
                             </Tooltip>
                         </div>
@@ -517,6 +587,20 @@ export const GameBar = ({
                                         >
                                             <HelpCircle size={20} strokeWidth={2} className="text-cobalt shrink-0" />
                                             <span>How to play</span>
+                                        </button>
+
+                                        {/* 1b. Settings */}
+                                        <button
+                                            type="button"
+                                            role="menuitem"
+                                            onClick={() => {
+                                                setShowMenu(false);
+                                                openSettings();
+                                            }}
+                                            className="flex items-center gap-2 px-3 py-2 text-sm font-bold text-ink hover:bg-paper rounded-[4px] cursor-pointer text-left focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none min-h-[44px]"
+                                        >
+                                            <Settings size={20} strokeWidth={2} className="text-cobalt shrink-0" />
+                                            <span>Settings</span>
                                         </button>
 
                                         {/* 2. Leave game */}

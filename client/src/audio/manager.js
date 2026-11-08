@@ -14,10 +14,13 @@
  * - Volumes per category with default master volume 0.4.
  * - Audio ducking: lowers sound volumes while someone speaks on voice.
  * - Persisted mute toggle in localStorage (try/catch protected).
- * - Haptic vibration on correct guess (50ms) and round end ([80, 50, 80]ms) when supported.
+ * - Immediate stop of playing sounds when muted or sound effects disabled.
+ * - Haptic vibration on correct guess (50ms) and round end ([80, 50, 80]ms) when supported & enabled.
+ * - Mute when tab hidden listener.
  */
 
 const STORAGE_KEY = 'scribble_muted';
+const SETTINGS_KEY = 'scribble_settings';
 const DEFAULT_VOLUME = 0.4;
 const DUCKED_VOLUME_MULTIPLIER = 0.3; // 30% volume while someone speaks on voice
 
@@ -46,15 +49,27 @@ class AudioManager {
         this.isUnlocked = false;
         this.isDucked = false;
         this.masterVolume = DEFAULT_VOLUME;
+        this.soundEffects = true;
+        this.haptics = true;
+        this.muteOnHidden = false;
         this.cache = {}; // soundName -> HTMLAudioElement
+        this.activeAudios = new Set(); // Currently playing HTMLAudioElements
         this.listeners = new Set(); // Mute/state subscribers
 
         this.initUnlockListeners();
+        this.initVisibilityListener();
     }
 
     loadMuted() {
         if (typeof window === 'undefined') return false;
         try {
+            const rawSettings = localStorage.getItem(SETTINGS_KEY);
+            if (rawSettings) {
+                const parsed = JSON.parse(rawSettings);
+                if (typeof parsed.isMuted === 'boolean') {
+                    return parsed.isMuted;
+                }
+            }
             return localStorage.getItem(STORAGE_KEY) === 'true';
         } catch {
             return false;
@@ -88,6 +103,17 @@ class AudioManager {
         window.addEventListener('touchstart', unlock, { once: true, passive: true });
     }
 
+    initVisibilityListener() {
+        if (typeof document === 'undefined') return;
+        if (this.hasVisibilityListener) return;
+        this.hasVisibilityListener = true;
+        document.addEventListener('visibilitychange', () => {
+            if (this.muteOnHidden && document.hidden) {
+                this.stopAll();
+            }
+        });
+    }
+
     preload() {
         if (typeof window === 'undefined') return;
         for (const [name, config] of Object.entries(SOUNDS)) {
@@ -105,9 +131,46 @@ class AudioManager {
     }
 
     calculateVolume(config) {
-        const base = config.volume ?? this.masterVolume;
+        const relative = (config.volume ?? DEFAULT_VOLUME) / DEFAULT_VOLUME;
+        const base = relative * this.masterVolume;
         const multiplier = this.isDucked ? DUCKED_VOLUME_MULTIPLIER : 1.0;
         return Math.max(0, Math.min(1, base * multiplier));
+    }
+
+    setMasterVolume(vol) {
+        this.masterVolume = Math.max(0, Math.min(1, Number(vol) || 0));
+        // Update volumes on all cached sounds
+        for (const [name, audio] of Object.entries(this.cache)) {
+            const config = SOUNDS[name];
+            if (config && audio) {
+                try {
+                    audio.volume = this.calculateVolume(config);
+                } catch {
+                    // Ignore volume setting errors
+                }
+            }
+        }
+    }
+
+    setSoundEffects(enabled) {
+        this.soundEffects = Boolean(enabled);
+        if (!this.soundEffects) {
+            this.stopAll();
+        }
+    }
+
+    setHaptics(enabled) {
+        this.haptics = Boolean(enabled);
+    }
+
+    setMuteOnHidden(enabled) {
+        this.muteOnHidden = Boolean(enabled);
+        if (this.muteOnHidden) {
+            this.initVisibilityListener();
+            if (typeof document !== 'undefined' && document.hidden) {
+                this.stopAll();
+            }
+        }
     }
 
     setDucking(isSpeaking) {
@@ -116,13 +179,41 @@ class AudioManager {
         for (const [name, audio] of Object.entries(this.cache)) {
             const config = SOUNDS[name];
             if (config && audio) {
-                audio.volume = this.calculateVolume(config);
+                try {
+                    audio.volume = this.calculateVolume(config);
+                } catch {
+                    // Ignore volume setting errors
+                }
+            }
+        }
+    }
+
+    stopAll() {
+        for (const audio of this.activeAudios) {
+            try {
+                audio.pause();
+                audio.currentTime = 0;
+            } catch {
+                // Ignore pause errors
+            }
+        }
+        this.activeAudios.clear();
+
+        for (const audio of Object.values(this.cache)) {
+            try {
+                audio.pause();
+                audio.currentTime = 0;
+            } catch {
+                // Ignore pause errors
             }
         }
     }
 
     toggleMute() {
         this.isMuted = !this.isMuted;
+        if (this.isMuted) {
+            this.stopAll();
+        }
         this.saveMuted(this.isMuted);
         this.notify();
         return this.isMuted;
@@ -130,8 +221,31 @@ class AudioManager {
 
     setMuted(muted) {
         this.isMuted = Boolean(muted);
+        if (this.isMuted) {
+            this.stopAll();
+        }
         this.saveMuted(this.isMuted);
         this.notify();
+        return this.isMuted;
+    }
+
+    applySettings(settings) {
+        if (!settings) return;
+        if (settings.masterVolume !== undefined) {
+            this.setMasterVolume(settings.masterVolume);
+        }
+        if (settings.soundEffects !== undefined) {
+            this.setSoundEffects(settings.soundEffects);
+        }
+        if (settings.haptics !== undefined) {
+            this.setHaptics(settings.haptics);
+        }
+        if (settings.muteOnHidden !== undefined) {
+            this.setMuteOnHidden(settings.muteOnHidden);
+        }
+        if (settings.isMuted !== undefined) {
+            this.setMuted(settings.isMuted);
+        }
     }
 
     subscribe(callback) {
@@ -150,6 +264,7 @@ class AudioManager {
     }
 
     vibrate(pattern) {
+        if (!this.haptics) return;
         if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
             try {
                 navigator.vibrate(pattern);
@@ -160,7 +275,8 @@ class AudioManager {
     }
 
     play(name) {
-        if (this.isMuted) return;
+        if (this.isMuted || !this.soundEffects) return;
+        if (this.muteOnHidden && typeof document !== 'undefined' && document.hidden) return;
 
         const resolved = ALIASES[name] || name;
         const config = SOUNDS[resolved];
@@ -184,10 +300,18 @@ class AudioManager {
 
             audio.volume = this.calculateVolume(config);
             audio.currentTime = 0;
+            this.activeAudios.add(audio);
+
+            const handleEnded = () => {
+                this.activeAudios.delete(audio);
+                audio.removeEventListener('ended', handleEnded);
+            };
+            audio.addEventListener('ended', handleEnded);
+
             const promise = audio.play();
             if (promise && typeof promise.catch === 'function') {
                 promise.catch(() => {
-                    // Autoplay prevented by browser gesture policy; ignore silently
+                    this.activeAudios.delete(audio);
                 });
             }
         } catch {
@@ -198,4 +322,3 @@ class AudioManager {
 
 export const audioManager = new AudioManager();
 export default audioManager;
-

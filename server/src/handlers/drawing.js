@@ -1,6 +1,13 @@
 const { EVENTS, GAME_STATES } = require('../../../shared/types.cjs');
 const { rejectWithError, getMemberRoom, isDrawer } = require('./utils');
 const { canDraw } = require('../game/machine');
+const {
+    validateStrokeForTwist,
+    validateUndoForTwist,
+    refundInkOnUndo,
+    calculateInkCost,
+    createMirroredStroke
+} = require('../game/twists');
 
 function registerDrawingHandlers(io, socket, safeOn) {
     function resetAfk(room) {
@@ -47,12 +54,27 @@ function registerDrawingHandlers(io, socket, safeOn) {
             return rejectWithError(socket, 'Room stroke limit reached (max 3000)');
         }
 
+        const twistCheck = validateStrokeForTwist(room, stroke);
+        if (!twistCheck.valid) {
+            return rejectWithError(socket, twistCheck.error, twistCheck.code);
+        }
+
         stroke.seq = ++room.strokeSeq;
         stroke.turnId = room.currentTurnId;
         resetAfk(room);
 
         room.strokes.push(stroke);
         socket.to(room.code).emit(EVENTS.STROKE_RECEIVED, stroke);
+
+        if (room.currentTwist?.id === 'mirror') {
+            const mirrorStroke = createMirroredStroke(stroke);
+            if (mirrorStroke) {
+                mirrorStroke.seq = ++room.strokeSeq;
+                mirrorStroke.turnId = room.currentTurnId;
+                room.strokes.push(mirrorStroke);
+                socket.to(room.code).emit(EVENTS.STROKE_RECEIVED, mirrorStroke);
+            }
+        }
     });
 
     safeOn(EVENTS.STROKE_START, (payload) => {
@@ -90,6 +112,11 @@ function registerDrawingHandlers(io, socket, safeOn) {
         const color = typeof payload.color === 'string' ? payload.color.slice(0, 32) : '#000000';
         const size = typeof payload.size === 'number' && payload.size > 0 ? Math.min(100, payload.size) : 5;
 
+        const twistCheck = validateStrokeForTwist(room, { tool, color, size, points: [{ x, y }] });
+        if (!twistCheck.valid) {
+            return rejectWithError(socket, twistCheck.error, twistCheck.code);
+        }
+
         resetAfk(room);
 
         const stroke = {
@@ -112,6 +139,31 @@ function registerDrawingHandlers(io, socket, safeOn) {
             x,
             y
         });
+
+        if (room.currentTwist?.id === 'mirror') {
+            const mirrorX = Math.max(0, Math.min(1, 1 - x));
+            const mirrorStroke = {
+                id: `${id}-m`,
+                isMirror: true,
+                seq: ++room.strokeSeq,
+                turnId: room.currentTurnId,
+                tool,
+                color,
+                size,
+                points: [{ x: mirrorX, y }]
+            };
+            room.strokes.push(mirrorStroke);
+
+            socket.to(room.code).emit(EVENTS.STROKE_START, {
+                id: `${id}-m`,
+                seq: mirrorStroke.seq,
+                tool,
+                color,
+                size,
+                x: mirrorX,
+                y
+            });
+        }
     });
 
     safeOn(EVENTS.STROKE_POINTS, (payload) => {
@@ -154,11 +206,38 @@ function registerDrawingHandlers(io, socket, safeOn) {
         const remainingCapacity = Math.max(0, 2000 - stroke.points.length);
         const pointsToAdd = validPoints.slice(0, remainingCapacity);
         if (pointsToAdd.length > 0) {
+            if (room.currentTwist?.id === 'limited-ink') {
+                if (stroke.tool !== 'eraser') {
+                    const cost = calculateInkCost(pointsToAdd, stroke.tool);
+                    const remaining = room.turnInkRemaining ?? 1200;
+                    if (cost > remaining) {
+                        return rejectWithError(socket, 'Out of ink', 'OUT_OF_INK');
+                    }
+                    room.turnInkRemaining = Math.max(0, remaining - cost);
+                    stroke.inkCost = (stroke.inkCost || 0) + cost;
+                }
+            }
+
             stroke.points.push(...pointsToAdd);
             socket.to(room.code).emit(EVENTS.STROKE_POINTS, {
                 id,
                 points: pointsToAdd
             });
+
+            if (room.currentTwist?.id === 'mirror') {
+                const mirrorStroke = room.strokes.find(s => s.id === `${id}-m`);
+                if (mirrorStroke) {
+                    const mirrorPoints = pointsToAdd.map(pt => ({
+                        x: Math.max(0, Math.min(1, 1 - pt.x)),
+                        y: pt.y
+                    }));
+                    mirrorStroke.points.push(...mirrorPoints);
+                    socket.to(room.code).emit(EVENTS.STROKE_POINTS, {
+                        id: `${id}-m`,
+                        points: mirrorPoints
+                    });
+                }
+            }
         }
     });
 
@@ -185,6 +264,9 @@ function registerDrawingHandlers(io, socket, safeOn) {
             return rejectWithError(socket, 'Invalid stroke ID');
         }
         socket.to(room.code).emit(EVENTS.STROKE_END, { id });
+        if (room.currentTwist?.id === 'mirror') {
+            socket.to(room.code).emit(EVENTS.STROKE_END, { id: `${id}-m` });
+        }
     });
 
     safeOn(EVENTS.CLEAR_CANVAS, (payload) => {
@@ -200,6 +282,9 @@ function registerDrawingHandlers(io, socket, safeOn) {
         }
         if (!canDraw(room)) {
             return rejectWithError(socket, 'Drawing is not active');
+        }
+        if (room.currentTwist?.id === 'no-undo-eraser') {
+            return rejectWithError(socket, 'Clearing canvas is disabled in No undo or eraser twist', 'TWIST_NO_UNDO_VIOLATION');
         }
         room.strokes = [];
         io.to(room.code).emit(EVENTS.CANVAS_CLEARED);
@@ -219,9 +304,23 @@ function registerDrawingHandlers(io, socket, safeOn) {
         if (!canDraw(room)) {
             return rejectWithError(socket, 'Drawing is not active');
         }
+        const undoCheck = validateUndoForTwist(room);
+        if (!undoCheck.valid) {
+            return rejectWithError(socket, undoCheck.error, undoCheck.code);
+        }
         if (room.strokes.length > 0) {
-            const removedStroke = room.strokes.pop();
-            io.to(room.code).emit(EVENTS.STROKE_UNDONE, { strokeId: removedStroke?.id });
+            const last = room.strokes[room.strokes.length - 1];
+            if (last?.isMirror) {
+                const mirrorStroke = room.strokes.pop();
+                const origStroke = room.strokes.pop();
+                refundInkOnUndo(room, origStroke);
+                io.to(room.code).emit(EVENTS.STROKE_UNDONE, { strokeId: mirrorStroke?.id });
+                io.to(room.code).emit(EVENTS.STROKE_UNDONE, { strokeId: origStroke?.id });
+            } else {
+                const removedStroke = room.strokes.pop();
+                refundInkOnUndo(room, removedStroke);
+                io.to(room.code).emit(EVENTS.STROKE_UNDONE, { strokeId: removedStroke?.id });
+            }
         }
     });
 }

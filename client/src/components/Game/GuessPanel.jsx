@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, X } from 'lucide-react';
 import { useGame } from '../../context/GameContext';
@@ -6,6 +7,7 @@ import { useSocket } from '../../hooks/useSocket';
 import { EVENTS } from '../../../../shared/types';
 import GuessInput from '../Chat/GuessInput';
 import MessageList from '../Chat/MessageList';
+import VoteCard from './VoteCard';
 
 export const GuessPanel = ({
     roomCode,
@@ -99,7 +101,25 @@ export const GuessPanel = ({
         const trimmed = (textToSend || message).trim();
         if (!trimmed || !socket) return;
 
-        socket.emit(EVENTS.SEND_MESSAGE, { roomCode, text: trimmed });
+        const clientMsgId = uuidv4();
+        socket.emit(EVENTS.SEND_MESSAGE, { roomCode, text: trimmed, clientMsgId });
+    };
+
+    const handleVote = (yes) => {
+        if (socket && roomCode && state.voteState?.voteId) {
+            socket.emit(EVENTS.CAST_VOTE, {
+                roomCode,
+                voteId: state.voteState.voteId,
+                yes
+            });
+            dispatch({ type: 'CAST_VOTE_LOCAL' });
+        }
+    };
+
+    const handleCancelVote = () => {
+        if (socket && roomCode) {
+            socket.emit(EVENTS.CANCEL_VOTE_KICK, { roomCode });
+        }
     };
 
     const headerTitle = isGuessedOrDrawer
@@ -154,6 +174,15 @@ export const GuessPanel = ({
 
                 {/* Pinned Guess Input Row: pinned to bottom, respecting safe-area inset */}
                 <div className="w-full p-2 bg-card border-2 border-ink rounded-b-[12px] shadow-hard-sm pb-[calc(env(safe-area-inset-bottom,0px)+6px)]">
+                    <VoteCard
+                        voteState={state.voteState}
+                        currentUserId={myId}
+                        currentUserPlayerId={state.currentUser?.playerId}
+                        isHost={Boolean(state.currentUser?.isHost)}
+                        hasVoted={state.hasVotedKick}
+                        onVote={handleVote}
+                        onCancel={handleCancelVote}
+                    />
                     <GuessInput
                         message={message}
                         setMessage={setMessage}
@@ -223,6 +252,16 @@ export const GuessPanel = ({
                                     </button>
                                 </div>
 
+                                <VoteCard
+                                    voteState={state.voteState}
+                                    currentUserId={myId}
+                                    currentUserPlayerId={state.currentUser?.playerId}
+                                    isHost={Boolean(state.currentUser?.isHost)}
+                                    hasVoted={state.hasVotedKick}
+                                    onVote={handleVote}
+                                    onCancel={handleCancelVote}
+                                />
+
                                 <MessageList
                                     messages={state.messages}
                                     isDrawer={isDrawer}
@@ -277,6 +316,17 @@ export const GuessPanel = ({
                     idPrefix="desktop"
                 />
             </div>
+
+            {/* VoteCard docked above the chat */}
+            <VoteCard
+                voteState={state.voteState}
+                currentUserId={myId}
+                currentUserPlayerId={state.currentUser?.playerId}
+                isHost={Boolean(state.currentUser?.isHost)}
+                hasVoted={state.hasVotedKick}
+                onVote={handleVote}
+                onCancel={handleCancelVote}
+            />
 
             {/* Scrollable Message List */}
             <MessageList

@@ -9,9 +9,9 @@
 function sanitiseText(text, max = undefined) {
     if (typeof text !== 'string') return '';
     let cleaned = text.normalize('NFKC');
-    // Strip control (\x00-\x1F, \x7F-\x9F), zero-width (\u200B-\u200D, \uFEFF, \u200E, \u200F),
+    // Strip control (\x00-\x1F, \x7F-\x9F), zero-width (\u200B-\u200D, \uFEFF, \u200E, \u200F, \u2060, \u180E),
     // and bidi-override (\u202A-\u202E, \u2066-\u2069) characters
-    cleaned = cleaned.replace(/[\x00-\x1F\x7F-\x9F\u200B-\u200D\uFEFF\u200E\u200F\u202A-\u202E\u2066-\u2069]/g, '');
+    cleaned = cleaned.replace(/[\x00-\x1F\x7F-\x9F\u200B-\u200D\uFEFF\u200E\u200F\u2060\u180E\u202A-\u202E\u2066-\u2069]/g, '');
     cleaned = cleaned.replace(/\s+/g, ' ').trim();
     if (typeof max === 'number' && max > 0) {
         cleaned = cleaned.slice(0, max);

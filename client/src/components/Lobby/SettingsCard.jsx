@@ -2,10 +2,20 @@ import React from 'react';
 import { Lock, Settings as SettingsIcon } from 'lucide-react';
 import Card from '../ui/Card';
 import Chip from '../ui/Chip';
+import { TWIST_IDS, TWIST_DEFINITIONS } from '../../../../shared/types';
 
 const ROUND_OPTIONS = [1, 2, 3, 5, 7, 10, 12];
 const DRAW_TIME_OPTIONS = [60, 80, 100, 120];
 const DIFFICULTY_OPTIONS = ['Easy', 'Medium', 'Hard', 'Mixed'];
+const WORD_CHOICE_OPTIONS = [
+    { id: 'pick', label: 'Pick from 3' },
+    { id: 'random', label: 'Random word' }
+];
+const TWISTS_OPTIONS = [
+    { id: 'off', label: 'Off' },
+    { id: 'sometimes', label: 'Sometimes' },
+    { id: 'every', label: 'Every turn' }
+];
 const AVAILABLE_PACKS = [
     { id: 'animals', label: 'Animals' },
     { id: 'food', label: 'Food' },
@@ -23,6 +33,9 @@ export const SettingsCard = ({
     onRoundsChange,
     onDrawTimeChange,
     onDifficultyChange,
+    onWordChoiceChange,
+    onTwistsChange,
+    onToggleEnabledTwist,
     onTogglePack,
     validCustomWordCount = 0,
 }) => {
@@ -130,6 +143,92 @@ export const SettingsCard = ({
                         </div>
                     </div>
 
+                    {/* Word Choice Selector */}
+                    <div>
+                        <label className="block text-xs font-black uppercase tracking-wider text-ink mb-1.5">
+                            Word Choice
+                        </label>
+                        <div className="grid grid-cols-2 gap-1 bg-paper p-1 border-2 border-ink rounded-[6px]">
+                            {WORD_CHOICE_OPTIONS.map((opt) => {
+                                const isSelected = (settings.wordChoice || 'pick') === opt.id;
+                                return (
+                                    <button
+                                        key={opt.id}
+                                        type="button"
+                                        data-testid={`word-choice-option-${opt.id}`}
+                                        onClick={() => onWordChoiceChange?.(opt.id)}
+                                        className={`py-1.5 text-xs sm:text-sm font-bold rounded-[4px] transition-all cursor-pointer select-none ${
+                                            isSelected
+                                                ? 'bg-tomato text-white border-2 border-ink shadow-hard-sm'
+                                                : 'text-ink hover:bg-card border-2 border-transparent'
+                                        }`}
+                                    >
+                                        {opt.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Rule Twists Selector */}
+                    <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                            <label className="text-xs font-black uppercase tracking-wider text-ink flex items-center gap-1.5">
+                                Rule Twists
+                            </label>
+                            <span className="text-xs font-bold text-ink-soft">
+                                {(settings.twists || 'off') === 'off' ? 'Off' : `${(settings.enabledTwists || TWIST_IDS).length} enabled`}
+                            </span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-1 bg-paper p-1 border-2 border-ink rounded-[6px]">
+                            {TWISTS_OPTIONS.map((opt) => {
+                                const isSelected = (settings.twists || 'off') === opt.id;
+                                return (
+                                    <button
+                                        key={opt.id}
+                                        type="button"
+                                        data-testid={`twist-option-${opt.id}`}
+                                        onClick={() => onTwistsChange?.(opt.id)}
+                                        className={`py-1.5 text-xs sm:text-sm font-bold rounded-[4px] transition-all cursor-pointer select-none ${
+                                            isSelected
+                                                ? 'bg-tomato text-white border-2 border-ink shadow-hard-sm'
+                                                : 'text-ink hover:bg-card border-2 border-transparent'
+                                        }`}
+                                    >
+                                        {opt.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {/* Checklist of enabled twists */}
+                        {(settings.twists || 'off') !== 'off' && (
+                            <div className="mt-2.5 p-2 bg-paper/60 border border-ink/20 rounded-[6px]" data-testid="enabled-twists-checklist">
+                                <span className="block text-[11px] font-bold text-ink-soft mb-1.5 uppercase tracking-wide">
+                                    Enabled Twists:
+                                </span>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {TWIST_IDS.map((id) => {
+                                        const def = TWIST_DEFINITIONS[id];
+                                        const isEnabled = (settings.enabledTwists || TWIST_IDS).includes(id);
+                                        return (
+                                            <Chip
+                                                key={id}
+                                                variant={isEnabled ? 'leaf' : 'default'}
+                                                data-testid={`twist-chip-${id}`}
+                                                onClick={() => onToggleEnabledTwist?.(id)}
+                                                className="cursor-pointer text-xs py-1 px-2"
+                                            >
+                                                {isEnabled ? '✓ ' : '+ '}
+                                                {def?.name || id}
+                                            </Chip>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
                     {/* Themed Word Packs */}
                     <div>
                         <div className="flex items-center justify-between mb-1.5">
@@ -210,6 +309,23 @@ export const SettingsCard = ({
                                 {currentPacks.length > 0
                                     ? currentPacks.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(', ')
                                     : 'All Packs'}
+                            </span>
+                        </div>
+                        <div className="bg-paper border-2 border-ink p-2.5 rounded-[6px] col-span-2">
+                            <span className="block text-[10px] font-black uppercase text-ink-soft">Word Choice</span>
+                            <span className="text-sm font-black text-ink" data-testid="readonly-word-choice">
+                                {settings.wordChoice === 'random' ? 'Random word' : 'Pick from 3'}
+                            </span>
+                        </div>
+                        <div className="bg-paper border-2 border-ink p-2.5 rounded-[6px] col-span-2">
+                            <span className="block text-[10px] font-black uppercase text-ink-soft">Rule Twists</span>
+                            <span className="text-sm font-black text-ink" data-testid="readonly-twists">
+                                {settings.twists === 'every'
+                                    ? 'Every turn'
+                                    : (settings.twists === 'sometimes' ? 'Sometimes (30%)' : 'Off')}
+                                {settings.twists && settings.twists !== 'off'
+                                    ? ` (${(settings.enabledTwists || TWIST_IDS).length} enabled)`
+                                    : ''}
                             </span>
                         </div>
                     </div>

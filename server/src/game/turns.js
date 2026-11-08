@@ -378,7 +378,8 @@ function buildTurnInfo(room) {
         turnsInRound: room.turnsInRound || (room.turnQueue ? room.turnQueue.length : 1),
         drawerId: room.drawerId || null,
         nextDrawerId,
-        queue: Array.isArray(room.turnQueue) ? [...room.turnQueue] : []
+        queue: Array.isArray(room.turnQueue) ? [...room.turnQueue] : [],
+        twist: room.currentTwist || null
     };
 }
 

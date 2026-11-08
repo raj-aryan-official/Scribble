@@ -10,6 +10,9 @@ const initialState = {
     currentUser: null, // { id, username, avatar, isHost, isDisconnected }
     messages: [],
     wordChoices: [],
+    defaultChoice: null,
+    wordChoiceMode: 'pick',
+    turnId: null,
     currentRound: 0,
     totalRounds: 0,
     timer: 0,
@@ -33,6 +36,20 @@ const initialState = {
     endReason: null,
     turnInfo: null,
     turnWait: null,
+    isSuperseded: false,
+    seatClaimRequest: null,
+    isPaused: false,
+    pausedData: null,
+    publicRoom: null,
+    voteState: null,
+    hasVotedKick: false,
+    likesCount: 0,
+    hasLiked: false,
+    incomingReactionBatch: null,
+    topReaction: null,
+    currentTwist: null,
+    turnInkRemaining: null,
+    toast: null,
     error: null
 };
 
@@ -40,9 +57,52 @@ const gameReducer = (state, action) => {
     switch (action.type) {
         case 'SET_USER':
             return { ...state, currentUser: action.payload };
+        case 'SET_SUPERSEDED':
+            return { ...state, isSuperseded: action.payload };
+        case 'SET_SEAT_CLAIM_REQUEST':
+            return { ...state, seatClaimRequest: action.payload };
+        case 'SET_VOTE_STATE':
+            return {
+                ...state,
+                voteState: action.payload,
+                hasVotedKick: action.payload ? state.hasVotedKick : false
+            };
+        case 'CAST_VOTE_LOCAL':
+            return {
+                ...state,
+                hasVotedKick: true
+            };
+        case 'SHOW_TOAST':
+            return { ...state, toast: typeof action.payload === 'string' ? { message: action.payload, variant: 'info' } : action.payload };
+        case 'HIDE_TOAST':
+            return { ...state, toast: null };
+        case 'GAME_PAUSED':
+            return {
+                ...state,
+                gameState: GAME_STATES.PAUSED,
+                isPaused: true,
+                pausedData: action.payload
+            };
+        case 'GAME_RESUMED':
+            return {
+                ...state,
+                gameState: GAME_STATES.DRAWING,
+                isPaused: false,
+                pausedData: null,
+                roundEndsAt: action.payload?.roundEndsAt || state.roundEndsAt
+            };
+        case 'ROOM_JOINED':
+            return {
+                ...state,
+                publicRoom: action.payload,
+                players: action.payload.players || state.players,
+                scores: action.payload.scores || state.scores,
+                gameState: action.payload.gameState || state.gameState
+            };
         case 'JOIN_ROOM':
             return {
                 ...state,
+                publicRoom: action.payload,
                 roomCode: action.payload.code,
                 players: action.payload.players,
                 gameState: action.payload.gameState,
@@ -83,9 +143,15 @@ const gameReducer = (state, action) => {
                 endsAt: snapshot.turnWaitEndsAt || snapshot.endsAt
             } : null;
 
+            const isPausedState = currentGameState === GAME_STATES.PAUSED;
+
             return {
                 ...state,
                 gameState: currentGameState,
+                isPaused: isPausedState,
+                pausedData: isPausedState ? (snapshot.pausedData || { timeout: 60, endsAt: snapshot.pausedEndsAt || room?.pausedEndsAt }) : null,
+                isSuperseded: false,
+                publicRoom: room || state.publicRoom,
                 roomCode: room?.code || state.roomCode,
                 players: room?.players || state.players,
                 scores: updatedScores,
@@ -100,13 +166,21 @@ const gameReducer = (state, action) => {
                 wordToGuess: snapshot.word || state.wordToGuess,
                 guessedPlayers: updatedGuessed,
                 wordChoices: snapshot.wordChoices || [],
-                messages: Array.isArray(snapshot.recentChat) && snapshot.recentChat.length > 0 ? snapshot.recentChat.slice(-100) : state.messages.slice(-100),
+                defaultChoice: typeof snapshot.defaultChoice === 'number' ? snapshot.defaultChoice : 0,
+                wordChoiceMode: snapshot.wordChoiceMode || snapshot.publicRoom?.settings?.wordChoice || state.settings?.wordChoice || 'pick',
+                turnId: snapshot.turnId || snapshot.turnInfo?.turnId || state.turnId,
+                messages: Array.isArray(snapshot.recentChat) && snapshot.recentChat.length > 0 ? snapshot.recentChat.slice(-100) : (state.messages || []).slice(-100),
                 startsAt: snapshot.startsAt || null,
                 selectionEndsAt: snapshot.selectionEndsAt || null,
                 roundEndsAt: snapshot.roundEndsAt || null,
                 joinedMidRound: isMid || state.joinedMidRound,
                 turnInfo: snapshot.turnInfo || snapshot.TURN_INFO || state.turnInfo,
                 turnWait: turnWaitObj,
+                voteState: snapshot.activeVote !== undefined ? snapshot.activeVote : state.voteState,
+                likesCount: snapshot.likesCount ?? state.likesCount ?? 0,
+                topReaction: snapshot.topReaction || null,
+                currentTwist: snapshot.twist !== undefined ? snapshot.twist : state.currentTwist,
+                turnInkRemaining: snapshot.turnInkRemaining !== undefined ? snapshot.turnInkRemaining : state.turnInkRemaining,
                 error: null
             };
         }
@@ -139,13 +213,27 @@ const gameReducer = (state, action) => {
         case 'SET_GAME_STATE':
             return { ...state, gameState: action.payload };
         case 'ADD_MESSAGE': {
+            if (!action.payload) return state;
+            if (action.payload.id && state.messages.some(m => m.id === action.payload.id)) {
+                return state;
+            }
             const nextMessages = [...state.messages, action.payload];
             return { ...state, messages: nextMessages.slice(-100) };
         }
-        case 'SET_WORD_CHOICES':
-            return { ...state, wordChoices: action.payload, wordToGuess: null };
+        case 'SET_WORD_CHOICES': {
+            const choices = Array.isArray(action.payload) ? action.payload : (action.payload?.choices || []);
+            const defaultChoice = typeof action.payload?.defaultChoice === 'number' ? action.payload.defaultChoice : 0;
+            return {
+                ...state,
+                wordChoices: choices,
+                defaultChoice,
+                wordToGuess: null
+            };
+        }
         case 'UPDATE_TIMER':
             return { ...state, timer: action.payload };
+        case 'UPDATE_INK':
+            return { ...state, turnInkRemaining: action.payload };
         case 'WORD_CHOSEN':
             return {
                 ...state,
@@ -154,13 +242,34 @@ const gameReducer = (state, action) => {
                 gameState: GAME_STATES.DRAWING,
                 wordToGuess: state.currentUser?.id === action.payload.drawerId ? state.wordToGuess : null,
                 wordChoices: [],
+                defaultChoice: null,
+                turnId: action.payload.turnId || state.turnId,
                 guessedPlayers: [],
                 drawerId: action.payload.drawerId,
                 roundEndsAt: action.payload.roundEndsAt || null,
                 startsAt: null,
                 selectionEndsAt: null,
                 turnWait: null,
-                myGainedPoints: 0
+                myGainedPoints: 0,
+                likesCount: 0,
+                hasLiked: false,
+                incomingReactionBatch: null,
+                topReaction: null,
+                currentTwist: action.payload.twist !== undefined ? action.payload.twist : state.currentTwist
+            };
+        case 'REACTION_BATCH':
+            return { ...state, incomingReactionBatch: action.payload };
+        case 'LIKE_UPDATE':
+            return {
+                ...state,
+                likesCount: typeof action.payload?.likes === 'number' ? action.payload.likes : state.likesCount,
+                scores: action.payload?.scores || state.scores
+            };
+        case 'SET_LOCAL_LIKED':
+            return {
+                ...state,
+                hasLiked: true,
+                likesCount: state.likesCount + 1
             };
         case 'HINT_UPDATE':
             return { ...state, wordHint: action.payload.hint };
@@ -216,7 +325,11 @@ const gameReducer = (state, action) => {
                 wordHint: '',
                 wordLength: 0,
                 wordToGuess: null,
+                wordChoiceMode: action.payload.wordChoiceMode || state.settings?.wordChoice || 'pick',
+                turnId: action.payload.turnId || state.turnId,
                 turnInfo: action.payload.turnInfo || state.turnInfo,
+                currentTwist: action.payload.twist !== undefined ? action.payload.twist : state.currentTwist,
+                turnInkRemaining: action.payload.twist?.totalInk ?? null,
                 turnWait: isTurnWait ? {
                     waitingFor: action.payload.waitingFor || 'Player',
                     waitingForDrawerId: action.payload.waitingForDrawerId,
@@ -237,7 +350,9 @@ const gameReducer = (state, action) => {
                 myGainedPoints: 0,
                 joinedMidRound: false,
                 wordHint: '',
-                wordLength: 0
+                wordLength: 0,
+                likesCount: typeof action.payload.likesCount === 'number' ? action.payload.likesCount : state.likesCount,
+                topReaction: action.payload.topReaction || null
             };
         case 'GAME_ENDED':
             return {
@@ -266,3 +381,4 @@ export const GameProvider = ({ children }) => {
 };
 
 export const useGame = () => useContext(GameContext);
+export { gameReducer, initialState };

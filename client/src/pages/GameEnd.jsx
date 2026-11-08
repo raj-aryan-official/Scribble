@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
-import { Download, Palette, Zap } from 'lucide-react';
+import { Download, Palette, Zap, Heart } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { useSocket } from '../hooks/useSocket';
 import { useSound } from '../hooks/useSound';
@@ -467,10 +467,10 @@ export const GameEnd = () => {
                 )}
 
                 {/* 3. Two Awards Cards Under Podium ('Best artist' & 'Fastest guesser') */}
-                {awards && (awards.bestArtist || awards.fastestGuesser) && (
+                {awards && (awards.bestArtist || awards.fastestGuesser || awards.crowdFavourite) && (
                     <div
                         data-testid="awards-container"
-                        className="w-full max-w-lg grid grid-cols-1 sm:grid-cols-2 gap-3"
+                        className="w-full max-w-lg grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
                     >
                         {awards.bestArtist && (
                             <div className="bg-card border-2 border-ink rounded-[8px] p-3 shadow-hard-sm flex items-center gap-3">
@@ -509,6 +509,29 @@ export const GameEnd = () => {
                                     </p>
                                 </div>
                                 <Avatar avatarId={awards.fastestGuesser.avatar} size="xs" />
+                            </div>
+                        )}
+
+                        {awards.crowdFavourite && (
+                            <div
+                                data-testid="award-crowd-favourite"
+                                className="bg-card border-2 border-ink rounded-[8px] p-3 shadow-hard-sm flex items-center gap-3"
+                            >
+                                <div className="w-10 h-10 rounded-full bg-rose-100 border-2 border-ink flex items-center justify-center shrink-0 text-tomato">
+                                    <Heart className="w-5 h-5 fill-tomato text-tomato" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-ink-soft block">
+                                        Crowd favourite
+                                    </span>
+                                    <p className="font-heading font-black text-sm text-ink truncate">
+                                        {awards.crowdFavourite.username}
+                                    </p>
+                                    <p className="text-[11px] font-mono text-ink-soft">
+                                        {awards.crowdFavourite.likes} {awards.crowdFavourite.likes === 1 ? 'like' : 'likes'}
+                                    </p>
+                                </div>
+                                <Avatar avatarId={awards.crowdFavourite.avatar} size="xs" />
                             </div>
                         )}
                     </div>

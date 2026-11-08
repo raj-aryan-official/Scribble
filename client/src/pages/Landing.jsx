@@ -2,10 +2,11 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
-import { Dice5, Volume2, VolumeX } from 'lucide-react';
+import { Dice5, Volume2, VolumeX, Settings } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { useSocket } from '../hooks/useSocket';
 import { useSound } from '../hooks/useSound';
+import { useSettings } from '../context/SettingsContext';
 import { EVENTS } from '../../../shared/types';
 import { CREDIT_LINE } from '../config';
 import { FUN_NAMES, getRandomFunName } from '../constants/funNames';
@@ -15,10 +16,12 @@ import Card from '../components/ui/Card';
 import AvatarPicker from '../components/ui/AvatarPicker';
 import Spinner from '../components/ui/Spinner';
 import Toast from '../components/ui/Toast';
+import Tooltip from '../components/ui/Tooltip';
 import Wordmark from '../components/Landing/Wordmark';
 import DoodleCat from '../components/Landing/DoodleCat';
 import RoomCodeInput, { extractRoomCode } from '../components/Landing/RoomCodeInput';
 import HowToPlayModal from '../components/Landing/HowToPlayModal';
+import SoundHint from '../components/Settings/SoundHint';
 
 const getApiBaseUrl = () => {
     if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
@@ -38,6 +41,7 @@ export const Landing = () => {
     const { state, dispatch } = useGame();
     const socket = useSocket();
     const { isMuted, toggleMute } = useSound();
+    const { soundHintDismissed, dismissSoundHint, openSettings } = useSettings();
 
     // Form inputs
     const [username, setUsername] = useState('');
@@ -356,21 +360,42 @@ export const Landing = () => {
         <div className="flex-1 w-full max-w-[1100px] mx-auto flex flex-col justify-center px-4 py-3 sm:py-6 md:py-8 lg:py-10 relative">
             <h1 tabIndex={-1} className="sr-only">Scribble</h1>
 
-            {/* Sound Toggle accessible from Landing */}
-            <div className="absolute top-2 right-4 z-elevated">
-                <button
-                    type="button"
-                    onClick={toggleMute}
-                    aria-label={isMuted ? 'Unmute game sounds' : 'Mute game sounds'}
-                    title={isMuted ? 'Unmute sounds' : 'Mute sounds'}
-                    className="min-w-[40px] min-h-[40px] p-2 bg-card hover:bg-paper border-2 border-ink rounded-[6px] shadow-hard-sm flex items-center justify-center text-ink cursor-pointer active:translate-x-[1px] active:translate-y-[1px] focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none"
-                >
-                    {isMuted ? (
-                        <VolumeX className="w-5 h-5 text-tomato" />
-                    ) : (
-                        <Volume2 className="w-5 h-5 text-ink" />
+            {/* Sound Toggle & Settings accessible from Landing */}
+            <div className="absolute top-2 right-4 z-elevated flex items-center gap-1.5">
+                <div className="relative inline-flex">
+                    <Tooltip content={isMuted ? 'Unmute sounds (M)' : 'Mute sounds (M)'}>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                dismissSoundHint?.();
+                                toggleMute();
+                            }}
+                            aria-label={isMuted ? 'Unmute game sounds' : 'Mute game sounds'}
+                            aria-pressed={isMuted}
+                            className="min-w-[40px] min-h-[40px] p-2 bg-card hover:bg-paper border-2 border-ink rounded-[6px] shadow-hard-sm flex items-center justify-center text-ink cursor-pointer active:translate-x-[1px] active:translate-y-[1px] focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none"
+                        >
+                            {isMuted ? (
+                                <VolumeX className="w-5 h-5 text-tomato" />
+                            ) : (
+                                <Volume2 className="w-5 h-5 text-ink" />
+                            )}
+                        </button>
+                    </Tooltip>
+                    {!soundHintDismissed && !isMuted && (
+                        <SoundHint onDismiss={dismissSoundHint} />
                     )}
-                </button>
+                </div>
+
+                <Tooltip content="Settings">
+                    <button
+                        type="button"
+                        onClick={openSettings}
+                        aria-label="Settings"
+                        className="min-w-[40px] min-h-[40px] p-2 bg-card hover:bg-paper border-2 border-ink rounded-[6px] shadow-hard-sm flex items-center justify-center text-ink cursor-pointer active:translate-x-[1px] active:translate-y-[1px] focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none"
+                    >
+                        <Settings className="w-5 h-5" />
+                    </button>
+                </Tooltip>
             </div>
 
             {/* Server Unreachable Toast with Retry */}

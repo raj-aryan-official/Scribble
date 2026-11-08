@@ -15,7 +15,7 @@ import { PRESET_COLORS } from '../components/Canvas/ColorSwatches';
 const BASE_WIDTH = 1600;
 const BASE_HEIGHT = 1200;
 
-export const useCanvas = (roomCode, isDrawer) => {
+export const useCanvas = (roomCode, isDrawer, twist = null) => {
     const canvasRef = useRef(null);
     const ctxRef = useRef(null);
     const offscreenCanvasRef = useRef(null);
@@ -28,6 +28,7 @@ export const useCanvas = (roomCode, isDrawer) => {
     const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
     const [isCursorInside, setIsCursorInside] = useState(false);
     const [strokeCount, setStrokeCount] = useState(0);
+    const [inkRemaining, setInkRemaining] = useState(1200);
 
     // Palm rejection refs
     const isPenActiveRef = useRef(false);
@@ -39,12 +40,47 @@ export const useCanvas = (roomCode, isDrawer) => {
     const colorRef = useRef(color);
     const lineWidthRef = useRef(lineWidth);
     const toolRef = useRef(tool);
+    const twistRef = useRef(twist);
+    const inkRemainingRef = useRef(1200);
 
     useEffect(() => { isDrawerRef.current = isDrawer; }, [isDrawer]);
     useEffect(() => { roomCodeRef.current = roomCode; }, [roomCode]);
     useEffect(() => { colorRef.current = color; }, [color]);
     useEffect(() => { lineWidthRef.current = lineWidth; }, [lineWidth]);
     useEffect(() => { toolRef.current = tool; }, [tool]);
+    useEffect(() => { twistRef.current = twist; }, [twist]);
+
+    // Apply rule twist overrides
+    useEffect(() => {
+        if (twist?.id === 'one-colour' && twist.color) {
+            setColorState(twist.color);
+            colorRef.current = twist.color;
+        }
+    }, [twist?.id, twist?.color]);
+
+    useEffect(() => {
+        if (twist?.id === 'thin-line') {
+            setLineWidthState(2);
+            lineWidthRef.current = 2;
+        }
+    }, [twist?.id]);
+
+    useEffect(() => {
+        if (twist?.id === 'no-undo-eraser') {
+            if (toolRef.current === 'eraser') {
+                setToolState('pencil');
+                toolRef.current = 'pencil';
+            }
+        }
+    }, [twist?.id]);
+
+    useEffect(() => {
+        if (twist?.id === 'limited-ink') {
+            const initialInk = twist.remainingInk || twist.totalInk || 1200;
+            setInkRemaining(initialInk);
+            inkRemainingRef.current = initialInk;
+        }
+    }, [twist]);
 
     // Stroke stores
     const strokesRef = useRef([]); // Completed strokes
@@ -247,6 +283,15 @@ export const useCanvas = (roomCode, isDrawer) => {
         }
 
         renderCommands(offCtx, cmds, offscreen.width, offscreen.height, stroke.size, stroke.tool, stroke.color);
+        if (twistRef.current?.id === 'mirror') {
+            const mirrorCmds = cmds.map(cmd => {
+                const res = { ...cmd };
+                if (typeof cmd.x === 'number') res.x = 1 - cmd.x;
+                if (typeof cmd.cpX === 'number') res.cpX = 1 - cmd.cpX;
+                return res;
+            });
+            renderCommands(offCtx, mirrorCmds, offscreen.width, offscreen.height, stroke.size, stroke.tool, stroke.color);
+        }
         blitToMainCanvas();
     }, [renderCommands, blitToMainCanvas]);
 
@@ -265,6 +310,13 @@ export const useCanvas = (roomCode, isDrawer) => {
                 { type: 'line', x: last.x, y: last.y }
             ];
             renderCommands(offCtx, cmds, offscreen.width, offscreen.height, stroke.size, stroke.tool, stroke.color);
+            if (twistRef.current?.id === 'mirror') {
+                const mirrorCmds = [
+                    { type: 'move', x: 1 - stroke.lastMidpoint.x, y: stroke.lastMidpoint.y },
+                    { type: 'line', x: 1 - last.x, y: last.y }
+                ];
+                renderCommands(offCtx, mirrorCmds, offscreen.width, offscreen.height, stroke.size, stroke.tool, stroke.color);
+            }
             blitToMainCanvas();
         }
 
@@ -278,8 +330,21 @@ export const useCanvas = (roomCode, isDrawer) => {
         const canvas = canvasRef.current;
         if (!canvas) return { x: 0, y: 0 };
         const rect = canvas.getBoundingClientRect();
-        const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-        const y = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
+        let x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        let y = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
+
+        if (twistRef.current?.id === 'upside-down' && isDrawerRef.current) {
+            x = Math.max(0, Math.min(1, 1 - x));
+            y = Math.max(0, Math.min(1, 1 - y));
+        }
+
+        if (twistRef.current?.id === 'wobbly-pen' && isDrawerRef.current) {
+            const jitterX = (Math.random() - 0.5) * 0.016;
+            const jitterY = (Math.random() - 0.5) * 0.016;
+            x = Math.max(0, Math.min(1, x + jitterX));
+            y = Math.max(0, Math.min(1, y + jitterY));
+        }
+
         return { x, y };
     }, []);
 
@@ -294,6 +359,12 @@ export const useCanvas = (roomCode, isDrawer) => {
             isPenActiveRef.current = true;
         } else if (e.pointerType === 'touch' && isPenActiveRef.current) {
             return;
+        }
+
+        if (twistRef.current?.id === 'limited-ink') {
+            if (toolRef.current !== 'eraser' && inkRemainingRef.current <= 0) {
+                return;
+            }
         }
 
         e.preventDefault();
@@ -322,6 +393,13 @@ export const useCanvas = (roomCode, isDrawer) => {
             points: [{ x, y }],
             lastMidpoint: null
         };
+
+        if (twistRef.current?.id === 'limited-ink' && isDrawerRef.current && stroke.tool !== 'eraser') {
+            stroke.inkCost = 5;
+            inkRemainingRef.current = Math.max(0, inkRemainingRef.current - 5);
+            setInkRemaining(inkRemainingRef.current);
+        }
+
         inProgressStrokesRef.current.set(id, stroke);
         setStrokeCount((prev) => prev + 1);
 
@@ -330,6 +408,9 @@ export const useCanvas = (roomCode, isDrawer) => {
         const offCtx = offscreenCtxRef.current;
         if (offscreen && offCtx) {
             renderCommands(offCtx, [{ type: 'dot', x, y }], offscreen.width, offscreen.height, size, stroke.tool, stroke.color);
+            if (twistRef.current?.id === 'mirror') {
+                renderCommands(offCtx, [{ type: 'dot', x: 1 - x, y }], offscreen.width, offscreen.height, size, stroke.tool, stroke.color);
+            }
             blitToMainCanvas();
         }
 
@@ -384,12 +465,29 @@ export const useCanvas = (roomCode, isDrawer) => {
         const events = (typeof e.getCoalescedEvents === 'function' ? e.getCoalescedEvents() : null) || [e];
         for (const ev of events) {
             const { x, y } = getNormalizedPoint(ev);
+            if (twistRef.current?.id === 'limited-ink' && isDrawerRef.current && stroke.tool !== 'eraser') {
+                const lastPt = stroke.points[stroke.points.length - 1];
+                if (lastPt) {
+                    const dx = x - lastPt.x;
+                    const dy = y - lastPt.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const cost = Math.max(1, Math.round(dist * 1000));
+                    if (inkRemainingRef.current < cost) {
+                        isDrawingRef.current = false;
+                        finishStroke(strokeId);
+                        return;
+                    }
+                    inkRemainingRef.current -= cost;
+                    stroke.inkCost = (stroke.inkCost || 0) + cost;
+                    setInkRemaining(inkRemainingRef.current);
+                }
+            }
             const accepted = batcherRef.current.addPoint(x, y);
             if (accepted) {
                 drawIncrementalPoint(stroke, { x, y });
             }
         }
-    }, [getNormalizedPoint, drawIncrementalPoint]);
+    }, [getNormalizedPoint, drawIncrementalPoint, finishStroke]);
 
     const onPointerUp = useCallback((e) => {
         if (e.pointerType === 'pen') {
@@ -436,12 +534,14 @@ export const useCanvas = (roomCode, isDrawer) => {
 
     // Actions
     const clearCanvas = useCallback(() => {
+        if (twistRef.current?.id === 'no-undo-eraser') return;
         if (socket) {
             socket.emit(EVENTS.CLEAR_CANVAS, { roomCode: roomCodeRef.current });
         }
     }, [socket]);
 
     const undo = useCallback(() => {
+        if (twistRef.current?.id === 'no-undo-eraser') return;
         if (socket) {
             socket.emit(EVENTS.UNDO_STROKE, { roomCode: roomCodeRef.current });
         }
@@ -468,7 +568,9 @@ export const useCanvas = (roomCode, isDrawer) => {
             // Undo: Ctrl/Cmd + Z
             if (isCtrlOrCmd && e.key.toLowerCase() === 'z' && !e.shiftKey) {
                 e.preventDefault();
-                undo();
+                if (twistRef.current?.id !== 'no-undo-eraser') {
+                    undo();
+                }
                 return;
             }
 
@@ -482,29 +584,37 @@ export const useCanvas = (roomCode, isDrawer) => {
             }
             if (e.key.toLowerCase() === 'e') {
                 e.preventDefault();
-                setTool('eraser');
+                if (twistRef.current?.id !== 'no-undo-eraser') {
+                    setTool('eraser');
+                }
                 return;
             }
 
             // Size: [ (decrease), ] (increase)
             if (e.key === '[') {
                 e.preventDefault();
-                setLineWidth((prev) => Math.max(2, prev - 2));
+                if (twistRef.current?.id !== 'thin-line') {
+                    setLineWidth((prev) => Math.max(2, prev - 2));
+                }
                 return;
             }
             if (e.key === ']') {
                 e.preventDefault();
-                setLineWidth((prev) => Math.min(40, prev + 2));
+                if (twistRef.current?.id !== 'thin-line') {
+                    setLineWidth((prev) => Math.min(40, prev + 2));
+                }
                 return;
             }
 
             // Colors: 1 through 9
             if (e.key >= '1' && e.key <= '9') {
-                const colorIndex = parseInt(e.key, 10) - 1;
-                const swatch = PRESET_COLORS[colorIndex];
-                if (swatch) {
-                    e.preventDefault();
-                    setColor(swatch.hex);
+                if (twistRef.current?.id !== 'one-colour') {
+                    const colorIndex = parseInt(e.key, 10) - 1;
+                    const swatch = PRESET_COLORS[colorIndex];
+                    if (swatch) {
+                        e.preventDefault();
+                        setColor(swatch.hex);
+                    }
                 }
             }
         };
@@ -623,10 +733,16 @@ export const useCanvas = (roomCode, isDrawer) => {
         };
 
         const handleUndone = ({ strokeId }) => {
+            let removed = null;
             if (strokeId) {
+                removed = strokesRef.current.find(s => s.id === strokeId);
                 strokesRef.current = strokesRef.current.filter(s => s.id !== strokeId);
             } else if (strokesRef.current.length > 0) {
-                strokesRef.current.pop();
+                removed = strokesRef.current.pop();
+            }
+            if (removed?.inkCost && twistRef.current?.id === 'limited-ink') {
+                inkRemainingRef.current = Math.min(1200, inkRemainingRef.current + removed.inkCost);
+                setInkRemaining(inkRemainingRef.current);
             }
             setStrokeCount(strokesRef.current.length);
             redraw();
@@ -676,6 +792,8 @@ export const useCanvas = (roomCode, isDrawer) => {
         tool,
         cursorPos,
         isCursorInside,
-        strokeCount
+        strokeCount,
+        inkRemaining,
+        setInkRemaining
     };
 };

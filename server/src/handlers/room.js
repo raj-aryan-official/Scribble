@@ -23,6 +23,10 @@ const {
 } = require('./rateLimiter');
 const logger = require('../logger');
 
+const isFastTimers = process.env.FAST_TIMERS === 'true' || process.env.TEST_TIMERS === 'true';
+const HOST_GRACE_MS = isFastTimers ? 4000 : 90000;
+const SEAT_CLAIM_TIMEOUT_MS = isFastTimers ? 4000 : 20000;
+
 const ALLOWED_AVATARS = new Set(Array.from({ length: 12 }, (_, i) => `avatar-${i + 1}`));
 
 function validateAvatar(avatar) {
@@ -36,7 +40,7 @@ function registerRoomHandlers(io, socket, safeOn) {
     safeOn(EVENTS.CREATE_ROOM, (payload) => {
         // E22: Token bucket rate limiting for CREATE_ROOM
         if (!checkCreateRoomLimit(socket)) {
-            return rejectWithError(socket, 'Too many requests. Please slow down.', 'RATE_LIMITED');
+            return rejectWithError(socket, 'Too many tries. Wait a moment.', 'RATE_LIMITED');
         }
 
         if (!payload || typeof payload !== 'object') {
@@ -58,7 +62,7 @@ function registerRoomHandlers(io, socket, safeOn) {
         } catch (err) {
             // E21: Refuse new rooms beyond MAX_ROOMS (500)
             if (err.code === 'MAX_ROOMS_REACHED') {
-                return rejectWithError(socket, 'Server room capacity reached', 'MAX_ROOMS_REACHED');
+                return rejectWithError(socket, 'The server is busy. Try again in a minute.', 'MAX_ROOMS_REACHED');
             }
             throw err;
         }
@@ -75,7 +79,7 @@ function registerRoomHandlers(io, socket, safeOn) {
     safeOn(EVENTS.JOIN_ROOM, (payload) => {
         // E22: Token bucket rate limiting for JOIN_ROOM
         if (!checkJoinRoomLimit(socket)) {
-            return rejectWithError(socket, 'Too many requests. Please slow down.', 'RATE_LIMITED');
+            return rejectWithError(socket, 'Too many tries. Wait a moment.', 'RATE_LIMITED');
         }
 
         if (!payload || typeof payload !== 'object') {
@@ -110,7 +114,7 @@ function registerRoomHandlers(io, socket, safeOn) {
 
         // 6. Seat claim without a token: if the room has 'away' players and a joiner uses the same nickname,
         // reply SEAT_CLAIM_AVAILABLE { playerId, username }
-        if (!payload.rejoinToken && targetRoom.records) {
+        if (!payload.rejoinToken && !payload.bypassSeatClaim && targetRoom.records) {
             const awayRecord = Array.from(targetRoom.records.values()).find(
                 r => r.status === 'away' && r.username.toLowerCase() === cleanUsername.toLowerCase()
             );
@@ -162,6 +166,8 @@ function registerRoomHandlers(io, socket, safeOn) {
         });
 
         const joinMsg = {
+            id: uuidv4(),
+            ts: Date.now(),
             username: 'System',
             text: `${result.player.username} joined!`,
             type: 'system'
@@ -472,9 +478,9 @@ function registerRoomHandlers(io, socket, safeOn) {
                 room.pendingClaims.delete(claimId);
                 const joinerSock = io.sockets?.sockets?.get ? io.sockets.sockets.get(socket.id) : io.sockets?.[socket.id];
                 if (joinerSock) {
-                    joinerSock.emit(EVENTS.SEAT_CLAIM_DECLINED, { reason: 'Host did not respond in time' });
+                    joinerSock.emit(EVENTS.SEAT_CLAIM_DECLINED, { reason: 'The host said no' });
                 }
-            }, 20000)
+            }, SEAT_CLAIM_TIMEOUT_MS)
         };
 
         if (!room.pendingClaims) room.pendingClaims = new Map();
@@ -483,7 +489,8 @@ function registerRoomHandlers(io, socket, safeOn) {
         hostSocket.emit(EVENTS.SEAT_CLAIM_REQUEST, {
             claimId,
             playerId,
-            username: awayRecord.username
+            username: awayRecord.username,
+            timeout: Math.ceil(SEAT_CLAIM_TIMEOUT_MS / 1000)
         });
     });
 
@@ -509,7 +516,7 @@ function registerRoomHandlers(io, socket, safeOn) {
 
         if (!accepted) {
             if (joinerSocket) {
-                joinerSocket.emit(EVENTS.SEAT_CLAIM_DECLINED, { reason: 'Host declined seat claim' });
+                joinerSocket.emit(EVENTS.SEAT_CLAIM_DECLINED, { reason: 'The host said no' });
             }
             return;
         }
@@ -565,66 +572,6 @@ function registerRoomHandlers(io, socket, safeOn) {
         });
         io.to(room.code).emit(EVENTS.ROOM_JOINED, toPublicRoom(room));
         io.to(room.code).emit(EVENTS.TURN_INFO, buildTurnInfo(room));
-    });
-
-    safeOn(EVENTS.KICK_PLAYER, (payload) => {
-        if (!payload || typeof payload !== 'object') {
-            return rejectWithError(socket, 'Invalid payload');
-        }
-        const room = getMemberRoom(socket, payload.roomCode);
-        if (!room) {
-            return rejectWithError(socket, 'Not a member of this room');
-        }
-        if (!isHost(room, socket)) {
-            return rejectWithError(socket, 'Only the host can kick players');
-        }
-        const targetId = payload.playerId || payload.targetId || payload.target;
-        if (typeof targetId !== 'string' || !targetId) {
-            return rejectWithError(socket, 'Invalid target player');
-        }
-        if (targetId === socket.id) {
-            return rejectWithError(socket, 'Cannot kick yourself');
-        }
-        const targetPlayer = room.players.find(p => p.id === targetId || p.playerId === targetId);
-        const targetRecord = room.records ? (room.records.get(targetId) || Array.from(room.records.values()).find(r => r.socketId === targetId)) : null;
-
-        if (!targetPlayer && !targetRecord) {
-            return rejectWithError(socket, 'Player not found in room');
-        }
-
-        const effectivePlayerId = targetRecord?.playerId || targetPlayer?.playerId || targetId;
-        const targetSocketId = targetRecord?.socketId || targetPlayer?.id;
-
-        // Record to prevent rejoining
-        if (!room.kickedPlayerIds) room.kickedPlayerIds = new Set();
-        room.kickedPlayerIds.add(effectivePlayerId);
-
-        if (targetRecord?.tokenHash) {
-            if (!room.kickedTokenHashes) room.kickedTokenHashes = new Set();
-            room.kickedTokenHashes.add(targetRecord.tokenHash);
-        }
-        if (targetPlayer?.sessionId || targetRecord?.sessionId) {
-            const sid = targetPlayer?.sessionId || targetRecord?.sessionId;
-            if (!room.kickedSessionIds) room.kickedSessionIds = new Set();
-            room.kickedSessionIds.add(sid);
-        }
-
-        if (targetSocketId) {
-            io.to(targetSocketId).emit(EVENTS.KICKED, { message: 'You have been kicked from the room' });
-            if (EVENTS.KICKED !== 'KICKED') {
-                io.to(targetSocketId).emit('KICKED', { message: 'You have been kicked from the room' });
-            }
-
-            const targetSocket = io.sockets?.sockets?.get
-                ? io.sockets.sockets.get(targetSocketId)
-                : (io.sockets?.[targetSocketId] || null);
-            if (targetSocket && typeof targetSocket.leave === 'function') {
-                targetSocket.leave(room.code);
-                targetSocket.leave(`${room.code}_voice`);
-            }
-        }
-
-        handlePlayerLeave(io, room, targetSocketId || effectivePlayerId, 'kicked');
     });
 
     safeOn(EVENTS.EDIT_PROFILE, (payload) => {
@@ -796,7 +743,7 @@ function registerRoomHandlers(io, socket, safeOn) {
                     currentRoom.originalHostId = currentRoom.actingHostId;
                     currentRoom.actingHostId = null;
                 }
-            }, 90000);
+            }, HOST_GRACE_MS);
         }
 
         // E1: Drawer disconnect pauses turn clock for up to 10s

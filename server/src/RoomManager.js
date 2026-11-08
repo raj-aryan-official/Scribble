@@ -1,6 +1,6 @@
 const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
-const { GAME_STATES } = require('../../shared/types.cjs');
+const { GAME_STATES, TWIST_IDS } = require('../../shared/types.cjs');
 const blocklist = require('./blocklist');
 const { sanitiseText } = require('./sanitise');
 const {
@@ -19,6 +19,8 @@ const ALLOWED_ROUNDS = [1, 2, 3, 5, 7, 10, 12];
 const ALLOWED_DRAW_TIMES = [60, 80, 100, 120];
 const ALLOWED_DIFFICULTIES = ['Easy', 'Medium', 'Hard', 'Mixed'];
 const ALLOWED_PACKS = ['animals', 'food', 'places', 'objects', 'actions'];
+const ALLOWED_WORD_CHOICES = ['pick', 'random'];
+const ALLOWED_TWISTS = ['off', 'sometimes', 'every'];
 const MAX_ROOMS = 500;
 
 function deduplicateNickname(room, desired) {
@@ -70,10 +72,51 @@ function verifyToken(token, storedHash) {
     }
 }
 
+// Soft block: 10-minute temporary ban by rejoinToken and nickname
+function isPlayerBlocked(room, player) {
+    if (!room || !player) return false;
+    const now = Date.now();
+    if (!room.kickedBlocks) room.kickedBlocks = new Map();
+
+    const checkKey = (key) => {
+        if (!key) return false;
+        if (room.kickedBlocks.has(key)) {
+            const exp = room.kickedBlocks.get(key);
+            if (now < exp) {
+                return true;
+            }
+            room.kickedBlocks.delete(key);
+        }
+        return false;
+    };
+
+    if (player.sessionId && checkKey(`sid:${player.sessionId}`)) return true;
+    if (player.playerId && checkKey(`pid:${player.playerId}`)) return true;
+    if (player.rejoinToken && checkKey(`token:${hashToken(player.rejoinToken)}`)) return true;
+    if (player.tokenHash && checkKey(`token:${player.tokenHash}`)) return true;
+    if (player.username && checkKey(`nick:${player.username.trim().toLowerCase()}`)) return true;
+
+    return false;
+}
+
+// Soft block: 10-minute temporary ban by rejoinToken and nickname
+function blockKickedPlayer(room, record, durationMs = 10 * 60 * 1000) {
+    if (!room) return;
+    if (!room.kickedBlocks) room.kickedBlocks = new Map();
+    const expiresAt = Date.now() + durationMs;
+
+    if (record?.sessionId) room.kickedBlocks.set(`sid:${record.sessionId}`, expiresAt);
+    if (record?.playerId) room.kickedBlocks.set(`pid:${record.playerId}`, expiresAt);
+    if (record?.tokenHash) room.kickedBlocks.set(`token:${record.tokenHash}`, expiresAt);
+    if (record?.rejoinToken) room.kickedBlocks.set(`token:${hashToken(record.rejoinToken)}`, expiresAt);
+    if (record?.username) room.kickedBlocks.set(`nick:${record.username.trim().toLowerCase()}`, expiresAt);
+}
+
 function sanitizeSettings(rawSettings = {}) {
     const rounds = ALLOWED_ROUNDS.includes(rawSettings?.rounds) ? rawSettings.rounds : 3;
     const drawTime = ALLOWED_DRAW_TIMES.includes(rawSettings?.drawTime) ? rawSettings.drawTime : 60;
     const difficulty = ALLOWED_DIFFICULTIES.includes(rawSettings?.difficulty) ? rawSettings.difficulty : 'Medium';
+    const wordChoice = ALLOWED_WORD_CHOICES.includes(rawSettings?.wordChoice) ? rawSettings.wordChoice : 'pick';
     let maxPlayers = 12;
     if (
         typeof rawSettings?.maxPlayers === 'number' &&
@@ -119,13 +162,25 @@ function sanitizeSettings(rawSettings = {}) {
         }
     }
 
+    const twists = ALLOWED_TWISTS.includes(rawSettings?.twists) ? rawSettings.twists : 'off';
+    let enabledTwists = [...TWIST_IDS];
+    if (Array.isArray(rawSettings?.enabledTwists)) {
+        const valid = rawSettings.enabledTwists.filter(id => TWIST_IDS.includes(id));
+        if (valid.length > 0) {
+            enabledTwists = valid;
+        }
+    }
+
     return {
         rounds,
         drawTime,
         difficulty,
         maxPlayers,
         packs,
-        customWords
+        customWords,
+        wordChoice,
+        twists,
+        enabledTwists
     };
 }
 
@@ -193,19 +248,41 @@ function clearRoomTimers(room) {
         clearTimeout(room.saveDebounceTimer);
         room.saveDebounceTimer = null;
     }
+    if (room.activeVote?.timer) {
+        clearTimeout(room.activeVote.timer);
+        room.activeVote.timer = null;
+    }
+    if (room.reactionBatchTimer) {
+        clearTimeout(room.reactionBatchTimer);
+        room.reactionBatchTimer = null;
+    }
 }
 
 const toPublicPlayer = (player, room = null) => {
     if (!player || typeof player !== 'object') return null;
     const isAway = player.status === 'away' || player.status === 'left' || Boolean(player.isDisconnected);
     const isHost = Boolean(player.isHost || (room && (player.id === room.hostId || room.records?.get(player.playerId)?.isHost)));
-    return {
+    const rec = room?.records?.get(player.playerId);
+    const result = {
         id: player.id,
         username: player.username,
         avatar: player.avatar,
         isHost,
         isDisconnected: isAway
     };
+    if (player.playerId || rec?.playerId) {
+        result.playerId = player.playerId || rec?.playerId;
+    }
+    if (player.status || rec?.status) {
+        result.status = player.status || rec?.status || (isAway ? 'away' : 'connected');
+    }
+    if (rec?.missedDraws || player.missedDraws) {
+        result.missedDraws = rec?.missedDraws || player.missedDraws;
+    }
+    if (rec?.joinedMidRound !== undefined || player.joinedMidRound !== undefined) {
+        result.joinedMidRound = Boolean(rec?.joinedMidRound || player.joinedMidRound);
+    }
+    return result;
 };
 
 const toPublicRoom = (room) => {
@@ -222,6 +299,14 @@ const toPublicRoom = (room) => {
         }
     }
 
+    const actingRecord = room.actingHostId ? room.records?.get(room.actingHostId) : null;
+    const actingPlayer = room.actingHostId ? (Array.isArray(room.players) ? room.players.find(p => p.playerId === room.actingHostId || p.id === room.actingHostId) : null) : null;
+    const actingHostName = actingRecord?.username || actingPlayer?.username || null;
+
+    const originalRecord = room.originalHostId ? room.records?.get(room.originalHostId) : null;
+    const originalPlayer = room.originalHostId ? (Array.isArray(room.players) ? room.players.find(p => p.playerId === room.originalHostId || p.id === room.originalHostId) : null) : null;
+    const originalHostName = originalRecord?.username || originalPlayer?.username || null;
+
     return {
         code: room.code,
         hostId: room.hostId,
@@ -229,7 +314,11 @@ const toPublicRoom = (room) => {
         gameState: room.gameState,
         currentRound: room.currentRound,
         scores,
-        players: Array.isArray(room.players) ? room.players.map(p => toPublicPlayer(p, room)) : []
+        players: Array.isArray(room.players) ? room.players.map(p => toPublicPlayer(p, room)) : [],
+        actingHostId: room.actingHostId || null,
+        actingHostName: actingHostName || null,
+        originalHostId: room.originalHostId || null,
+        originalHostName: originalHostName || null
     };
 };
 
@@ -316,6 +405,7 @@ class RoomManager {
             chatMessages: data.chatMessages || [],
             wordToGuess: data.wordToGuess || null,
             wordChoices: data.wordChoices || null,
+            defaultChoice: typeof data.defaultChoice === 'number' ? data.defaultChoice : null,
             usedWords: new Set(data.usedWords || []),
             hint: data.hint || null,
             wordHint: data.wordHint || null,
@@ -325,6 +415,8 @@ class RoomManager {
             revealedIndices: new Set(data.revealedIndices || []),
             guessedPlayers: new Set(data.guessedPlayers || []),
             matchDrawings: data.matchDrawings || [],
+            currentTwist: data.currentTwist || null,
+            turnInkRemaining: typeof data.turnInkRemaining === 'number' ? data.turnInkRemaining : null,
             timers: {
                 interval: null,
                 wordSelection: null,
@@ -413,6 +505,7 @@ class RoomManager {
             chatMessages: [],
             wordToGuess: null,
             wordChoices: null,
+            defaultChoice: null,
             usedWords: new Set(),
             hint: null,
             wordHint: null,
@@ -420,6 +513,8 @@ class RoomManager {
             timer: 0,
             scores: { [hostPlayer.id]: 0, [playerId]: 0 },
             guessedPlayers: new Set(),
+            currentTwist: null,
+            turnInkRemaining: null,
             timers: {
                 interval: null,
                 wordSelection: null,
@@ -448,6 +543,7 @@ class RoomManager {
         if (!room) return { error: 'Room not found' };
 
         if (
+            isPlayerBlocked(room, player) ||
             (room.kickedSessionIds && player.sessionId && room.kickedSessionIds.has(player.sessionId)) ||
             (player.rejoinToken && room.kickedTokenHashes && room.kickedTokenHashes.has(hashToken(player.rejoinToken)))
         ) {
@@ -600,6 +696,10 @@ class RoomManager {
 
     reconnectRecord(room, record, newSocketId) {
         if (!room || !record) return { error: 'Invalid room or record' };
+
+        if (isPlayerBlocked(room, record)) {
+            return { error: 'You have been kicked from this room' };
+        }
 
         if (room.kickedPlayerIds && room.kickedPlayerIds.has(record.playerId)) {
             return { error: 'You have been kicked from this room' };
@@ -858,6 +958,8 @@ roomManager.ALLOWED_ROUNDS = ALLOWED_ROUNDS;
 roomManager.ALLOWED_DRAW_TIMES = ALLOWED_DRAW_TIMES;
 roomManager.ALLOWED_DIFFICULTIES = ALLOWED_DIFFICULTIES;
 roomManager.ALLOWED_PACKS = ALLOWED_PACKS;
+roomManager.ALLOWED_TWISTS = ALLOWED_TWISTS;
+roomManager.TWIST_IDS = TWIST_IDS;
 roomManager.MAX_ROOMS = MAX_ROOMS;
 roomManager.deduplicateNickname = deduplicateNickname;
 roomManager.RoomManager = RoomManager;
@@ -876,6 +978,10 @@ module.exports.ALLOWED_ROUNDS = ALLOWED_ROUNDS;
 module.exports.ALLOWED_DRAW_TIMES = ALLOWED_DRAW_TIMES;
 module.exports.ALLOWED_DIFFICULTIES = ALLOWED_DIFFICULTIES;
 module.exports.ALLOWED_PACKS = ALLOWED_PACKS;
+module.exports.ALLOWED_TWISTS = ALLOWED_TWISTS;
+module.exports.TWIST_IDS = TWIST_IDS;
 module.exports.MAX_ROOMS = MAX_ROOMS;
 module.exports.deduplicateNickname = deduplicateNickname;
+module.exports.blockKickedPlayer = blockKickedPlayer;
+module.exports.isPlayerBlocked = isPlayerBlocked;
 module.exports.RoomManager = RoomManager;

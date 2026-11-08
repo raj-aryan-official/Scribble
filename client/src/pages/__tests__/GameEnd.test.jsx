@@ -143,7 +143,7 @@ describe('GameEnd - Celebration, Drawings, and Rematch Flow', () => {
         });
     });
 
-    describe('3. Two Awards Cards (Best artist & Fastest guesser)', () => {
+    describe('3. Awards Cards (Best artist, Fastest guesser, Crowd favourite)', () => {
         it('renders Best artist and Fastest guesser cards with server stats', () => {
             const html = renderGameEnd();
             expect(html).toContain('data-testid="awards-container"');
@@ -153,6 +153,24 @@ describe('GameEnd - Celebration, Drawings, and Rematch Flow', () => {
             expect(html).toContain('Fastest guesser');
             expect(html).toContain('Raj');
             expect(html).toContain('5.8s avg guess');
+        });
+
+        it('renders Crowd favourite award when present in awards', () => {
+            const html = renderGameEnd({
+                awards: {
+                    ...mockAwards,
+                    crowdFavourite: {
+                        id: 'u1',
+                        username: 'Maya',
+                        avatar: 'avatar-1',
+                        likes: 18,
+                    },
+                },
+            });
+            expect(html).toContain('data-testid="award-crowd-favourite"');
+            expect(html).toContain('Crowd favourite');
+            expect(html).toContain('Maya');
+            expect(html).toContain('18 likes');
         });
     });
 

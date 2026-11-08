@@ -7,7 +7,7 @@ const SIZE_PRESETS = [
     { name: 'Large', size: 22, dotClass: 'w-5.5 h-5.5' },
 ];
 
-export const BrushSize = ({ lineWidth = 6, setLineWidth, className = '' }) => {
+export const BrushSize = ({ lineWidth = 6, setLineWidth, isLockedSize = false, className = '' }) => {
     const [isPopoverOpen, setIsPopoverOpen] = useState(false);
     const popoverRef = useRef(null);
 
@@ -57,10 +57,12 @@ export const BrushSize = ({ lineWidth = 6, setLineWidth, className = '' }) => {
                             type="button"
                             aria-pressed={isSelected}
                             tabIndex={isSelected ? 0 : -1}
+                            disabled={isLockedSize}
                             aria-label={`Brush size ${preset.name} (${preset.size}px)`}
-                            title={`${preset.name} (${preset.size}px)`}
-                            onClick={() => setLineWidth?.(preset.size)}
+                            title={isLockedSize ? 'Brush size locked' : `${preset.name} (${preset.size}px)`}
+                            onClick={() => !isLockedSize && setLineWidth?.(preset.size)}
                             onKeyDown={(e) => {
+                                if (isLockedSize) return;
                                 let nextIndex = null;
                                 if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
                                     e.preventDefault();
@@ -75,10 +77,12 @@ export const BrushSize = ({ lineWidth = 6, setLineWidth, className = '' }) => {
                                     e.currentTarget.parentElement?.children[nextIndex]?.focus();
                                 }
                             }}
-                            className={`min-w-[44px] min-h-[44px] p-2 rounded-[4px] flex items-center justify-center transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none ${
-                                isSelected
-                                    ? 'bg-card border-2 border-ink shadow-hard-sm'
-                                    : 'hover:bg-card/50 text-ink-soft'
+                            className={`min-w-[44px] min-h-[44px] p-2 rounded-[4px] flex items-center justify-center transition-all focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none ${
+                                isLockedSize
+                                    ? 'opacity-40 cursor-not-allowed bg-paper text-ink-soft'
+                                    : isSelected
+                                    ? 'bg-card border-2 border-ink shadow-hard-sm cursor-pointer'
+                                    : 'hover:bg-card/50 text-ink-soft cursor-pointer'
                             }`}
                         >
                             <span
@@ -96,12 +100,15 @@ export const BrushSize = ({ lineWidth = 6, setLineWidth, className = '' }) => {
                 aria-label="Open fine brush size slider"
                 aria-haspopup="dialog"
                 aria-expanded={isPopoverOpen}
-                title="Fine size adjustment ([ / ])"
-                onClick={() => setIsPopoverOpen(!isPopoverOpen)}
-                className={`min-w-[44px] min-h-[44px] p-2 rounded-[6px] border-2 border-ink shadow-hard-sm flex items-center justify-center cursor-pointer focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none transition-all ${
-                    isPopoverOpen
-                        ? 'bg-marigold text-ink'
-                        : 'bg-paper text-ink hover:bg-card'
+                disabled={isLockedSize}
+                title={isLockedSize ? 'Size adjustment locked' : 'Fine size adjustment ([ / ])'}
+                onClick={() => !isLockedSize && setIsPopoverOpen(!isPopoverOpen)}
+                className={`min-w-[44px] min-h-[44px] p-2 rounded-[6px] border-2 border-ink shadow-hard-sm flex items-center justify-center focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none transition-all ${
+                    isLockedSize
+                        ? 'opacity-40 cursor-not-allowed bg-paper text-ink-soft'
+                        : isPopoverOpen
+                        ? 'bg-marigold text-ink cursor-pointer'
+                        : 'bg-paper text-ink hover:bg-card cursor-pointer'
                 }`}
             >
                 <Sliders className="w-5 h-5" />
