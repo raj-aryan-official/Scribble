@@ -1,83 +1,203 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
+import { Dice5 } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { useSocket } from '../hooks/useSocket';
 import { EVENTS } from '../../../shared/types';
+import { CREDIT_LINE } from '../config';
+import { FUN_NAMES, getRandomFunName } from '../constants/funNames';
+import { AVATAR_IDS } from '../components/ui/Avatar';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
-import Input from '../components/ui/Input';
 import AvatarPicker from '../components/ui/AvatarPicker';
 import Spinner from '../components/ui/Spinner';
 import Toast from '../components/ui/Toast';
 import Wordmark from '../components/Landing/Wordmark';
-import RoomCodeInput from '../components/Landing/RoomCodeInput';
+import DoodleCat from '../components/Landing/DoodleCat';
+import RoomCodeInput, { extractRoomCode } from '../components/Landing/RoomCodeInput';
+import HowToPlayModal from '../components/Landing/HowToPlayModal';
 
 export const Landing = () => {
-    const [username, setUsername] = useState('');
-    const [avatar, setAvatar] = useState('avatar-1');
-    const [roomCode, setRoomCode] = useState('');
-    const [inputError, setInputError] = useState('');
-    const [isJoining, setIsJoining] = useState(false);
-
     const navigate = useNavigate();
     const { code } = useParams();
     const { state, dispatch } = useGame();
     const socket = useSocket();
 
-    // Auto-fill code from URL if present (e.g. /join/:code)
+    // Form inputs
+    const [username, setUsername] = useState('');
+    const [avatar, setAvatar] = useState('avatar-1');
+    const [roomCode, setRoomCode] = useState('');
+
+    // Field-level error states
+    const [nicknameError, setNicknameError] = useState('');
+    const [roomCodeError, setRoomCodeError] = useState('');
+
+    // Connection & loading states
+    const [isConnecting, setIsConnecting] = useState(false);
+    const [connectingAction, setConnectingAction] = useState(null); // 'create' | 'join'
+    const [showConnectingState, setShowConnectingState] = useState(false);
+    const [serverUnreachable, setServerUnreachable] = useState(false);
+
+    // Modals
+    const [showHowToPlay, setShowHowToPlay] = useState(false);
+
+    // Random placeholder from 40 fun names
+    const [placeholderName, setPlaceholderName] = useState('Sleepy Otter');
+
+    // DOM & Action refs
+    const nicknameInputRef = useRef(null);
+    const lastActionRef = useRef(null);
+
+    // 1. Prefill nickname & avatar from localStorage (inside try/catch)
+    useEffect(() => {
+        try {
+            const savedName = localStorage.getItem('scribble_nickname');
+            if (savedName) setUsername(savedName);
+            const savedAvatar = localStorage.getItem('scribble_avatar');
+            if (savedAvatar && AVATAR_IDS.includes(savedAvatar)) {
+                setAvatar(savedAvatar);
+            }
+        } catch {
+            // Ignore localStorage errors
+        }
+
+        // Random fun placeholder from 40 names
+        setPlaceholderName(getRandomFunName());
+
+        // Autofocus nickname on desktop only (viewport width >= 768px)
+        if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+            nicknameInputRef.current?.focus();
+        }
+    }, []);
+
+    // 2. Auto-fill code from URL if present (e.g. /join/:code)
     useEffect(() => {
         if (code) {
-            setRoomCode(code.toUpperCase().slice(0, 6));
+            const extracted = extractRoomCode(code);
+            setRoomCode(extracted);
         }
     }, [code]);
 
-    // Handle server error reset
+    // 3. Show Spinner and 'Connecting...' ONLY after 400 ms delay
     useEffect(() => {
-        if (state.error) {
-            setIsJoining(false);
+        let timer = null;
+        if (isConnecting) {
+            timer = setTimeout(() => {
+                setShowConnectingState(true);
+            }, 400);
+        } else {
+            setShowConnectingState(false);
         }
-    }, [state.error]);
 
-    // Redirect to lobby once room is joined
+        return () => {
+            if (timer) clearTimeout(timer);
+        };
+    }, [isConnecting]);
+
+    // 4. Handle Server Errors (Room not found, full room, server error)
+    useEffect(() => {
+        if (!state.error) return;
+
+        setIsConnecting(false);
+        setConnectingAction(null);
+
+        const errorStr = String(state.error);
+        const lower = errorStr.toLowerCase();
+
+        if (lower.includes('not found') || lower.includes('no room') || lower.includes('invalid room')) {
+            setRoomCodeError('No room with that code. Check the letters?');
+            dispatch({ type: 'SET_ERROR', payload: null });
+        } else if (lower.includes('full')) {
+            setRoomCodeError('That room is full.');
+            dispatch({ type: 'SET_ERROR', payload: null });
+        }
+    }, [state.error, dispatch]);
+
+    // 5. Redirect once room is joined
     useEffect(() => {
         if (!state.roomCode) return;
-        if (isJoining || !code) {
-            navigate(`/lobby/${state.roomCode}`);
-        }
-    }, [state.roomCode, navigate, code, isJoining]);
+        setIsConnecting(false);
+        setConnectingAction(null);
+        navigate(`/lobby/${state.roomCode}`);
+    }, [state.roomCode, navigate]);
 
+    // Helper: Session ID
     const getSessionId = () => {
-        let sessionId = localStorage.getItem('scribble_session_id');
-        if (!sessionId) {
+        let sessionId = null;
+        try {
+            sessionId = localStorage.getItem('scribble_session_id');
+            if (!sessionId) {
+                sessionId = uuidv4();
+                localStorage.setItem('scribble_session_id', sessionId);
+            }
+        } catch {
             sessionId = uuidv4();
-            localStorage.setItem('scribble_session_id', sessionId);
         }
         return sessionId;
     };
 
-    const validateNickname = () => {
+    // Helper: Persist preferences locally
+    const savePreferencesLocally = (name, chosenAvatar) => {
+        try {
+            localStorage.setItem('scribble_nickname', name);
+            localStorage.setItem('scribble_avatar', chosenAvatar);
+        } catch {
+            // Ignore localStorage errors
+        }
+    };
+
+    // Validation on Blur: 1 to 16 characters
+    const validateNickname = useCallback(() => {
         const trimmed = username.trim();
         if (!trimmed) {
-            setInputError('Please enter a nickname');
+            setNicknameError('Please enter a nickname');
             return null;
         }
         if (trimmed.length > 16) {
-            setInputError('Nickname must be 16 characters or less');
+            setNicknameError('Nickname must be 16 characters or less');
             return null;
         }
-        setInputError('');
+        setNicknameError('');
         return trimmed;
+    }, [username]);
+
+    // Randomize Name & Avatar
+    const handleRandomize = () => {
+        const randomName = getRandomFunName();
+        const randomAvatarIndex = Math.floor(Math.random() * AVATAR_IDS.length);
+        const randomAvatar = AVATAR_IDS[randomAvatarIndex];
+
+        setUsername(randomName);
+        setAvatar(randomAvatar);
+        setNicknameError('');
+        savePreferencesLocally(randomName, randomAvatar);
     };
 
+    // Handle Start a room
     const handleCreateRoom = (e) => {
         e?.preventDefault();
         const validName = validateNickname();
-        if (!validName) return;
+        if (!validName) {
+            nicknameInputRef.current?.focus();
+            return;
+        }
 
+        if (!socket || !socket.connected) {
+            setServerUnreachable(true);
+            lastActionRef.current = () => handleCreateRoom();
+            return;
+        }
+
+        savePreferencesLocally(validName, avatar);
         const sessionId = getSessionId();
-        setIsJoining(true);
+
+        setConnectingAction('create');
+        setIsConnecting(true);
+        setNicknameError('');
+        setRoomCodeError('');
+
         socket.emit(EVENTS.CREATE_ROOM, {
             username: validName,
             avatar,
@@ -86,19 +206,35 @@ export const Landing = () => {
         });
     };
 
+    // Handle Join with code
     const handleJoinRoom = (e) => {
         e?.preventDefault();
         const validName = validateNickname();
-        if (!validName) return;
-
-        const cleanCode = roomCode.trim().toUpperCase();
-        if (!cleanCode || cleanCode.length !== 6) {
-            setInputError('Room code must be 6 characters');
+        if (!validName) {
+            nicknameInputRef.current?.focus();
             return;
         }
 
+        const cleanCode = extractRoomCode(roomCode);
+        if (!cleanCode || cleanCode.length !== 6) {
+            setRoomCodeError('Room code must be 6 characters');
+            return;
+        }
+
+        if (!socket || !socket.connected) {
+            setServerUnreachable(true);
+            lastActionRef.current = () => handleJoinRoom();
+            return;
+        }
+
+        savePreferencesLocally(validName, avatar);
         const sessionId = getSessionId();
-        setIsJoining(true);
+
+        setConnectingAction('join');
+        setIsConnecting(true);
+        setNicknameError('');
+        setRoomCodeError('');
+
         socket.emit(EVENTS.JOIN_ROOM, {
             roomCode: cleanCode,
             username: validName,
@@ -107,131 +243,232 @@ export const Landing = () => {
         });
     };
 
+    // Enter submits active action
+    const handleCardKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            if (roomCode.trim().length === 6) {
+                handleJoinRoom(e);
+            } else {
+                handleCreateRoom(e);
+            }
+        }
+    };
+
     return (
-        <div className="flex-1 w-full max-w-[1100px] mx-auto flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 relative">
+        <div className="flex-1 w-full max-w-[1100px] mx-auto flex flex-col justify-center px-4 py-3 sm:py-6 md:py-8 lg:py-10 relative">
             <h1 tabIndex={-1} className="sr-only">Scribble</h1>
-            {/* Server Error Toast */}
+
+            {/* Server Unreachable Toast with Retry */}
             <Toast
-                isOpen={Boolean(state.error)}
+                isOpen={serverUnreachable}
+                onClose={() => setServerUnreachable(false)}
+                message="Server unreachable. Please check your connection."
+                variant="error"
+                duration={5000}
+                action={{
+                    label: 'Retry',
+                    onClick: () => {
+                        setServerUnreachable(false);
+                        if (socket) socket.connect();
+                        if (lastActionRef.current) {
+                            lastActionRef.current();
+                        }
+                    },
+                }}
+            />
+
+            {/* General Server Error Toast (fallback) */}
+            <Toast
+                isOpen={Boolean(state.error && !roomCodeError)}
                 onClose={() => dispatch({ type: 'SET_ERROR', payload: null })}
                 message={state.error}
                 variant="error"
             />
 
-            {/* Joining Spinner Overlay */}
-            {isJoining && !state.error && (
-                <div
-                    role="status"
-                    aria-live="polite"
-                    className="fixed inset-0 z-sheet flex flex-col items-center justify-center bg-paper/85 backdrop-blur-none p-4"
-                >
-                    <Card className="flex flex-col items-center justify-center p-8 max-w-xs text-center shadow-hard-lg">
-                        <Spinner size="lg" label="Entering room..." />
-                        <h2 className="text-xl font-bold font-heading text-ink mt-4">
-                            Entering room...
-                        </h2>
-                        <p className="text-xs text-ink-soft mt-1">
-                            Sharpening pencils and laying out paper
-                        </p>
-                    </Card>
-                </div>
-            )}
-
-            <div className="w-full max-w-lg flex flex-col items-center gap-6 md:gap-8">
-                {/* Header with Wordmark and Copy */}
-                <motion.header
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ type: 'spring', stiffness: 300, damping: 24 }}
-                    className="flex flex-col items-center text-center gap-2"
+            {/* Two Column Layout on Desktop, Card First on Phone */}
+            <div className="w-full grid grid-cols-1 md:grid-cols-2 items-center gap-6 sm:gap-8 lg:gap-12">
+                {/* Desktop Left Column / Phone Bottom Doodle */}
+                <motion.div
+                    initial={{ opacity: 0, x: -16 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 26 }}
+                    className="order-2 md:order-1 flex flex-col items-center md:items-start text-center md:text-left gap-3 sm:gap-5"
                 >
                     <Wordmark />
-                    <p className="text-base sm:text-lg font-bold text-ink-soft">
+                    <p className="text-base sm:text-lg md:text-xl font-bold text-ink-soft max-w-sm">
                         Draw it. Guess it. Win bragging rights.
                     </p>
-                </motion.header>
 
-                {/* Index-card Form */}
+                    {/* Looping Cat Doodle: hidden on phone when screen height < 700px */}
+                    <div className="w-full flex justify-center md:justify-start pt-2 phone-short-hide">
+                        <DoodleCat />
+                    </div>
+                </motion.div>
+
+                {/* Desktop Right Column / Phone First Item: The Index Card */}
                 <motion.div
-                    initial={{ opacity: 0, scale: 0.96, y: 15 }}
+                    initial={{ opacity: 0, scale: 0.97, y: 12 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
-                    transition={{ type: 'spring', stiffness: 300, damping: 24, delay: 0.05 }}
-                    className="w-full"
+                    transition={{ type: 'spring', stiffness: 300, damping: 26, delay: 0.05 }}
+                    className="order-1 md:order-2 w-full max-w-md mx-auto md:max-w-none"
                 >
-                    <Card className="flex flex-col gap-6 shadow-hard-lg bg-card">
-                        {/* Nickname Input */}
-                        <Input
-                            label="Your Nickname"
-                            id="player-nickname"
-                            name="nickname"
-                            value={username}
-                            onChange={(e) => {
-                                setUsername(e.target.value);
-                                if (inputError) setInputError('');
-                            }}
-                            error={inputError}
-                            maxLength={16}
-                            placeholder="e.g. Leonardo"
-                            autoComplete="nickname"
-                            required
-                        />
+                    <Card
+                        onKeyDown={handleCardKeyDown}
+                        className="flex flex-col gap-3.5 sm:gap-4 p-4 sm:p-6 bg-card border-2 border-ink shadow-hard-lg rounded-[12px]"
+                    >
+                        {/* 1. Nickname Field with Dice Randomizer */}
+                        <div className="flex flex-col gap-1 w-full text-left">
+                            <div className="flex items-center justify-between">
+                                <label
+                                    htmlFor="player-nickname"
+                                    className="text-xs font-bold uppercase tracking-wider text-ink select-none"
+                                >
+                                    Your Nickname
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={handleRandomize}
+                                    aria-label="Randomize nickname and avatar"
+                                    title="Randomize nickname and avatar"
+                                    className="inline-flex items-center gap-1 text-xs font-bold text-ink-soft hover:text-ink cursor-pointer px-1.5 py-0.5 rounded-[4px] hover:bg-paper transition-colors focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none"
+                                >
+                                    <Dice5 className="w-3.5 h-3.5 text-tomato" />
+                                    <span>Randomize</span>
+                                </button>
+                            </div>
 
-                        {/* Avatar Picker */}
+                            <input
+                                ref={nicknameInputRef}
+                                id="player-nickname"
+                                name="nickname"
+                                type="text"
+                                value={username}
+                                onChange={(e) => {
+                                    setUsername(e.target.value);
+                                    if (nicknameError) setNicknameError('');
+                                }}
+                                onBlur={validateNickname}
+                                placeholder={`e.g. ${placeholderName}`}
+                                maxLength={16}
+                                autoComplete="nickname"
+                                aria-invalid={Boolean(nicknameError)}
+                                aria-describedby={nicknameError ? 'nickname-error' : undefined}
+                                className={`w-full min-h-[42px] px-3.5 py-2 text-base font-body bg-paper text-ink placeholder:text-ink-soft/50 border-2 ${
+                                    nicknameError ? 'border-tomato ring-1 ring-tomato' : 'border-ink'
+                                } rounded-[6px] shadow-hard-sm transition-colors focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none focus-visible:ring-offset-1`}
+                            />
+
+                            {nicknameError && (
+                                <p
+                                    id="nickname-error"
+                                    role="alert"
+                                    className="text-xs font-bold text-tomato mt-0.5 flex items-center gap-1"
+                                >
+                                    <span>•</span> {nicknameError}
+                                </p>
+                            )}
+                        </div>
+
+                        {/* 2. Avatar Picker */}
                         <AvatarPicker
                             selectedAvatar={avatar}
-                            onSelect={setAvatar}
+                            onSelect={(selected) => {
+                                setAvatar(selected);
+                                savePreferencesLocally(username, selected);
+                            }}
                         />
 
-                        {/* Start Room Action */}
-                        <div className="flex flex-col gap-2 pt-2">
+                        {/* 3. Primary Button: Start a room */}
+                        <div className="pt-1">
                             <Button
                                 variant="primary"
                                 size="lg"
                                 onClick={handleCreateRoom}
-                                disabled={isJoining}
-                                className="w-full text-base sm:text-lg tracking-wide uppercase"
+                                disabled={isConnecting}
+                                className="w-full text-base sm:text-lg tracking-wide uppercase font-bold min-h-[46px]"
                             >
-                                Start a room
+                                {showConnectingState && connectingAction === 'create' ? (
+                                    <span className="flex items-center justify-center gap-2">
+                                        <Spinner size="sm" label="Connecting..." />
+                                        <span>Connecting...</span>
+                                    </span>
+                                ) : (
+                                    'Start a room'
+                                )}
                             </Button>
                         </div>
 
-                        {/* Divider */}
-                        <div className="relative flex items-center justify-center my-1 select-none">
+                        {/* 4. Divider: or join with a code */}
+                        <div className="relative flex items-center justify-center my-0.5 select-none">
                             <div className="w-full border-t-2 border-ink" />
-                            <span className="absolute bg-card px-3 text-xs font-bold uppercase tracking-wider text-ink-soft">
-                                or join a game
+                            <span className="absolute bg-card px-2.5 text-[11px] font-bold uppercase tracking-wider text-ink-soft">
+                                or join with a code
                             </span>
                         </div>
 
-                        {/* Join with 6-box room code */}
-                        <div className="flex flex-col gap-3">
+                        {/* 6-box Code Input & Join Button */}
+                        <div className="flex flex-col gap-2.5">
                             <RoomCodeInput
                                 value={roomCode}
                                 onChange={(val) => {
                                     setRoomCode(val);
-                                    if (inputError) setInputError('');
+                                    if (roomCodeError) setRoomCodeError('');
                                 }}
                                 onComplete={() => {
                                     if (username.trim()) {
                                         handleJoinRoom();
                                     }
                                 }}
-                                disabled={isJoining}
+                                onEnter={() => {
+                                    if (roomCode.trim().length === 6) {
+                                        handleJoinRoom();
+                                    }
+                                }}
+                                error={roomCodeError}
+                                disabled={isConnecting}
                             />
 
                             <Button
                                 variant="secondary"
                                 size="lg"
                                 onClick={handleJoinRoom}
-                                disabled={isJoining || roomCode.trim().length !== 6}
-                                className="w-full uppercase text-base tracking-wide"
+                                disabled={isConnecting || roomCode.trim().length !== 6}
+                                className="w-full uppercase text-base tracking-wide font-bold min-h-[44px]"
                             >
-                                Join Room
+                                {showConnectingState && connectingAction === 'join' ? (
+                                    <span className="flex items-center justify-center gap-2">
+                                        <Spinner size="sm" label="Connecting..." />
+                                        <span>Connecting...</span>
+                                    </span>
+                                ) : (
+                                    'Join Room'
+                                )}
                             </Button>
                         </div>
                     </Card>
+
+                    {/* 5. Below the card: Quiet 'How to play' Link & Single Credit Line */}
+                    <div className="flex flex-col items-center gap-1.5 mt-3 select-none">
+                        <button
+                            type="button"
+                            onClick={() => setShowHowToPlay(true)}
+                            aria-label="Open how to play instructions"
+                            className="text-xs sm:text-sm font-bold text-ink-soft hover:text-ink underline underline-offset-4 decoration-ink-soft/40 hover:decoration-ink cursor-pointer focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none rounded-[4px] px-2 py-0.5"
+                        >
+                            How to play
+                        </button>
+                        <p className="text-xs text-ink-soft/80 text-center font-normal">
+                            {CREDIT_LINE}
+                        </p>
+                    </div>
                 </motion.div>
             </div>
+
+            {/* How to Play Modal */}
+            <HowToPlayModal
+                isOpen={showHowToPlay}
+                onClose={() => setShowHowToPlay(false)}
+            />
         </div>
     );
 };

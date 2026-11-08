@@ -128,3 +128,10 @@ h6 {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Hide element on phone screens shorter than 700px height */
+@media (max-width: 767px) and (max-height: 699px) {
+  .phone-short-hide {
+    display: none !important;
+  }
+}

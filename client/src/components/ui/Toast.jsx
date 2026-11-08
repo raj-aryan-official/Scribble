@@ -6,6 +6,7 @@ export const Toast = ({
     isOpen,
     onClose,
     message,
+    action, // { label: string, onClick: () => void }
     variant = 'info', // 'info' | 'success' | 'error'
     duration = 3000,
     className = '',
@@ -41,6 +42,15 @@ export const Toast = ({
                         <p className="text-sm font-bold flex-1 select-none font-body">
                             {message}
                         </p>
+                        {action && (
+                            <button
+                                type="button"
+                                onClick={action.onClick}
+                                className="px-2.5 py-1 text-xs font-bold uppercase bg-paper hover:bg-card border-2 border-ink rounded-[4px] shadow-hard-sm cursor-pointer active:translate-x-[1px] active:translate-y-[1px] focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none shrink-0"
+                            >
+                                {action.label}
+                            </button>
+                        )}
                         {onClose && (
                             <button
                                 type="button"
