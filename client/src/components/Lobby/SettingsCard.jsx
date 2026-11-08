@@ -2,6 +2,7 @@ import React from 'react';
 import { Lock, Settings as SettingsIcon } from 'lucide-react';
 import Card from '../ui/Card';
 import Chip from '../ui/Chip';
+import ModePicker from './ModePicker';
 import { TWIST_IDS, TWIST_DEFINITIONS } from '../../../../shared/types';
 
 const ROUND_OPTIONS = [1, 2, 3, 5, 7, 10, 12];
@@ -28,6 +29,7 @@ export const SettingsCard = ({
     isHost = false,
     hostName = 'the host',
     settings = {},
+    players = [],
     customWordsText = '',
     onCustomWordsChange,
     onRoundsChange,
@@ -37,6 +39,11 @@ export const SettingsCard = ({
     onTwistsChange,
     onToggleEnabledTwist,
     onTogglePack,
+    onModeChange,
+    onTeamCountChange,
+    onHintsChange,
+    onScoreMultiplierChange,
+    onRandomizeTeams,
     validCustomWordCount = 0,
 }) => {
     const currentPacks = settings.packs || [];
@@ -64,6 +71,21 @@ export const SettingsCard = ({
             {isHost ? (
                 /* Host Interactive Controls */
                 <div className="flex flex-col gap-4">
+                    {/* Game Mode Picker */}
+                    <ModePicker
+                        isHost={true}
+                        currentMode={settings.mode || 'classic'}
+                        settings={settings}
+                        players={players}
+                        onModeChange={onModeChange}
+                        onTeamCountChange={onTeamCountChange}
+                        onHintsChange={onHintsChange}
+                        onScoreMultiplierChange={onScoreMultiplierChange}
+                        onRandomizeTeams={onRandomizeTeams}
+                        onRoundsChange={onRoundsChange}
+                        onDrawTimeChange={onDrawTimeChange}
+                    />
+
                     {/* Rounds Selector */}
                     <div>
                         <label className="block text-xs font-black uppercase tracking-wider text-ink mb-1.5">
@@ -289,6 +311,13 @@ export const SettingsCard = ({
                             Only {hostName} can change these.
                         </span>
                     </div>
+
+                    <ModePicker
+                        isHost={false}
+                        currentMode={settings.mode || 'classic'}
+                        settings={settings}
+                        players={players}
+                    />
 
                     <div className="grid grid-cols-2 gap-2 text-center">
                         <div className="bg-paper border-2 border-ink p-2.5 rounded-[6px]">

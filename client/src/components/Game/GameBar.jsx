@@ -254,11 +254,17 @@ export const GameBar = ({
             statusText = isDrawer ? 'You are choosing a word' : `${drawerName} is choosing a word`;
         }
     } else if (isDrawer) {
-        statusText = 'You are drawing!';
+        statusText = drawer?.teamName ? `You are drawing for ${drawer.teamName}!` : 'You are drawing!';
     } else if (hasGuessed) {
         statusText = 'You got it!';
     } else if (gameState === 'DRAWING') {
-        statusText = `${drawerName} is drawing`;
+        if (drawer?.teamName) {
+            statusText = `${drawerName} is drawing for ${drawer.teamName}`;
+        } else if (state.settings?.mode === 'relay') {
+            statusText = `${drawerName} is drawing (Relay)`;
+        } else {
+            statusText = `${drawerName} is drawing`;
+        }
     } else if (gameState === 'ROUND_END') {
         statusText = 'Round ended';
     }
@@ -383,6 +389,23 @@ export const GameBar = ({
                         >
                             {statusText}
                         </span>
+                        {drawer?.teamName && (
+                            <span
+                                data-testid="gamebar-team-badge"
+                                className="inline-flex items-center px-1.5 py-0.5 rounded-[4px] text-[10px] font-black uppercase text-white border border-ink shadow-hard-xs shrink-0"
+                                style={{ backgroundColor: drawer.teamColor || '#EF4444' }}
+                            >
+                                {drawer.teamName}
+                            </span>
+                        )}
+                        {state.settings?.mode === 'relay' && gameState === 'DRAWING' && (
+                            <span
+                                data-testid="relay-segment-indicator"
+                                className="inline-flex items-center px-1.5 py-0.5 rounded-[4px] text-[10px] font-black uppercase bg-marigold text-ink border border-ink shadow-hard-xs shrink-0"
+                            >
+                                Relay #{(state.currentRelaySegment ?? 0) + 1}
+                            </span>
+                        )}
                         {twist && (
                             <Tooltip content={twist.rule || twist.name}>
                                 <span

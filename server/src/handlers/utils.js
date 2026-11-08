@@ -22,19 +22,26 @@ const getMemberRoom = (socket, roomCode) => {
     return null;
 };
 
+const { getMode } = require('../modes');
+
 const isDrawer = (room, socket) => {
     if (!room || !socket) return false;
+    const socketId = typeof socket === 'string' ? socket : socket.id;
+    const mode = getMode(room.settings?.mode);
+    if (mode && typeof mode.canDraw === 'function') {
+        return mode.canDraw(room, socketId);
+    }
     if (room.drawerId) {
-        if (room.drawerId === socket.id) return true;
+        if (room.drawerId === socketId) return true;
         const rec = room.records?.get(room.drawerId);
-        if (rec && rec.socketId === socket.id) return true;
+        if (rec && rec.socketId === socketId) return true;
         for (const r of (room.records?.values() || [])) {
-            if (r.socketId === socket.id && r.playerId === room.drawerId) return true;
+            if (r.socketId === socketId && r.playerId === room.drawerId) return true;
         }
     }
     if (Array.isArray(room.players) && room.currentDrawerIndex !== undefined) {
         const drawer = room.players[room.currentDrawerIndex];
-        return Boolean(drawer && (drawer.id === socket.id || drawer.socketId === socket.id));
+        return Boolean(drawer && (drawer.id === socketId || drawer.socketId === socketId));
     }
     return false;
 };

@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
-const { GAME_STATES, TWIST_IDS } = require('../../shared/types.cjs');
+const { GAME_STATES, TWIST_IDS, ALLOWED_MODES } = require('../../shared/types.cjs');
+const { getMode } = require('./modes');
 const blocklist = require('./blocklist');
 const { sanitiseText } = require('./sanitise');
 const {
@@ -15,8 +16,8 @@ const {
 const { clearRoomQueue } = require('./handlers/actionQueue');
 
 const ROOM_CODE_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
-const ALLOWED_ROUNDS = [1, 2, 3, 5, 7, 10, 12];
-const ALLOWED_DRAW_TIMES = [60, 80, 100, 120];
+const ALLOWED_ROUNDS = [1, 2, 3, 5, 7, 8, 10, 12];
+const ALLOWED_DRAW_TIMES = [10, 15, 30, 45, 60, 80, 100, 120];
 const ALLOWED_DIFFICULTIES = ['Easy', 'Medium', 'Hard', 'Mixed'];
 const ALLOWED_PACKS = ['animals', 'food', 'places', 'objects', 'actions'];
 const ALLOWED_WORD_CHOICES = ['pick', 'random'];
@@ -113,9 +114,24 @@ function blockKickedPlayer(room, record, durationMs = 10 * 60 * 1000) {
 }
 
 function sanitizeSettings(rawSettings = {}) {
-    const rounds = ALLOWED_ROUNDS.includes(rawSettings?.rounds) ? rawSettings.rounds : 3;
-    const drawTime = ALLOWED_DRAW_TIMES.includes(rawSettings?.drawTime) ? rawSettings.drawTime : 60;
-    const difficulty = ALLOWED_DIFFICULTIES.includes(rawSettings?.difficulty) ? rawSettings.difficulty : 'Medium';
+    const mode = ALLOWED_MODES.includes(rawSettings?.mode) ? rawSettings.mode : 'classic';
+
+    let defaultRounds = 3;
+    let defaultDrawTime = 60;
+    let defaultDifficulty = 'Medium';
+    if (mode === 'speed') {
+        defaultRounds = 8;
+        defaultDrawTime = 30;
+        defaultDifficulty = 'Easy';
+    } else if (mode === 'relay') {
+        defaultDrawTime = 10;
+    } else if (mode === 'hard') {
+        defaultDifficulty = 'Hard';
+    }
+
+    const rounds = ALLOWED_ROUNDS.includes(rawSettings?.rounds) ? rawSettings.rounds : defaultRounds;
+    const drawTime = ALLOWED_DRAW_TIMES.includes(rawSettings?.drawTime) ? rawSettings.drawTime : defaultDrawTime;
+    const difficulty = ALLOWED_DIFFICULTIES.includes(rawSettings?.difficulty) ? rawSettings.difficulty : defaultDifficulty;
     const wordChoice = ALLOWED_WORD_CHOICES.includes(rawSettings?.wordChoice) ? rawSettings.wordChoice : 'pick';
     let maxPlayers = 12;
     if (
@@ -171,7 +187,27 @@ function sanitizeSettings(rawSettings = {}) {
         }
     }
 
+    let hints = 2;
+    if (mode === 'hard') {
+        hints = 1;
+    } else if (typeof rawSettings?.hints === 'number') {
+        hints = Math.max(0, Math.min(5, Math.floor(rawSettings.hints)));
+    }
+
+    let scoreMultiplier = 1.0;
+    if (mode === 'hard') {
+        scoreMultiplier = 1.5;
+    } else if (typeof rawSettings?.scoreMultiplier === 'number') {
+        scoreMultiplier = Math.max(0.5, Math.min(3.0, rawSettings.scoreMultiplier));
+    }
+
+    let teamCount = 2;
+    if (typeof rawSettings?.teamCount === 'number') {
+        teamCount = Math.max(2, Math.min(4, Math.floor(rawSettings.teamCount)));
+    }
+
     return {
+        mode,
         rounds,
         drawTime,
         difficulty,
@@ -180,7 +216,10 @@ function sanitizeSettings(rawSettings = {}) {
         customWords,
         wordChoice,
         twists,
-        enabledTwists
+        enabledTwists,
+        hints,
+        scoreMultiplier,
+        teamCount
     };
 }
 
@@ -282,6 +321,13 @@ const toPublicPlayer = (player, room = null) => {
     if (rec?.joinedMidRound !== undefined || player.joinedMidRound !== undefined) {
         result.joinedMidRound = Boolean(rec?.joinedMidRound || player.joinedMidRound);
     }
+    const teamId = player.teamId || rec?.teamId || null;
+    if (teamId) {
+        result.teamId = teamId;
+        const { TEAM_DEFINITIONS } = require('./modes/teams');
+        result.teamName = TEAM_DEFINITIONS[teamId]?.name || teamId;
+        result.teamColor = TEAM_DEFINITIONS[teamId]?.color || null;
+    }
     return result;
 };
 
@@ -307,7 +353,7 @@ const toPublicRoom = (room) => {
     const originalPlayer = room.originalHostId ? (Array.isArray(room.players) ? room.players.find(p => p.playerId === room.originalHostId || p.id === room.originalHostId) : null) : null;
     const originalHostName = originalRecord?.username || originalPlayer?.username || null;
 
-    return {
+    const publicRoom = {
         code: room.code,
         hostId: room.hostId,
         settings: room.settings,
@@ -320,6 +366,17 @@ const toPublicRoom = (room) => {
         originalHostId: room.originalHostId || null,
         originalHostName: originalHostName || null
     };
+
+    if (room.teams) publicRoom.teams = room.teams;
+    if (room.teamScores) publicRoom.teamScores = room.teamScores;
+    if (room.currentRelaySegment !== undefined && room.currentRelaySegment !== null) {
+        publicRoom.currentRelaySegment = room.currentRelaySegment;
+    }
+    if (room.currentRelayDrawerId) {
+        publicRoom.currentRelayDrawerId = room.currentRelayDrawerId;
+    }
+
+    return publicRoom;
 };
 
 class RoomManager {
@@ -606,7 +663,14 @@ class RoomManager {
             if (!room.turnQueue.includes(playerId)) {
                 room.turnQueue.push(playerId);
             }
+            if (room.settings?.mode === 'team') {
+                const { getSmallerTeam, assignPlayerToTeam } = require('./modes/teams');
+                const tId = getSmallerTeam(room, room.settings?.teamCount || 2);
+                assignPlayerToTeam(room, playerId, tId);
+            }
         } else {
+            const mode = getMode(room.settings?.mode);
+            mode.canJoinMidGame(room, player);
             handleLateJoin(room, playerId);
         }
 
@@ -959,6 +1023,7 @@ roomManager.ALLOWED_DRAW_TIMES = ALLOWED_DRAW_TIMES;
 roomManager.ALLOWED_DIFFICULTIES = ALLOWED_DIFFICULTIES;
 roomManager.ALLOWED_PACKS = ALLOWED_PACKS;
 roomManager.ALLOWED_TWISTS = ALLOWED_TWISTS;
+roomManager.ALLOWED_MODES = ALLOWED_MODES;
 roomManager.TWIST_IDS = TWIST_IDS;
 roomManager.MAX_ROOMS = MAX_ROOMS;
 roomManager.deduplicateNickname = deduplicateNickname;
@@ -979,6 +1044,7 @@ module.exports.ALLOWED_DRAW_TIMES = ALLOWED_DRAW_TIMES;
 module.exports.ALLOWED_DIFFICULTIES = ALLOWED_DIFFICULTIES;
 module.exports.ALLOWED_PACKS = ALLOWED_PACKS;
 module.exports.ALLOWED_TWISTS = ALLOWED_TWISTS;
+module.exports.ALLOWED_MODES = ALLOWED_MODES;
 module.exports.TWIST_IDS = TWIST_IDS;
 module.exports.MAX_ROOMS = MAX_ROOMS;
 module.exports.deduplicateNickname = deduplicateNickname;

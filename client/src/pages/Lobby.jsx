@@ -5,7 +5,7 @@ import { Users, ChevronDown, ChevronUp, Settings as SettingsIcon } from 'lucide-
 import { useGame } from '../context/GameContext';
 import { useSocket } from '../hooks/useSocket';
 import { useSound } from '../hooks/useSound';
-import { EVENTS, TWIST_IDS } from '../../../shared/types';
+import { EVENTS, TWIST_IDS, MODE_DEFINITIONS } from '../../../shared/types';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import Toast from '../components/ui/Toast';
@@ -244,6 +244,21 @@ export const Lobby = () => {
     const handleDrawTimeChange = (drawTime) => emitUpdateSettings({ drawTime });
     const handleDifficultyChange = (difficulty) => emitUpdateSettings({ difficulty });
     const handleWordChoiceChange = (wordChoice) => emitUpdateSettings({ wordChoice });
+    const handleModeChange = (mode) => {
+        const def = MODE_DEFINITIONS[mode];
+        const updates = { mode };
+        if (def?.defaults) {
+            Object.assign(updates, def.defaults);
+        }
+        emitUpdateSettings(updates);
+    };
+    const handleTeamCountChange = (teamCount) => emitUpdateSettings({ teamCount });
+    const handleHintsChange = (hints) => emitUpdateSettings({ hints });
+    const handleScoreMultiplierChange = (scoreMultiplier) => emitUpdateSettings({ scoreMultiplier });
+    const handleRandomizeTeams = () => {
+        if (!isHost) return;
+        socket.emit(EVENTS.RANDOMIZE_TEAMS, { roomCode: code });
+    };
     const handleTwistsChange = (twists) => emitUpdateSettings({ twists });
     const handleToggleEnabledTwist = (twistId) => {
         const active = currentSettings.enabledTwists || TWIST_IDS;
@@ -449,6 +464,7 @@ export const Lobby = () => {
                                     isHost={isHost}
                                     hostName={hostPlayer.username}
                                     settings={currentSettings}
+                                    players={state.players}
                                     customWordsText={customWordsText}
                                     onCustomWordsChange={handleCustomWordsChange}
                                     onRoundsChange={handleRoundsChange}
@@ -458,6 +474,11 @@ export const Lobby = () => {
                                     onTwistsChange={handleTwistsChange}
                                     onToggleEnabledTwist={handleToggleEnabledTwist}
                                     onTogglePack={handleTogglePack}
+                                    onModeChange={handleModeChange}
+                                    onTeamCountChange={handleTeamCountChange}
+                                    onHintsChange={handleHintsChange}
+                                    onScoreMultiplierChange={handleScoreMultiplierChange}
+                                    onRandomizeTeams={handleRandomizeTeams}
                                     validCustomWordCount={validCustomWordCount}
                                 />
                             </div>
@@ -500,6 +521,7 @@ export const Lobby = () => {
                         isHost={isHost}
                         hostName={hostPlayer.username}
                         settings={currentSettings}
+                        players={state.players}
                         customWordsText={customWordsText}
                         onCustomWordsChange={handleCustomWordsChange}
                         onRoundsChange={handleRoundsChange}
@@ -509,6 +531,11 @@ export const Lobby = () => {
                         onTwistsChange={handleTwistsChange}
                         onToggleEnabledTwist={handleToggleEnabledTwist}
                         onTogglePack={handleTogglePack}
+                        onModeChange={handleModeChange}
+                        onTeamCountChange={handleTeamCountChange}
+                        onHintsChange={handleHintsChange}
+                        onScoreMultiplierChange={handleScoreMultiplierChange}
+                        onRandomizeTeams={handleRandomizeTeams}
                         validCustomWordCount={validCustomWordCount}
                     />
 

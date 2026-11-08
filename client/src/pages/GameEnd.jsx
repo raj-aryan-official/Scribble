@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
-import { Download, Palette, Zap, Heart } from 'lucide-react';
+import { Download, Palette, Zap, Heart, Crown } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { useSocket } from '../hooks/useSocket';
 import { useSound } from '../hooks/useSound';
@@ -157,6 +157,38 @@ export const GameEnd = () => {
         return state.players?.find((p) => p.isHost) || state.players?.[0];
     }, [state.players]);
     const hostName = hostPlayer?.username || 'the host';
+
+    // Winning team calculation for Team mode
+    const winningTeam = useMemo(() => {
+        if (state.settings?.mode !== 'team' || !state.teamScores) return null;
+        let bestTeamId = null;
+        let highestScore = -1;
+        for (const [tId, score] of Object.entries(state.teamScores)) {
+            if (score > highestScore) {
+                highestScore = score;
+                bestTeamId = tId;
+            }
+        }
+        if (!bestTeamId) return null;
+        const teamNames = {
+            'team-red': 'Team Red',
+            'team-blue': 'Team Blue',
+            'team-green': 'Team Green',
+            'team-yellow': 'Team Yellow',
+        };
+        const teamColors = {
+            'team-red': '#EF4444',
+            'team-blue': '#3B82F6',
+            'team-green': '#10B981',
+            'team-yellow': '#F59E0B',
+        };
+        return {
+            id: bestTeamId,
+            name: teamNames[bestTeamId] || bestTeamId,
+            color: teamColors[bestTeamId] || '#EF4444',
+            score: highestScore,
+        };
+    }, [state.settings?.mode, state.teamScores]);
 
     // Podium configuration
     // When only 2 players: show 1st and 2nd.
@@ -374,6 +406,23 @@ export const GameEnd = () => {
                     </h1>
                 </div>
 
+                {/* Winning Team Banner (Team Mode) */}
+                {winningTeam && (
+                    <div
+                        data-testid="winning-team-banner"
+                        className="px-6 py-3 rounded-[8px] border-2 border-ink shadow-hard flex items-center gap-3 text-white"
+                        style={{ backgroundColor: winningTeam.color }}
+                    >
+                        <Crown className="w-6 h-6 fill-white" />
+                        <span className="font-heading font-black text-xl sm:text-2xl uppercase tracking-wider">
+                            {winningTeam.name} Wins!
+                        </span>
+                        <span className="font-mono font-bold text-sm bg-white/20 px-2.5 py-0.5 rounded-[4px]">
+                            {winningTeam.score} pts
+                        </span>
+                    </div>
+                )}
+
                 {/* Accessible Ordered List of Standings (Visually Hidden) */}
                 <ol className="sr-only">
                     {rankedPlayers.map((p) => (
@@ -444,6 +493,15 @@ export const GameEnd = () => {
                                         <p className="font-heading font-black text-xs sm:text-sm text-ink truncate max-w-[100px] mt-1">
                                             {player.username}
                                         </p>
+                                        {player.teamName && (
+                                            <span
+                                                data-testid={`player-team-pill-${player.id}`}
+                                                className="text-[9px] font-black uppercase text-white px-1.5 py-0.5 rounded-[3px] border border-ink mt-0.5"
+                                                style={{ backgroundColor: player.teamColor || '#3B82F6' }}
+                                            >
+                                                {player.teamName}
+                                            </span>
+                                        )}
                                         <p className="font-mono font-bold text-xs text-ink-soft tabular-nums">
                                             {player.score} pts
                                         </p>
@@ -620,6 +678,15 @@ export const GameEnd = () => {
                                         <span className="font-bold text-xs sm:text-sm truncate text-ink">
                                             {player.username}
                                         </span>
+                                        {player.teamName && (
+                                            <span
+                                                data-testid={`player-standing-team-${player.id}`}
+                                                className="text-[9px] font-black uppercase text-white px-1.5 py-0.5 rounded-[3px] border border-ink shrink-0"
+                                                style={{ backgroundColor: player.teamColor || '#3B82F6' }}
+                                            >
+                                                {player.teamName}
+                                            </span>
+                                        )}
                                         {isMe && (
                                             <span className="text-[10px] font-black uppercase px-1.5 py-0.5 rounded-[4px] bg-cobalt text-white shrink-0">
                                                 YOU

@@ -1,11 +1,11 @@
 const { v4: uuidv4 } = require('uuid');
 const { EVENTS, GAME_STATES } = require('../../../shared/types.cjs');
-const { normalize, isCorrect, isClose } = require('../guess');
+const { normalize } = require('../guess');
 const blocklist = require('../blocklist');
 const { rejectWithError, getMemberRoom, sanitiseText } = require('./utils');
-const { calculateGuessScore, calculateDrawerBonus } = require('../game/scoring');
 const { getTimeLeft, recordChatMessage, endRound } = require('../game/loop');
 const { isGuesserEligibleForBonus } = require('../game/turns');
+const { getMode } = require('../modes');
 
 // Per-socket message rate-limiting store (socketId -> Array<timestamp>)
 const socketMessageTimestamps = new Map();
@@ -122,8 +122,11 @@ function registerChatHandlers(io, socket, safeOn) {
         // Active game during DRAWING phase: message from player who hasn't guessed yet
         // E20: Stale turnId messages are dropped from being counted as guesses
         const isStaleTurn = Boolean(payload.turnId && room.currentTurnId && payload.turnId !== room.currentTurnId);
-        if (room.gameState === GAME_STATES.DRAWING && room.wordToGuess && !isStaleTurn) {
-            if (isCorrect(text, room.wordToGuess)) {
+        const mode = getMode(room.settings?.mode);
+        const guessCheck = mode.onGuess(room, socket.id, text);
+
+        if (room.gameState === GAME_STATES.DRAWING && room.wordToGuess && !isStaleTurn && guessCheck.allowed) {
+            if (guessCheck.isCorrect) {
                 if (!room.guessedPlayers) room.guessedPlayers = new Set();
                 room.guessedPlayers.add(socket.id);
                 socket.join(`${room.code}:guessed`);
@@ -140,12 +143,14 @@ function registerChatHandlers(io, socket, safeOn) {
                 if (isFirstGuesser) {
                     room.fastestGuesserId = socket.id;
                 }
-                let gained = calculateGuessScore(timeLeft, totalTime, isFirstGuesser);
-                if (room.currentTwist?.id === 'speed') {
-                    gained = gained * 2;
-                } else if (room.currentTwist?.id === 'first-guesser-bonus' && isFirstGuesser) {
-                    gained = gained * 2;
-                }
+                const scoreResult = mode.score(room, {
+                    type: 'guess',
+                    guesserId: socket.id,
+                    timeLeft,
+                    totalTime,
+                    isFirstGuesser
+                });
+                let gained = scoreResult.points;
 
                 const guessDuration = Math.max(0.5, (Date.now() - (room.roundStartTime || Date.now())) / 1000);
                 if (!room.playerGuessTimes) room.playerGuessTimes = {};
@@ -192,7 +197,12 @@ function registerChatHandlers(io, socket, safeOn) {
                 // Drawer bonus at 10% of each guess - awards only if guesser was present when word was chosen
                 const isEligibleForBonus = isGuesserEligibleForBonus(room, socket.id) || (guesserRecord && isGuesserEligibleForBonus(room, guesserRecord.playerId));
                 if (drawerId && isEligibleForBonus) {
-                    const drawerBonus = calculateDrawerBonus(gained);
+                    const drawerBonusResult = mode.score(room, {
+                        type: 'drawerBonus',
+                        drawerId,
+                        guesserGained: gained
+                    });
+                    const drawerBonus = drawerBonusResult.points;
                     if (drawerRecord) {
                         drawerRecord.score = (drawerRecord.score || 0) + drawerBonus;
                         room.scores[drawerRecord.playerId] = drawerRecord.score;
@@ -249,7 +259,7 @@ function registerChatHandlers(io, socket, safeOn) {
             }
 
             // A near miss emits CLOSE_GUESS only to that sender. Do not broadcast it.
-            if (isClose(text, room.wordToGuess)) {
+            if (guessCheck.isClose) {
                 socket.emit(EVENTS.CLOSE_GUESS, { message: 'Close!' });
             }
         }

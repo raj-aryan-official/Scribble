@@ -6,6 +6,7 @@ const { getWordChoices } = require('../wordBank');
 const logger = require('../logger');
 const { flushReactionBatch, getTopReaction } = require('../handlers/reactions');
 const { selectTwistForTurn } = require('./twists');
+const { getMode } = require('../modes');
 const {
     transition
 } = require('./machine');
@@ -390,6 +391,8 @@ const startTurn = (io, room, isGameStart = false) => {
     room.currentTwist = selectTwistForTurn(room);
     room.turnInkRemaining = room.currentTwist?.totalInk ?? null;
 
+    getMode(room.settings?.mode).onTurnStart(room);
+
     room.drawerId = candidatePlayer ? candidatePlayer.id : (candidateRecord?.socketId || candidateId);
     const candidateIdx = room.players.findIndex(p => p.id === room.drawerId || p.playerId === candidateId);
     if (candidateIdx !== -1) {
@@ -530,9 +533,15 @@ const startRoundInterval = (io, room, totalTime = (room.settings?.drawTime || 60
             const timeLeft = getTimeLeft(currentRoom);
             io.to(currentRoom.code).emit(EVENTS.TIMER_UPDATE, timeLeft);
 
-            const revealTimes = [Math.floor(totalTime * 0.5), Math.floor(totalTime * 0.25)];
+            const maxHints = currentRoom.settings?.mode === 'hard'
+                ? 1
+                : (typeof currentRoom.settings?.hints === 'number' ? currentRoom.settings.hints : 2);
 
-            if (revealTimes.includes(timeLeft)) {
+            const revealTimes = maxHints === 1
+                ? [Math.floor(totalTime * 0.5)]
+                : (maxHints === 0 ? [] : [Math.floor(totalTime * 0.5), Math.floor(totalTime * 0.25)]);
+
+            if (revealTimes.includes(timeLeft) && (currentRoom.revealedIndices?.size || 0) < maxHints) {
                 const currentWord = currentRoom.wordToGuess;
                 if (currentWord) {
                     const unrevealedIndices = [];
@@ -664,6 +673,7 @@ const startRound = (io, room, word, autoPicked = false) => {
 
 const endRound = (io, room) => {
     clearRoomTimers(room);
+    getMode(room?.settings?.mode).onTurnEnd(room);
     if (room.drawerId) {
         recordTurnDraw(room, room.drawerId, room.currentTurnId);
     }

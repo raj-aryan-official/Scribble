@@ -24,6 +24,8 @@ export const EVENTS = {
     END_GAME_EARLY: 'endGameEarly',
     PLAY_AGAIN: 'playAgain',
     UPDATE_SETTINGS: 'updateSettings',
+    ASSIGN_TEAM: 'assignTeam',
+    RANDOMIZE_TEAMS: 'randomizeTeams',
     SKIP_ROUND_END: 'skipRoundEnd',
     CLAIM_SEAT: 'claimSeat',
     RESOLVE_SEAT_CLAIM: 'resolveSeatClaim',
@@ -174,5 +176,62 @@ export const TWIST_DEFINITIONS = {
         rule: 'The first player to guess correctly scores double points!',
         badge: 'First guess 2x',
         icon: 'award'
+    }
+};
+
+export const GAME_MODES = {
+    CLASSIC: 'classic',
+    SPEED: 'speed',
+    TEAM: 'team',
+    RELAY: 'relay',
+    HARD: 'hard',
+    CUSTOM: 'custom'
+};
+
+export const ALLOWED_MODES = [
+    'classic',
+    'speed',
+    'team',
+    'relay',
+    'hard',
+    'custom'
+];
+
+export const MODE_DEFINITIONS = {
+    'classic': {
+        id: 'classic',
+        name: 'Classic',
+        description: 'Standard Scribble. Take turns drawing secret words while others race to guess.',
+        icon: 'pencil'
+    },
+    'speed': {
+        id: 'speed',
+        name: 'Speed',
+        description: '30 s turns, 8 short rounds, and a smaller word pool of easy words.',
+        icon: 'zap'
+    },
+    'team': {
+        id: 'team',
+        name: 'Team',
+        description: '2 to 4 teams. Teams draw in turns; only teammates guess for their team. Shared team scores on the leaderboard.',
+        icon: 'users'
+    },
+    'relay': {
+        id: 'relay',
+        name: 'Relay',
+        description: 'One secret word, N players each draw for 10 s in turn on the same paper. Guessers guess at the end, and the score is split.',
+        icon: 'git-merge'
+    },
+    'hard': {
+        id: 'hard',
+        name: 'Hard',
+        description: 'Only one hint is ever revealed, and points are 1.5x.',
+        icon: 'flame'
+    },
+    'custom': {
+        id: 'custom',
+        name: 'Custom',
+        description: 'Host sets time, hint count, rounds, and a score multiplier.',
+        icon: 'sliders'
     }
 };

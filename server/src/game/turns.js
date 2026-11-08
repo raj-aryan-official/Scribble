@@ -1,5 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
 const { GAME_STATES } = require('../../../shared/types.cjs');
+const { getMode } = require('../modes');
 
 /**
  * Creates a unique identifier for a turn.
@@ -17,6 +18,10 @@ function createTurnId() {
  */
 function buildInitialQueue(room) {
     if (!room || !room.records) return [];
+    const mode = getMode(room?.settings?.mode);
+    if (mode && typeof mode.buildTurnQueue === 'function') {
+        return mode.buildTurnQueue(room);
+    }
     const eligible = Array.from(room.records.values())
         .filter((r) => r.status === 'connected' || r.status === 'away')
         .sort((a, b) => (a.joinedAt || 0) - (b.joinedAt || 0));
@@ -82,6 +87,12 @@ function handleLateJoin(room, playerId) {
         room.makeUpQueue.includes(playerId) ||
         room.drawerId === playerId
     ) {
+        return;
+    }
+
+    // Mid-game join rule for relay mode: Relay joins at the next relay
+    if (room.settings?.mode === 'relay') {
+        room.nextRoundQueue.push(playerId);
         return;
     }
 

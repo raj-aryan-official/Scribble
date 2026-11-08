@@ -70,6 +70,16 @@ export const PlayerTag = ({
                             </span>
                         )}
 
+                        {player.teamName && (
+                            <span
+                                data-testid={`player-team-${player.id}`}
+                                className="text-white text-[10px] font-black uppercase px-1.5 py-0.5 rounded-[4px] border border-ink shadow-hard-xs shrink-0"
+                                style={{ backgroundColor: player.teamColor || '#3B82F6' }}
+                            >
+                                {player.teamName}
+                            </span>
+                        )}
+
                         {isDisconnected && (
                             <span className="bg-paper text-tomato border border-tomato/50 text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-[4px] shrink-0">
                                 Away

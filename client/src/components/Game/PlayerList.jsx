@@ -179,6 +179,16 @@ export const PlayerList = ({
                                 {player.username}
                             </span>
 
+                            {player.teamName && (
+                                <span
+                                    data-testid={`player-team-badge-${player.id}`}
+                                    className="text-[8px] font-black uppercase text-white px-1 py-0.5 rounded-[3px] border border-ink shrink-0"
+                                    style={{ backgroundColor: player.teamColor || '#3B82F6' }}
+                                >
+                                    {player.teamName}
+                                </span>
+                            )}
+
                             {isAway && (
                                 <span className="text-[9px] font-bold text-tomato-deep uppercase bg-paper/80 px-1 py-0.5 rounded border border-tomato/30 shrink-0">
                                     Away
@@ -301,6 +311,40 @@ export const PlayerList = ({
                 </span>
             </div>
 
+            {/* Team Scoreboard (Team Mode) */}
+            {state.settings?.mode === 'team' && state.teamScores && (
+                <div
+                    data-testid="team-scoreboard"
+                    className="flex items-center gap-1.5 p-1.5 bg-paper border border-ink rounded-[6px] flex-wrap"
+                >
+                    {Object.entries(state.teamScores).map(([tId, tScore]) => {
+                        const teamNames = {
+                            'team-red': 'Team Red',
+                            'team-blue': 'Team Blue',
+                            'team-green': 'Team Green',
+                            'team-yellow': 'Team Yellow',
+                        };
+                        const teamColors = {
+                            'team-red': '#EF4444',
+                            'team-blue': '#3B82F6',
+                            'team-green': '#10B981',
+                            'team-yellow': '#F59E0B',
+                        };
+                        return (
+                            <div
+                                key={tId}
+                                data-testid={`team-score-${tId}`}
+                                className="flex items-center gap-1 px-2 py-0.5 rounded-[4px] text-white text-[11px] font-black border border-ink shadow-hard-xs"
+                                style={{ backgroundColor: teamColors[tId] || '#3B82F6' }}
+                            >
+                                <span>{teamNames[tId] || tId}:</span>
+                                <span className="font-mono">{tScore}</span>
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+
             <div className="flex flex-col gap-2 overflow-y-auto max-h-[calc(100vh-220px)] pr-1">
                 {rankedPlayers.map((player, index) => {
                     const isDrawer = player.id === drawerId || player.playerId === drawerId;
@@ -383,6 +427,15 @@ export const PlayerList = ({
                                     </span>
                                     {player.isHost && (
                                         <Crown className="w-3 h-3 text-marigold fill-marigold shrink-0" aria-label="Host" />
+                                    )}
+                                    {player.teamName && (
+                                        <span
+                                            data-testid={`player-team-badge-${player.id}`}
+                                            className="text-[9px] font-black uppercase text-white px-1.5 py-0.5 rounded-[3px] border border-ink shadow-hard-xs shrink-0"
+                                            style={{ backgroundColor: player.teamColor || '#3B82F6' }}
+                                        >
+                                            {player.teamName}
+                                        </span>
                                     )}
                                 </div>
                                 <div className="flex items-center gap-1.5 flex-wrap">

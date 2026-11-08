@@ -671,6 +671,35 @@ function registerRoomHandlers(io, socket, safeOn) {
         io.to(room.code).emit(EVENTS.ROOM_JOINED, toPublicRoom(room));
     };
 
+    const handleAssignTeam = (payload) => {
+        if (!payload || typeof payload !== 'object') return rejectWithError(socket, 'Invalid payload');
+        const room = getMemberRoom(socket, payload.roomCode);
+        if (!room) return rejectWithError(socket, 'Not a member of this room');
+        if (!isHost(room, socket)) return rejectWithError(socket, 'Only host can assign teams');
+        if (room.gameState !== GAME_STATES.LOBBY) return rejectWithError(socket, 'Teams can only be assigned in lobby');
+
+        const { assignPlayerToTeam } = require('../modes/teams');
+        assignPlayerToTeam(room, payload.playerId, payload.teamId);
+        io.to(room.code).emit(EVENTS.ROOM_JOINED, toPublicRoom(room));
+    };
+
+    const handleRandomizeTeams = (payload) => {
+        if (!payload || typeof payload !== 'object') return rejectWithError(socket, 'Invalid payload');
+        const room = getMemberRoom(socket, payload.roomCode);
+        if (!room) return rejectWithError(socket, 'Not a member of this room');
+        if (!isHost(room, socket)) return rejectWithError(socket, 'Only host can randomize teams');
+        if (room.gameState !== GAME_STATES.LOBBY) return rejectWithError(socket, 'Teams can only be randomized in lobby');
+
+        const { randomizeTeams } = require('../modes/teams');
+        randomizeTeams(room, room.settings?.teamCount || payload.teamCount || 2);
+        io.to(room.code).emit(EVENTS.ROOM_JOINED, toPublicRoom(room));
+    };
+
+    safeOn(EVENTS.ASSIGN_TEAM, handleAssignTeam);
+    if (EVENTS.ASSIGN_TEAM !== 'assignTeam') safeOn('assignTeam', handleAssignTeam);
+    safeOn(EVENTS.RANDOMIZE_TEAMS, handleRandomizeTeams);
+    if (EVENTS.RANDOMIZE_TEAMS !== 'randomizeTeams') safeOn('randomizeTeams', handleRandomizeTeams);
+
     safeOn(EVENTS.UPDATE_SETTINGS, handleUpdateSettings);
     if (EVENTS.UPDATE_SETTINGS !== 'updateSettings') {
         safeOn('updateSettings', handleUpdateSettings);
