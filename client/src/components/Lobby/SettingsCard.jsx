@@ -226,3 +226,4 @@ export const SettingsCard = ({
 };
 
 export default SettingsCard;
+

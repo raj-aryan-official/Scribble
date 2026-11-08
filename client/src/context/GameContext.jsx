@@ -1,7 +1,7 @@
 import React, { createContext, useReducer, useContext } from 'react';
 import { GAME_STATES } from '../../../shared/types';
 
-const GameContext = createContext();
+export const GameContext = createContext();
 
 const initialState = {
     gameState: GAME_STATES.LOBBY,
@@ -22,6 +22,10 @@ const initialState = {
     settings: { rounds: 3, drawTime: 60, difficulty: 'Medium', maxPlayers: 12, packs: [], customWords: [] },
     matchDrawings: [],
     roundGained: {},
+    startsAt: null,
+    selectionEndsAt: null,
+    roundEndsAt: null,
+    autoPickedWord: null,
     error: null
 };
 
@@ -62,6 +66,9 @@ const gameReducer = (state, action) => {
                 wordToGuess: snapshot.word || null,
                 wordChoices: snapshot.wordChoices || [],
                 messages: Array.isArray(snapshot.recentChat) && snapshot.recentChat.length > 0 ? snapshot.recentChat.slice(-100) : state.messages.slice(-100),
+                startsAt: snapshot.startsAt || null,
+                selectionEndsAt: snapshot.selectionEndsAt || null,
+                roundEndsAt: snapshot.roundEndsAt || null,
                 error: null
             };
         }
@@ -92,12 +99,21 @@ const gameReducer = (state, action) => {
                 wordToGuess: state.currentUser?.id === action.payload.drawerId ? state.wordToGuess : null,
                 wordChoices: [],
                 guessedPlayers: [],
-                drawerId: action.payload.drawerId
+                drawerId: action.payload.drawerId,
+                roundEndsAt: action.payload.roundEndsAt || null,
+                startsAt: null,
+                selectionEndsAt: null
             };
         case 'HINT_UPDATE':
             return { ...state, wordHint: action.payload.hint };
         case 'DRAWER_WORD':
-            return { ...state, wordToGuess: action.payload.word };
+            return {
+                ...state,
+                wordToGuess: action.payload.word,
+                autoPickedWord: action.payload.autoPicked ? action.payload.word : null
+            };
+        case 'CLEAR_AUTO_PICKED':
+            return { ...state, autoPickedWord: null };
         case 'CORRECT_GUESS': {
             const isMe = action.payload.playerId === state.currentUser?.id;
             const newScore = action.payload.total ?? action.payload.points;
@@ -118,7 +134,11 @@ const gameReducer = (state, action) => {
                 currentRound: action.payload.currentRound || state.currentRound,
                 totalRounds: action.payload.settings?.rounds || action.payload.totalRounds || state.totalRounds,
                 drawerId: action.payload.drawerId || state.drawerId,
-                guessedPlayers: []
+                startsAt: action.payload.startsAt || null,
+                selectionEndsAt: action.payload.selectionEndsAt || null,
+                roundEndsAt: action.payload.roundEndsAt || null,
+                guessedPlayers: [],
+                autoPickedWord: null
             };
         case 'ROUND_ENDED':
             return {

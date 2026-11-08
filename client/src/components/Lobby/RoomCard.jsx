@@ -110,3 +110,4 @@ export const RoomCard = ({
 };
 
 export default RoomCard;
+

@@ -14,6 +14,10 @@ import ToolTray from '../components/Game/ToolTray';
 import GuessPanel from '../components/Game/GuessPanel';
 import WordChoice from '../components/Game/WordChoice';
 import RoundEndOverlay from '../components/Game/RoundEndOverlay';
+import GameStartCountdown from '../components/Game/GameStartCountdown';
+import TurnIntro from '../components/Game/TurnIntro';
+import ScoringCoachmark from '../components/Game/ScoringCoachmark';
+import AutoPickedBanner from '../components/Game/AutoPickedBanner';
 import EdgeState, { mapErrorToEdgeState } from '../components/Game/EdgeState';
 import { RemoteAudio } from '../components/Chat/RemoteAudio';
 
@@ -27,9 +31,55 @@ export const Game = () => {
     const [canvasWidth, setCanvasWidth] = useState(800);
     const lastTickSecondRef = useRef(null);
 
+    const [showCountdown, setShowCountdown] = useState(() => {
+        return Boolean(state.startsAt && Date.now() < state.startsAt);
+    });
+    const [showTurnIntro, setShowTurnIntro] = useState(false);
+    const [cardsReady, setCardsReady] = useState(false);
+    const lastDrawerTurnRef = useRef(null);
+
     // Current player roles
     const myId = state.currentUser?.id;
     const isDrawer = Boolean(myId && myId === state.drawerId);
+    const drawer = state.players.find((p) => p.id === state.drawerId);
+
+    // Sync countdown when startsAt is set
+    useEffect(() => {
+        if (state.startsAt && Date.now() < state.startsAt) {
+            setShowCountdown(true);
+            setShowTurnIntro(false);
+            setCardsReady(false);
+        }
+    }, [state.startsAt]);
+
+    // Turn intro trigger on new turn
+    useEffect(() => {
+        if (state.gameState !== 'WORD_SELECTION') {
+            setShowTurnIntro(false);
+            setCardsReady(false);
+            return;
+        }
+
+        const turnKey = `${state.currentRound}-${state.drawerId}`;
+        if (lastDrawerTurnRef.current !== turnKey) {
+            lastDrawerTurnRef.current = turnKey;
+
+            // If countdown is active, wait until startsAt
+            if (state.startsAt && Date.now() < state.startsAt) {
+                const waitMs = state.startsAt - Date.now();
+                const timer = setTimeout(() => {
+                    setShowCountdown(false);
+                    setShowTurnIntro(true);
+                    setCardsReady(false);
+                }, waitMs);
+                return () => clearTimeout(timer);
+            } else {
+                setShowCountdown(false);
+                setShowTurnIntro(true);
+                setCardsReady(false);
+            }
+        }
+    }, [state.gameState, state.currentRound, state.drawerId, state.startsAt]);
 
     // Canvas management
     const {
@@ -156,9 +206,6 @@ export const Game = () => {
                 onEnableSound={handleEnableSound}
             />
 
-            {/* Overlays */}
-            <WordChoice roomCode={code} />
-
             {/* Main In-Game Area */}
             <div className="flex-1 w-full min-h-0 flex flex-col md:flex-row gap-2 sm:gap-3 overflow-hidden">
                 {/* Desktop Left Column: Ranked Player Scoreboard */}
@@ -187,6 +234,11 @@ export const Game = () => {
 
                 {/* Center Column: Hint Tiles + 4:3 Paper Canvas + Tool Tray */}
                 <main className="flex-1 min-h-0 flex flex-col items-center justify-between gap-2 overflow-hidden">
+                    {/* First Game Scoring Coachmark */}
+                    <div className="w-full shrink-0">
+                        <ScoringCoachmark />
+                    </div>
+
                     {/* Word Hint Tiles Header */}
                     <div className="w-full shrink-0">
                         <HintTiles
@@ -233,6 +285,44 @@ export const Game = () => {
                                     }`}
                                     style={{ touchAction: 'none' }}
                                 />
+
+                                {/* Game Start Countdown ('3, 2, 1' large numerals on paper) */}
+                                {showCountdown && (
+                                    <GameStartCountdown
+                                        startsAt={state.startsAt}
+                                        onComplete={() => {
+                                            setShowCountdown(false);
+                                            setShowTurnIntro(true);
+                                        }}
+                                    />
+                                )}
+
+                                {/* Turn Intro Card ('Round 1 of 3', 'Maya is up') */}
+                                {showTurnIntro && !showCountdown && (
+                                    <TurnIntro
+                                        round={state.currentRound || 1}
+                                        totalRounds={state.totalRounds || state.settings?.rounds || 3}
+                                        drawer={drawer}
+                                        onOverlap={() => setCardsReady(true)}
+                                        onComplete={() => setShowTurnIntro(false)}
+                                    />
+                                )}
+
+                                {/* Word Choice (Drawer 3 cards or Spectator tip/bob) */}
+                                {state.gameState === 'WORD_SELECTION' && !showCountdown && (
+                                    <WordChoice
+                                        roomCode={code}
+                                        cardsReady={cardsReady}
+                                    />
+                                )}
+
+                                {/* Auto-Picked Notice ('Picked for you: GUITAR') */}
+                                {state.autoPickedWord && isDrawer && (
+                                    <AutoPickedBanner
+                                        word={state.autoPickedWord}
+                                        onDismiss={() => dispatch({ type: 'CLEAR_AUTO_PICKED' })}
+                                    />
+                                )}
 
                                 {/* Drawer Brush Size Ring Cursor */}
                                 {isDrawer && isCursorInside && (

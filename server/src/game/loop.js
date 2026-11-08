@@ -25,7 +25,10 @@ const makeSnapshot = (room, playerSocketId) => {
         word: (isDrawerPlayer || hasGuessed) ? room.wordToGuess : null,
         wordChoices: (isDrawerPlayer && room.gameState === GAME_STATES.WORD_SELECTION) ? (room.wordChoices || []) : null,
         strokes: room.strokes || [],
-        recentChat: (room.chatMessages || []).slice(-100)
+        recentChat: (room.chatMessages || []).slice(-100),
+        startsAt: room.startsAt || null,
+        selectionEndsAt: room.selectionEndsAt || null,
+        roundEndsAt: room.roundEndsAt || null
     };
 };
 
@@ -43,6 +46,8 @@ const cleanEndGame = (io, room) => {
     clearRoomTimers(room);
     room.gameState = GAME_STATES.GAME_END;
     room.roundEndsAt = null;
+    room.startsAt = null;
+    room.selectionEndsAt = null;
     room.hint = null;
     room.wordChoices = null;
 
@@ -71,10 +76,13 @@ const startGameLoop = (io, roomCode) => {
     room.scores = room.players.reduce((acc, player) => ({ ...acc, [player.id]: 0 }), {});
     room.matchDrawings = [];
 
-    startTurn(io, room);
+    const now = Date.now();
+    room.startsAt = now + 3000;
+
+    startTurn(io, room, true);
 };
 
-const startTurn = (io, room) => {
+const startTurn = (io, room, isGameStart = false) => {
     room.gameState = GAME_STATES.WORD_SELECTION;
     room.guessedPlayers = new Set();
     clearRoomTimers(room);
@@ -87,13 +95,24 @@ const startTurn = (io, room) => {
     room.wordHint = null;
     room.roundEndsAt = null;
 
+    if (!isGameStart) {
+        room.startsAt = null;
+    }
+
     const choices = getWordChoices(room, 3);
     room.wordChoices = choices;
+
+    const countdownDelay = isGameStart && room.startsAt ? Math.max(0, room.startsAt - Date.now()) : 0;
+    const selectionDuration = countdownDelay + 10000;
+    room.selectionEndsAt = Date.now() + selectionDuration;
 
     io.to(room.code).emit(EVENTS.GAME_STARTED, {
         gameState: GAME_STATES.WORD_SELECTION,
         currentRound: room.currentRound,
-        drawerId: drawer.id
+        totalRounds: room.settings?.rounds || 3,
+        drawerId: drawer.id,
+        startsAt: room.startsAt,
+        selectionEndsAt: room.selectionEndsAt
     });
 
     io.to(drawer.id).emit(EVENTS.WORD_CHOICES, choices);
@@ -109,16 +128,16 @@ const startTurn = (io, room) => {
                 const randomChoice = currentRoom.wordChoices[Math.floor(Math.random() * currentRoom.wordChoices.length)];
                 const randomWord = typeof randomChoice === 'string' ? randomChoice : randomChoice.word;
                 currentRoom.wordChoices = null;
-                startRound(io, currentRoom, randomWord);
+                startRound(io, currentRoom, randomWord, true);
             }
         } catch (err) {
             logger.error('Error in wordSelection timer:', err);
             cleanEndGame(io, room);
         }
-    }, 10000);
+    }, selectionDuration);
 };
 
-const startRound = (io, room, word) => {
+const startRound = (io, room, word, autoPicked = false) => {
     clearRoomTimers(room);
     room.wordToGuess = word;
     if (room.usedWords && typeof room.usedWords.add === 'function') {
@@ -129,6 +148,8 @@ const startRound = (io, room, word) => {
     room.roundGained = {};
     room.roundStartTime = Date.now();
     room.revealedIndices = new Set();
+    room.startsAt = null;
+    room.selectionEndsAt = null;
 
     const initialHint = word.split('').map(char => char === ' ' ? '  ' : '_ ').join('').trim();
     room.hint = initialHint;
@@ -157,11 +178,15 @@ const startRound = (io, room, word) => {
     io.to(room.code).emit(EVENTS.WORD_CHOSEN, {
         hint: initialHint,
         length: word.length,
-        drawerId: drawer?.id
+        drawerId: drawer?.id,
+        roundEndsAt: room.roundEndsAt
     });
 
     if (drawer) {
-        io.to(drawer.id).emit(EVENTS.DRAWER_WORD, { word });
+        io.to(drawer.id).emit(EVENTS.DRAWER_WORD, {
+            word,
+            autoPicked: Boolean(autoPicked)
+        });
     }
     io.to(room.code).emit(EVENTS.CANVAS_CLEARED);
 

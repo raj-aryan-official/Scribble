@@ -97,3 +97,4 @@ export const QRCodeDisplay = ({ url, onClose, onCopied }) => {
 };
 
 export default QRCodeDisplay;
+
