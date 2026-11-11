@@ -691,7 +691,21 @@ class RoomManager {
         if (!room) return null;
 
         const leavingIndex = room.players.findIndex(p => p.id === playerId || p.playerId === playerId);
-        if (leavingIndex === -1) return room;
+        if (leavingIndex === -1) {
+            // Kicked players are marked on the record and removed from
+            // room.players earlier, so a record-only removal can still empty
+            // the room and must not leave an orphaned in-memory room behind.
+            const remaining = Array.from(room.records?.values() || [])
+                .filter(r => r.status === 'connected' || r.status === 'away');
+            if (room.players.length === 0 && remaining.length === 0) {
+                clearRoomTimers(room);
+                this.rooms.delete(roomCode);
+                this.roomStore?.delete(roomCode);
+                clearRoomQueue(roomCode);
+                return null;
+            }
+            return room;
+        }
 
         const leavingPlayer = room.players[leavingIndex];
         const record = room.records.get(leavingPlayer.playerId || playerId);

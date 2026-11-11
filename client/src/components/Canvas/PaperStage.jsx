@@ -11,10 +11,15 @@ export const PaperStage = ({
     paperClassName = '',
     maxWidth = 1400,
     testId = 'drawing-paper',
+    onSizeChange,
 }) => {
     const containerRef = useRef(null);
     const frameRef = useRef(null);
     const [size, setSize] = useState({ width: 0, height: 0 });
+
+    useEffect(() => {
+        if (size.width > 0) onSizeChange?.(size.width);
+    }, [size.width, onSizeChange]);
 
     useEffect(() => {
         const container = containerRef.current;

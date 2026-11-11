@@ -164,7 +164,8 @@ describe('Instant and Rewarding Guessing Experience', () => {
             expect(html).toContain('data-player-state="guessed"');
             expect(html).toContain('data-player-state="guessing"');
             expect(html).toContain('bg-marigold'); // Drawer
-            expect(html).toContain('bg-leaf-deep'); // Guessed leaf fill
+            expect(html).toContain('bg-leaf/15'); // Guessed leaf tint
+            expect(html).toContain('text-leaf-deep'); // Guessed tick
         });
     });
 

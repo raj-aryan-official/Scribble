@@ -40,7 +40,9 @@ export const Game = () => {
     const { settings } = useSettings();
 
     const [canvasWidth, setCanvasWidth] = useState(800);
+    const [paperWidth, setPaperWidth] = useState(0);
     const lastTickSecondRef = useRef(null);
+    const handlePaperSize = useCallback((width) => setPaperWidth(width), []);
 
     const [showCountdown, setShowCountdown] = useState(() => {
         return Boolean(state.startsAt && Date.now() < state.startsAt);
@@ -338,7 +340,7 @@ export const Game = () => {
                 className="flex-1 w-full min-h-0 flex flex-col md:flex-row landscape:flex-row gap-1 sm:gap-2 lg:gap-2 p-0 sm:p-2 lg:p-2 overflow-hidden"
             >
                 {/* Desktop Left Column: Ranked Player Scoreboard */}
-                <div className="hidden 2xl:flex w-60 min-[1800px]:w-64 h-full shrink-0">
+                <div className="hidden xl:flex w-60 h-full shrink-0">
                     <PlayerList
                         players={state.players}
                         scores={state.scores}
@@ -350,9 +352,9 @@ export const Game = () => {
                     />
                 </div>
 
-                {/* Vertical tool rail: desktop and short-landscape phones (saves height for the paper) */}
+                {/* Vertical tool rail: short landscape phones only (saves height for the paper) */}
                 {isDrawer && (
-                    <div className="hidden lg:flex landscape:flex h-full shrink-0">
+                    <div className="hidden landscape:max-lg:flex h-full shrink-0">
                         <ToolTray
                             orientation="vertical"
                             tool={tool}
@@ -385,16 +387,27 @@ export const Game = () => {
                         <ScoringCoachmark />
                     </div>
 
-                    {/* 3. Measured 4:3 paper: the largest rectangle that fits the stage */}
-                    <PaperStage className="flex-1 min-h-0" paperClassName="rounded-[12px]">
-                        {/* Draining Ink Timer Bar Across Top of Paper */}
-                        <TimerBar
-                            className="absolute inset-x-0 top-0 z-elevated"
-                            roundEndsAt={state.roundEndsAt}
-                            totalTime={totalDrawTime}
-                            timeLeft={state.timer}
-                        />
+                    {/* 3. Stage: draining ink timer line above the measured 4:3 paper */}
+                    <div className="w-full flex-1 min-h-0 flex flex-col items-center gap-1 sm:gap-1.5">
+                        <div
+                            className="shrink-0"
+                            style={{
+                                width: paperWidth > 0 ? `${paperWidth}px` : '100%',
+                                maxWidth: '100%',
+                            }}
+                        >
+                            <TimerBar
+                                roundEndsAt={state.roundEndsAt}
+                                totalTime={totalDrawTime}
+                                timeLeft={state.timer}
+                            />
+                        </div>
 
+                        <PaperStage
+                            className="flex-1 min-h-0 w-full"
+                            paperClassName="rounded-[12px]"
+                            onSizeChange={handlePaperSize}
+                        >
                         {/* Limited Ink Bar for Drawer */}
                         {isDrawer && state.currentTwist?.id === 'limited-ink' && (
                             <div
@@ -611,6 +624,32 @@ export const Game = () => {
                         </div>
                     </PaperStage>
 
+                        {/* Desktop: horizontal tool tray docked under the paper, same width as the paper */}
+                        {isDrawer && (
+                            <div className="hidden lg:flex w-full justify-center shrink-0">
+                                <div
+                                    className="w-full"
+                                    style={{
+                                        width: paperWidth > 0 ? `${paperWidth}px` : '100%',
+                                        maxWidth: '100%',
+                                    }}
+                                >
+                                    <ToolTray
+                                        tool={tool}
+                                        setTool={setTool}
+                                        lineWidth={lineWidth}
+                                        setLineWidth={setLineWidth}
+                                        color={color}
+                                        setColor={setColor}
+                                        undo={undo}
+                                        clearCanvas={clearCanvas}
+                                        twist={state.currentTwist}
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
                     {/* 4. Player Strip, 56 px (Portrait phones and tablets only) */}
                     <div className="flex lg:hidden landscape:hidden w-full h-[56px] min-h-[56px] max-h-[56px] shrink-0">
                         <PlayerList
@@ -657,8 +696,8 @@ export const Game = () => {
 
                 {/* Right Column: Chat (and controller bar for guessers) */}
                 <div className="hidden lg:flex landscape:flex w-[260px] xl:w-80 h-full shrink-0 min-w-0 flex-col gap-2">
-                    {/* On phones and tablets, show a compact player strip above chat */}
-                    <div className="flex 2xl:hidden w-full h-[56px] shrink-0">
+                    {/* Sub-1280 widths: compact player strip above chat (desktop uses the left scoreboard) */}
+                    <div className="flex xl:hidden w-full h-[56px] shrink-0">
                         <PlayerList
                             players={state.players}
                             scores={state.scores}
@@ -667,6 +706,9 @@ export const Game = () => {
                             speakingPeers={speakingPeers}
                             variant="mobile"
                         />
+                    </div>
+                    <div className="flex-1 min-h-0">
+                        <GuessPanel roomCode={code} isMobile={false} />
                     </div>
                     {!isDrawer && state.gameState === 'DRAWING' && (
                         <div className="shrink-0">
@@ -678,9 +720,6 @@ export const Game = () => {
                             />
                         </div>
                     )}
-                    <div className="flex-1 min-h-0">
-                        <GuessPanel roomCode={code} isMobile={false} />
-                    </div>
                 </div>
             </div>
         </div>

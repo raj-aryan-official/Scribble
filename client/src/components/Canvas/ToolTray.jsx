@@ -222,7 +222,7 @@ export const ToolTray = ({
             aria-label="Drawing tools"
             data-testid="tool-tray"
             data-layout={isLeftHanded ? 'left-handed' : 'right-handed'}
-            className={`w-full flex flex-col items-stretch gap-1.5 sm:gap-2 p-1.5 sm:p-2.5 bg-card border-2 border-ink shadow-hard rounded-[12px] select-none ${className}`}
+            className={`w-full flex flex-col items-stretch gap-1.5 sm:gap-2 p-1.5 sm:p-2 bg-card border-2 border-ink shadow-hard rounded-[12px] select-none ${className}`}
         >
             {/* Row 1: Tools, brush size and actions */}
             <div className={`w-full flex items-center justify-between gap-2 ${

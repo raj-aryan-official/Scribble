@@ -144,12 +144,12 @@ export const ColorSwatches = ({ color = '#1C1B18', setColor, lockedColor = null,
                                     e.currentTarget.parentElement?.children[nextIndex]?.focus();
                                 }
                             }}
-                            className={`min-w-[44px] min-h-[44px] snap-center flex items-center justify-center p-1 rounded-full focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none shrink-0 ${
+                            className={`min-w-[44px] min-h-[44px] sm:min-w-9 sm:min-h-9 snap-center flex items-center justify-center p-1 rounded-full focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none shrink-0 ${
                                 isLockedOut ? 'opacity-25 cursor-not-allowed' : 'cursor-pointer'
                             }`}
                         >
                             <span
-                                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-ink transition-all ${
+                                className={`w-7 h-7 sm:w-7 sm:h-7 rounded-full border-2 border-ink transition-all ${
                                     isSelected
                                         ? 'scale-110 ring-2 ring-ink ring-offset-2 ring-offset-paper shadow-hard-sm'
                                         : 'hover:scale-105 opacity-90'
@@ -161,12 +161,12 @@ export const ColorSwatches = ({ color = '#1C1B18', setColor, lockedColor = null,
                 })}
 
                 {/* Custom Color Picker at the end */}
-                <div className="min-w-[44px] min-h-[44px] snap-center flex items-center justify-center relative cursor-pointer p-1 shrink-0">
+                <div className="min-w-[44px] min-h-[44px] sm:min-w-9 sm:min-h-9 snap-center flex items-center justify-center relative cursor-pointer p-1 shrink-0">
                     <label
                         htmlFor="custom-color-picker-input"
                         title="Custom Color"
                         aria-label="Custom color picker"
-                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-ink flex items-center justify-center overflow-hidden cursor-pointer shadow-hard-sm hover:scale-105 transition-transform"
+                        className="w-7 h-7 sm:w-7 sm:h-7 rounded-full border-2 border-ink flex items-center justify-center overflow-hidden cursor-pointer shadow-hard-sm hover:scale-105 transition-transform"
                         style={{
                             background:
                                 'conic-gradient(from 180deg at 50% 50%, #E4472B 0deg, #F6B72C 72deg, #2E9E6B 144deg, #2F4FD8 216deg, #8D4BE5 288deg, #E4472B 360deg)',

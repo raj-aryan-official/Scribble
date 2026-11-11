@@ -109,12 +109,25 @@ function resetRateLimits() {
     ipBuckets.clear();
 }
 
+// Drop every bucket owned by a disconnected socket so the maps do not grow
+// for the lifetime of the process.
+function clearSocketLimits(socketId) {
+    if (!socketId) return;
+    const suffix = `:socket:${socketId}`;
+    for (const key of socketBuckets.keys()) {
+        if (key.endsWith(suffix)) {
+            socketBuckets.delete(key);
+        }
+    }
+}
+
 module.exports = {
     TokenBucket,
     checkLimit,
     checkCreateRoomLimit,
     checkJoinRoomLimit,
     recordWrongRoomCode,
+    clearSocketLimits,
     resetRateLimits
 };
 

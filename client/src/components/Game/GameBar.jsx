@@ -454,7 +454,7 @@ export const GameBar = ({
                       Desktop: 40px ring (md:w-10 md:h-10)
                       Phone: 36px ring in col 2 row 1 (w-9 h-9)
                     */}
-                    <div className="game-bar-timer col-start-2 row-start-1 self-center justify-self-center flex items-center justify-center">
+                    <div className="game-bar-timer col-start-2 row-start-1 self-center justify-self-center flex lg:hidden items-center justify-center">
                         <TimerRing timeLeft={timer} totalTime={totalDrawTime} />
                     </div>
 

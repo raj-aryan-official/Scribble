@@ -5,7 +5,7 @@ const { EVENTS, GAME_STATES } = require('../../../shared/types.cjs');
 const { getWordChoices } = require('../wordBank');
 const { getGraphemes } = require('../guess');
 const logger = require('../logger');
-const { flushReactionBatch, getTopReaction } = require('../handlers/reactions');
+const { flushReactionBatch, getTopReaction, clearTurnReactionCounts } = require('../handlers/reactions');
 const { selectTwistForTurn } = require('./twists');
 const { getMode } = require('../modes');
 const {
@@ -225,6 +225,7 @@ const calculateAwards = (room) => {
 const cleanEndGame = (io, room, reason = null) => {
     if (!room) return;
     clearRoomTimers(room);
+    clearTurnReactionCounts(room.currentTurnId);
     transition(room, 'END_GAME');
     room.waitingForDrawerId = null;
     room.turnWaitEndsAt = null;
@@ -262,11 +263,38 @@ const startGameLoop = (io, roomCode) => {
     initGameTurns(room);
     transition(room, 'START_GAME');
     room.currentDrawerIndex = 0;
+
+    // A new match always starts from zero, including when it is started
+    // directly from GAME_END (records hold the previous match's stats).
+    if (room.records) {
+        for (const rec of room.records.values()) {
+            rec.score = 0;
+            rec.guessedThisTurn = false;
+            rec.correctGuesses = 0;
+            rec.guessMs = [];
+            rec.drawsDone = [];
+            rec.missedDraws = [];
+            rec.consecutiveAutoPicks = 0;
+            rec.isAfkSkipped = false;
+            rec.lastVoteStartedAt = 0;
+            rec.failedVoteCount = 0;
+            rec.voteImmunityUntil = 0;
+        }
+    }
     room.scores = room.players.reduce((acc, player) => ({ ...acc, [player.id]: 0 }), {});
     room.matchDrawings = [];
     room.drawerFirstGuessTimes = {};
     room.playerGuessTimes = {};
     room.awards = null;
+    room.roundGained = {};
+    room.drawerBonus = 0;
+    room.turnLikes = new Set();
+    room.turnLikesCount = 0;
+    room.turnLikePoints = 0;
+    room.drawerLikes = {};
+    room.turnReactions = {};
+    room.pendingReactions = {};
+    room.strokes = [];
 
     const now = Date.now();
     room.startsAt = now + 3000;
@@ -676,6 +704,7 @@ const startRound = (io, room, word, autoPicked = false) => {
 
 const endRound = (io, room) => {
     clearRoomTimers(room);
+    clearTurnReactionCounts(room?.currentTurnId);
     getMode(room?.settings?.mode).onTurnEnd(room);
     if (room.drawerId) {
         recordTurnDraw(room, room.drawerId, room.currentTurnId);

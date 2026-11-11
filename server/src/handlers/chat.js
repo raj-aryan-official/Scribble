@@ -100,8 +100,14 @@ function registerChatHandlers(io, socket, safeOn) {
 
         const player = room.players.find(p => p.id === socket.id);
         const drawer = room.players[room.currentDrawerIndex];
-        const isCurrentDrawer = drawer && drawer.id === socket.id;
-        const hasAlreadyGuessed = Boolean(room.guessedPlayers && room.guessedPlayers.has(socket.id));
+        const isCurrentDrawer = room.drawerId === socket.id || Boolean(drawer && drawer.id === socket.id);
+        const playerRecord = room.records
+            ? (room.records.get(player?.playerId) || Array.from(room.records.values()).find(r => r.socketId === socket.id))
+            : null;
+        const hasAlreadyGuessed = Boolean(
+            room.guessedPlayers &&
+            (room.guessedPlayers.has(socket.id) || (playerRecord && room.guessedPlayers.has(playerRecord.playerId)))
+        );
 
         // CHANNELS:
         // The drawer and players who already guessed this round chat in a 'guessed' channel that only they receive

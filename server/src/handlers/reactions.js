@@ -15,6 +15,18 @@ function resetReactionRateLimits() {
     turnPlayerReactionCounts.clear();
 }
 
+// Drop per-turn counters once a turn is over so the map does not grow for the
+// life of the process.
+function clearTurnReactionCounts(turnId) {
+    if (!turnId) return;
+    const prefix = `${turnId}:`;
+    for (const key of turnPlayerReactionCounts.keys()) {
+        if (key.startsWith(prefix)) {
+            turnPlayerReactionCounts.delete(key);
+        }
+    }
+}
+
 function flushReactionBatch(io, room) {
     if (!room) return;
     if (room.reactionBatchTimer) {
@@ -205,6 +217,7 @@ module.exports = {
     registerReactionHandlers,
     flushReactionBatch,
     getTopReaction,
+    clearTurnReactionCounts,
     resetReactionRateLimits
 };
 

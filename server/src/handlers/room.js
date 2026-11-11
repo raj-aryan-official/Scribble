@@ -19,7 +19,8 @@ const { handlePlayerReturn, handlePlayerLeft, buildTurnInfo } = require('../game
 const {
     checkCreateRoomLimit,
     checkJoinRoomLimit,
-    recordWrongRoomCode
+    recordWrongRoomCode,
+    checkLimit
 } = require('./rateLimiter');
 const logger = require('../logger');
 
@@ -240,7 +241,7 @@ function registerRoomHandlers(io, socket, safeOn) {
                         socket.join(`${room.code}:guessed`);
                     }
                     io.to(roomCode).emit(EVENTS.ROOM_JOINED, toPublicRoom(room));
-                    const snapshot = makeSnapshot(room, socket.id, existing, lastSeq);
+                    const snapshot = { ...makeSnapshot(room, socket.id, existing, lastSeq), isRejoin: true };
                     socket.emit(EVENTS.STATE_SNAPSHOT, snapshot);
                     return;
                 }
@@ -325,7 +326,9 @@ function registerRoomHandlers(io, socket, safeOn) {
         io.to(roomCode).emit(EVENTS.TURN_INFO, buildTurnInfo(room));
 
         // Send STATE_SNAPSHOT to that socket only (with filtered strokes if lastSeq provided - E12)
-        const snapshot = makeSnapshot(room, socket.id, record, lastSeq);
+        // isRejoin marks this as a returning player, so the client greets them
+        // with their score instead of showing the welcome-back toast on every snapshot.
+        const snapshot = { ...makeSnapshot(room, socket.id, record, lastSeq), isRejoin: true };
         socket.emit(EVENTS.STATE_SNAPSHOT, snapshot);
         if (EVENTS.STATE_SNAPSHOT !== 'STATE_SNAPSHOT') {
             socket.emit('STATE_SNAPSHOT', snapshot);
@@ -396,7 +399,7 @@ function registerRoomHandlers(io, socket, safeOn) {
             socket.join(`${room.code}:guessed`);
         }
 
-        const snapshot = makeSnapshot(room, socket.id, record);
+        const snapshot = { ...makeSnapshot(room, socket.id, record), isRejoin: true };
         socket.emit(EVENTS.STATE_SNAPSHOT, snapshot);
         io.to(room.code).emit(EVENTS.ROOM_JOINED, toPublicRoom(room));
         io.to(room.code).emit(EVENTS.PLAYER_STATUS, { playerId: record.playerId, status: 'connected' });
@@ -407,7 +410,7 @@ function registerRoomHandlers(io, socket, safeOn) {
         const roomCode = (payload && typeof payload === 'object' && payload.roomCode)
             ? payload.roomCode
             : roomManager.getRoomByPlayerId(socket.id)?.code;
-        const room = roomManager.getRoom(roomCode);
+        const room = (roomCode && getMemberRoom(socket, roomCode)) || roomManager.getRoomByPlayerId(socket.id);
 
         socket.emit(EVENTS.CLOCK_SYNC, {
             clientTime: payload?.clientTime,
@@ -422,16 +425,28 @@ function registerRoomHandlers(io, socket, safeOn) {
 
     // E13: SYNC_REQUEST returning fresh STATE_SNAPSHOT
     const handleSyncRequest = (payload) => {
-        const roomCode = (payload && typeof payload === 'object' && payload.roomCode)
+        const requestedCode = (payload && typeof payload === 'object' && typeof payload.roomCode === 'string')
             ? payload.roomCode
-            : roomManager.getRoomByPlayerId(socket.id)?.code;
-
-        const room = roomManager.getRoom(roomCode);
+            : null;
+        // Only members may request a snapshot/strokes: the payload carries
+        // private state (word, strokes) that outsiders must not receive.
+        const room = requestedCode
+            ? getMemberRoom(socket, requestedCode)
+            : roomManager.getRoomByPlayerId(socket.id);
         if (!room) {
-            return rejectWithError(socket, 'Room not found');
+            return rejectWithError(socket, 'Not a member of this room');
         }
-        const snapshot = makeSnapshot(room, socket.id);
-        socket.emit(EVENTS.STATE_SNAPSHOT, snapshot);
+        if (!checkLimit({ socketId: socket.id, action: 'sync', capacity: 20, refillRatePerSec: 5 })) {
+            return rejectWithError(socket, 'Slow down', 'RATE_LIMITED');
+        }
+        const strokesOnly = Boolean(payload && payload.strokesOnly);
+        if (!strokesOnly) {
+            const snapshot = makeSnapshot(room, socket.id);
+            socket.emit(EVENTS.STATE_SNAPSHOT, snapshot);
+        }
+        // Replay the current turn's strokes so a canvas that mounted after the
+        // initial snapshot (reload, late join) does not miss earlier drawing.
+        socket.emit(EVENTS.STROKE_HISTORY, room.strokes || []);
     };
     safeOn(EVENTS.SYNC_REQUEST, handleSyncRequest);
     if (EVENTS.SYNC_REQUEST !== 'syncRequest') {
@@ -502,6 +517,9 @@ function registerRoomHandlers(io, socket, safeOn) {
         const room = roomManager.getRoomByPlayerId(socket.id);
         if (!room) {
             return rejectWithError(socket, 'Not in a room');
+        }
+        if (!isHost(room, socket)) {
+            return rejectWithError(socket, 'Only the host can resolve seat claims');
         }
 
         const claim = room.pendingClaims?.get(claimId);
@@ -708,6 +726,10 @@ function registerRoomHandlers(io, socket, safeOn) {
     safeOn('disconnect', () => {
         const room = roomManager.getRoomByPlayerId(socket.id);
         if (!room) return;
+
+        // Tell remaining voice peers this socket is gone so they tear down the
+        // stale RTCPeerConnection instead of renegotiating with a dead peer.
+        io.to(`${room.code}_voice`).emit(EVENTS.VOICE_LEAVE, { socketId: socket.id });
         socket.leave(`${room.code}:guessed`);
 
         let record = null;

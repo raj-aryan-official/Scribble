@@ -843,7 +843,21 @@ export const useCanvas = (roomCode, isDrawer, twist = null) => {
         socket.on(EVENTS.CANVAS_CLEARED, handleCleared);
         socket.on(EVENTS.STROKE_UNDONE, handleUndone);
 
+        // The canvas can mount after the turn snapshot/strokes were already
+        // delivered (reload, late join, reconnect). Pull the current strokes.
+        const requestStrokes = () => {
+            if (socket.connected && roomCodeRef.current) {
+                socket.emit(EVENTS.SYNC_REQUEST, {
+                    roomCode: roomCodeRef.current,
+                    strokesOnly: true
+                });
+            }
+        };
+        requestStrokes();
+        socket.on('connect', requestStrokes);
+
         return () => {
+            socket.off('connect', requestStrokes);
             socket.off(EVENTS.STROKE_START, handleStrokeStart);
             socket.off(EVENTS.STROKE_POINTS, handleStrokePoints);
             socket.off(EVENTS.STROKE_END, handleStrokeEnd);

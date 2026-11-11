@@ -30,6 +30,8 @@ export const useVoiceChat = (roomCode, username, playerCount = 1) => {
     const peersRef = useRef({}); // { socketId: RTCPeerConnection }
     const candidateQueueRef = useRef({}); // { socketId: Array<RTCIceCandidateInit> }
     const makingOfferRef = useRef({}); // { socketId: boolean }
+    const signalingQueueRef = useRef({}); // { socketId: Promise } serializes offer/answer handling per peer
+    const lastRemoteOfferSdpRef = useRef({}); // { socketId: sdp } ignores duplicate offers
     const audioContextRef = useRef(null);
     const analysersRef = useRef(new Map()); // socketId -> { sourceNode, analyser, buffer, lastSpokeAt, isSpeaking }
     const animFrameRef = useRef(null);
@@ -179,6 +181,8 @@ export const useVoiceChat = (roomCode, username, playerCount = 1) => {
         peersRef.current = {};
         candidateQueueRef.current = {};
         makingOfferRef.current = {};
+        signalingQueueRef.current = {};
+        lastRemoteOfferSdpRef.current = {};
 
         // Stop all audio analysers & close AudioContext
         analysersRef.current.forEach((item) => {
@@ -368,9 +372,29 @@ export const useVoiceChat = (roomCode, username, playerCount = 1) => {
 
         const myId = socket.id;
 
+        // Perfect-negotiation signals for one peer must be applied in order:
+        // duplicate or overlapping offers/answers otherwise leave the PC in a
+        // state where setLocalDescription/setRemoteDescription throws.
+        const enqueueSignal = (peerId, task) => {
+            const previous = signalingQueueRef.current[peerId] || Promise.resolve();
+            const next = previous.then(task, task);
+            signalingQueueRef.current[peerId] = next.catch(() => {});
+            return next;
+        };
+
         // When another user joins voice channel
         const handleVoiceJoin = async ({ socketId }) => {
             if (!socketId || socketId === myId) return;
+
+            // Already negotiated with this peer: a repeated join (reconnect,
+            // hot reload) must not trigger a duplicate offer/answer exchange.
+            const existingPeer = peersRef.current[socketId];
+            if (existingPeer && existingPeer.connectionState === 'connected') {
+                return;
+            }
+            if (makingOfferRef.current[socketId] || (existingPeer && existingPeer.signalingState !== 'stable')) {
+                return;
+            }
 
             // Only the player with the smaller socket ID initiates (sends offer)
             if (shouldInitiate(myId, socketId)) {
@@ -403,6 +427,14 @@ export const useVoiceChat = (roomCode, username, playerCount = 1) => {
             for (const peerId of users) {
                 if (peerId === myId) continue;
 
+                const existingPeer = peersRef.current[peerId];
+                if (existingPeer && existingPeer.connectionState === 'connected') {
+                    continue;
+                }
+                if (makingOfferRef.current[peerId]) {
+                    continue;
+                }
+
                 // Initiate only if our socket ID is smaller
                 if (shouldInitiate(myId, peerId)) {
                     try {
@@ -429,58 +461,82 @@ export const useVoiceChat = (roomCode, username, playerCount = 1) => {
         };
 
         // Handle incoming Offer with Perfect Negotiation (Polite peer handling)
-        const handleVoiceOffer = async ({ sender, offer }) => {
+        const handleVoiceOffer = ({ sender, offer }) => {
             if (!sender || sender === myId || !offer) return;
 
-            try {
-                const pc = getOrCreatePeerConnection(sender);
-                const isPolite = isPolitePeer(myId, sender);
-                const isMakingOffer = Boolean(makingOfferRef.current[sender]);
-                const offerCollision = isMakingOffer || pc.signalingState !== 'stable';
-
-                if (offerCollision) {
-                    if (!isPolite) {
-                        // Impolite peer ignores colliding offer
-                        return;
-                    }
-                    // Polite peer rolls back local description
-                    await pc.setLocalDescription({ type: 'rollback' });
+            enqueueSignal(sender, async () => {
+                if (offer.sdp && lastRemoteOfferSdpRef.current[sender] === offer.sdp) {
+                    return;
                 }
 
-                await pc.setRemoteDescription(new RTCSessionDescription(offer));
-                await flushCandidateQueue(sender, pc);
+                try {
+                    const pc = getOrCreatePeerConnection(sender);
+                    const isPolite = isPolitePeer(myId, sender);
+                    const state = pc.signalingState;
 
-                const answer = await pc.createAnswer();
-                await pc.setLocalDescription(answer);
+                    // Duplicate offer for an offer we are already answering: applying
+                    // it again would leave the peer in an impossible state.
+                    if (state === 'have-remote-offer') {
+                        return;
+                    }
 
-                socket.emit(EVENTS.VOICE_ANSWER, {
-                    roomCode,
-                    target: sender,
-                    answer
-                });
-            } catch (err) {
-                console.error('Error handling voice offer from', sender, err);
-            }
+                    if (state === 'have-local-offer' || makingOfferRef.current[sender]) {
+                        if (!isPolite) {
+                            // Impolite peer ignores colliding offer
+                            return;
+                        }
+                        // Rollback is only valid while we have a local offer.
+                        if (state === 'have-local-offer') {
+                            await pc.setLocalDescription({ type: 'rollback' });
+                        } else {
+                            return;
+                        }
+                    }
+
+                    await pc.setRemoteDescription(new RTCSessionDescription(offer));
+                    await flushCandidateQueue(sender, pc);
+
+                    if (pc.signalingState !== 'have-remote-offer') return;
+                    const answer = await pc.createAnswer();
+                    if (pc.signalingState !== 'have-remote-offer') return;
+                    await pc.setLocalDescription(answer);
+                    lastRemoteOfferSdpRef.current[sender] = offer.sdp;
+
+                    socket.emit(EVENTS.VOICE_ANSWER, {
+                        roomCode,
+                        target: sender,
+                        answer
+                    });
+                } catch (err) {
+                    console.error('Error handling voice offer from', sender, err);
+                }
+            });
         };
 
         // Handle incoming Answer
-        const handleVoiceAnswer = async ({ sender, answer }) => {
+        const handleVoiceAnswer = ({ sender, answer }) => {
             if (!sender || !answer) return;
-            const pc = peersRef.current[sender];
-            if (pc) {
+
+            enqueueSignal(sender, async () => {
+                const pc = peersRef.current[sender];
+                if (!pc || pc.signalingState !== 'have-local-offer') {
+                    // Stale or duplicate answer (the exchange already completed).
+                    return;
+                }
                 try {
                     await pc.setRemoteDescription(new RTCSessionDescription(answer));
                     await flushCandidateQueue(sender, pc);
                 } catch (err) {
                     console.error('Error setting remote answer from', sender, err);
                 }
-            }
+            });
         };
 
         // Handle incoming ICE Candidate (with pre-setRemoteDescription queueing)
         const handleIceCandidate = async ({ sender, candidate }) => {
             if (!sender || !candidate) return;
             const pc = peersRef.current[sender];
+            if (pc && pc.signalingState === 'closed') return;
 
             if (pc && pc.remoteDescription && pc.remoteDescription.type) {
                 try {
@@ -511,6 +567,8 @@ export const useVoiceChat = (roomCode, username, playerCount = 1) => {
             }
             delete candidateQueueRef.current[socketId];
             delete makingOfferRef.current[socketId];
+            delete signalingQueueRef.current[socketId];
+            delete lastRemoteOfferSdpRef.current[socketId];
 
             setRemoteStreams(prev => {
                 if (!prev[socketId]) return prev;

@@ -138,7 +138,7 @@ export const SocketProvider = ({ children }) => {
             }
             dispatch({ type: 'STATE_SNAPSHOT', payload: snapshot, socketId: socket.id });
 
-            if (snapshot?.ownRecord || snapshot?.isRejoin) {
+            if (snapshot?.isRejoin) {
                 const myScore = snapshot.ownRecord?.score ?? room?.scores?.[snapshot.playerId] ?? 0;
                 dispatch({
                     type: 'SHOW_TOAST',

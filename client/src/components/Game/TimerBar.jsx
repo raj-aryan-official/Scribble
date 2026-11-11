@@ -62,28 +62,16 @@ export const TimerBar = ({
                 {announcement}
             </span>
 
-            {/* Draining Ink Line Container */}
-            <div className="w-full h-2 sm:h-2.5 bg-paper border-b-2 border-ink overflow-hidden relative">
+            {/* Draining ink line: cobalt, turning tomato in the last 10 seconds */}
+            <div className="w-full h-1.5 bg-ink/10 rounded-full overflow-hidden relative">
                 <div
                     data-testid="timer-bar"
                     data-is-warning={isWarning}
-                    className={`h-full transition-all duration-200 ease-linear ${
-                        isWarning ? 'bg-tomato' : 'bg-ink'
+                    className={`h-full rounded-full transition-all duration-200 ease-linear ${
+                        isWarning ? 'bg-tomato' : 'bg-cobalt'
                     }`}
                     style={{ width: `${progress}%` }}
                 />
-            </div>
-
-            {/* Numeric Badge */}
-            <div className="absolute right-2 top-3 pointer-events-none z-elevated">
-                <span
-                    data-testid="timer-seconds"
-                    className={`inline-flex items-center justify-center font-mono font-black text-xs sm:text-sm px-2 py-0.5 rounded-[4px] border-2 border-ink shadow-hard-sm ${
-                        isWarning ? 'bg-tomato text-white animate-pulse' : 'bg-card text-ink'
-                    }`}
-                >
-                    {secondsLeft}s
-                </span>
             </div>
         </div>
     );

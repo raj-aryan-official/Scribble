@@ -25,42 +25,34 @@ function registerGameHandlers(io, socket, safeOn) {
     });
 
     safeOn(EVENTS.CHOOSE_WORD, (payload) => {
-        console.log('[SERVER] CHOOSE_WORD received with payload:', payload);
         if (!payload || typeof payload !== 'object') {
             return rejectWithError(socket, 'Invalid payload');
         }
         const room = getMemberRoom(socket, payload.roomCode);
         if (!room) {
-            console.log('[SERVER] CHOOSE_WORD rejected: Not a member of this room. socket:', socket.id, 'roomCode:', payload.roomCode);
             return rejectWithError(socket, 'Not a member of this room');
         }
         if (!isDrawer(room, socket)) {
-            console.log('[SERVER] CHOOSE_WORD rejected: Not drawer. drawerId:', room.players[room.currentDrawerIndex]?.id, 'socket:', socket.id);
             return rejectWithError(socket, 'Only the drawer can choose the word');
         }
         if (!canChooseWord(room)) {
-            console.log('[SERVER] CHOOSE_WORD rejected: Not in WORD_SELECTION. Current:', room.gameState);
             return rejectWithError(socket, 'Word selection is not active');
         }
 
         // E20: Verify turnId if provided; drop stale turnId
         if (payload.turnId && room.currentTurnId && payload.turnId !== room.currentTurnId) {
-            console.log('[SERVER] CHOOSE_WORD rejected: Stale turn ID.', payload.turnId, 'current:', room.currentTurnId);
             return rejectWithError(socket, 'Stale turn ID', 'STALE_TURN');
         }
 
         const rawWord = payload.word;
         const chosenWord = typeof rawWord === 'string' ? rawWord : rawWord?.word;
         if (!chosenWord || !Array.isArray(room.wordChoices)) {
-            console.log('[SERVER] CHOOSE_WORD rejected: wordChoices not array or no chosenWord:', chosenWord, room.wordChoices);
             return rejectWithError(socket, 'Word was not among the offered choices');
         }
         const match = room.wordChoices.find(c => (typeof c === 'string' ? c : c.word) === chosenWord);
         if (!match) {
-            console.log('[SERVER] CHOOSE_WORD rejected: match not found. chosenWord:', chosenWord, 'choices:', room.wordChoices);
             return rejectWithError(socket, 'Word was not among the offered choices');
         }
-        console.log('[SERVER] CHOOSE_WORD accepted! Starting round with word:', chosenWord);
 
         // E14: Active word choice resets consecutive auto-picks
         const drawerRec = room.records ? (room.records.get(room.drawerId) || Array.from(room.records.values()).find(r => r.socketId === socket.id)) : null;

@@ -22,6 +22,7 @@ const { registerChatHandlers } = require('./handlers/chat');
 const { registerVoiceHandlers } = require('./handlers/voice');
 const { registerModerationHandlers } = require('./handlers/moderation');
 const { registerReactionHandlers } = require('./handlers/reactions');
+const { clearSocketLimits } = require('./handlers/rateLimiter');
 
 /**
  * Register all Socket.IO event handlers on a newly connected socket.
@@ -54,6 +55,10 @@ function registerHandlers(io, socket) {
     registerVoiceHandlers(io, socket, safeOn);
     registerModerationHandlers(io, socket, safeOn);
     registerReactionHandlers(io, socket, safeOn);
+
+    socket.on('disconnect', () => {
+        clearSocketLimits(socket.id);
+    });
 }
 
 // Preserve helper references for testing and backward compatibility

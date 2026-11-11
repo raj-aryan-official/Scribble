@@ -317,11 +317,11 @@ export const PlayerList = ({
         <aside
             data-testid="player-list-desktop"
             aria-label="Player scoreboard"
-            className={`w-full flex flex-col gap-2 p-3 bg-card border-2 border-ink shadow-hard rounded-[12px] overflow-hidden select-none ${className}`}
+            className={`w-full h-full flex flex-col gap-2 select-none overflow-hidden ${className}`}
         >
-            <div className="flex items-center justify-between border-b-2 border-ink/10 pb-2 px-1">
-                <h3 className="font-heading font-black text-sm uppercase tracking-wider text-ink">
-                    Players
+            <div className="flex items-baseline justify-between px-1 shrink-0">
+                <h3 className="font-heading font-black text-sm text-ink">
+                    Ranked by score
                 </h3>
                 <span className="text-xs font-bold text-ink-soft">
                     {players.length}
@@ -362,7 +362,7 @@ export const PlayerList = ({
                 </div>
             )}
 
-            <div className="flex flex-col gap-2 overflow-y-auto max-h-[calc(100dvh-220px)] pr-1">
+            <div className="flex flex-col gap-2 overflow-y-auto flex-1 min-h-0 pr-1">
                 {rankedPlayers.map((player, index) => {
                     const isDrawer = player.id === drawerId || player.playerId === drawerId;
                     const hasGuessed = guessedPlayerIds.includes(player.id) || (player.playerId && guessedPlayerIds.includes(player.playerId));
@@ -392,19 +392,21 @@ export const PlayerList = ({
                             data-player-score={score}
                             data-player-state={isDrawer ? 'drawing' : hasGuessed ? 'guessed' : 'guessing'}
                             data-draw-order={drawOrderLabel || undefined}
-                            className={`flex items-center gap-2 p-2 rounded-[8px] border-2 border-ink shadow-hard-sm transition-all ${
+                            className={`flex items-center gap-2 p-2 rounded-[10px] border-2 shadow-hard-sm transition-all ${
                                 isAway
-                                    ? 'bg-paper border-dashed text-ink'
+                                    ? 'bg-card border-dashed border-ink/40 text-ink'
                                     : hasGuessed
-                                    ? 'bg-leaf-deep text-white'
+                                    ? 'bg-leaf/15 border-leaf-deep/70 text-ink'
                                     : isDrawer
-                                    ? 'bg-marigold text-ink'
-                                    : 'bg-paper text-ink'
+                                    ? 'bg-marigold/20 border-ink text-ink'
+                                    : 'bg-card border-ink text-ink'
                             }`}
                         >
-                            <span className="font-mono font-black text-[11px] w-4 text-center shrink-0">
-                                #{index + 1}
-                            </span>
+                            {score > 0 && (
+                                <span className="font-mono font-black text-[11px] w-4 text-center shrink-0">
+                                    #{index + 1}
+                                </span>
+                            )}
 
                             {/* Avatar with burst effect on guess or soft pulse on drawer like */}
                             <motion.div
@@ -467,18 +469,18 @@ export const PlayerList = ({
                                     {drawOrderLabel && (
                                         <span
                                             data-testid="draw-order-label"
-                                            className={`text-[10px] font-bold leading-none ${hasGuessed ? 'text-white/90' : 'text-ink-soft'}`}
+                                            className="text-[10px] font-bold leading-none text-ink-soft"
                                         >
                                             {isAway ? `• ${drawOrderLabel}` : drawOrderLabel}
                                         </span>
                                     )}
                                     {isMakeUp && (
-                                        <span className={`text-[10px] font-bold leading-none ${hasGuessed ? 'text-white' : 'text-leaf-deep'}`}>
+                                        <span className="text-[10px] font-bold leading-none text-leaf-deep bg-card/90 px-1 py-0.5 rounded border border-leaf/30">
                                             • Make-up turn
                                         </span>
                                     )}
                                     {hasMissed && !isMakeUp && (
-                                        <span className={`text-[10px] font-bold leading-none ${hasGuessed ? 'text-white' : 'text-tomato-deep'}`}>
+                                        <span className="text-[10px] font-bold leading-none text-tomato-deep">
                                             • Missed turn
                                         </span>
                                     )}
@@ -499,14 +501,17 @@ export const PlayerList = ({
                                 )}
                                 {hasGuessed && (
                                     <span role="img" title="Guessed" aria-label="Guessed">
-                                        <Check className="w-4 h-4 text-white stroke-[3]" aria-hidden="true" />
+                                        <Check className="w-4 h-4 text-leaf-deep stroke-[3]" aria-hidden="true" />
                                     </span>
                                 )}
 
                                 {/* Score display and floating gain */}
-                                <div className="relative flex items-center">
+                                <div className="relative flex items-baseline gap-0.5">
                                     <span className="font-mono font-black text-xs sm:text-sm">
                                         {score}
+                                    </span>
+                                    <span className="text-[9px] font-bold text-ink-soft uppercase">
+                                        pts
                                     </span>
                                     <AnimatePresence>
                                         {gain && (
