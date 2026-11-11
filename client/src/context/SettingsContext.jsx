@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { audioManager } from '../audio/manager';
-import { getStrings } from '../strings';
+import en from '../strings/en';
 
 export const SETTINGS_KEY = 'scribble_settings';
 export const SOUND_HINT_KEY = 'scribble_sound_hint_dismissed';
@@ -8,7 +8,6 @@ export const SETTINGS_VERSION = 1;
 
 export const DEFAULT_SETTINGS = {
     version: SETTINGS_VERSION,
-    language: 'en', // 'en' | 'hi'
     isMuted: false,
     masterVolume: 0.4,
     soundEffects: true,
@@ -74,7 +73,6 @@ export function migrateSettings(raw) {
     // Normalize types & bounds
     migrated.masterVolume = Math.max(0, Math.min(1, typeof migrated.masterVolume === 'number' ? migrated.masterVolume : 0.4));
     migrated.textSize = [100, 115, 130].includes(Number(migrated.textSize)) ? Number(migrated.textSize) : 100;
-    migrated.language = ['en', 'hi'].includes(migrated.language) ? migrated.language : 'en';
     migrated.isMuted = Boolean(migrated.isMuted);
     migrated.soundEffects = Boolean(migrated.soundEffects);
     migrated.voiceOutput = Boolean(migrated.voiceOutput);
@@ -168,14 +166,7 @@ export const SettingsProvider = ({ children }) => {
         }
     }, [settings.textSize]);
 
-    // Apply <html lang="..."> attribute dynamically
-    useEffect(() => {
-        if (typeof document !== 'undefined' && document.documentElement) {
-            document.documentElement.lang = settings.language || 'en';
-        }
-    }, [settings.language]);
-
-    const strings = useMemo(() => getStrings(settings.language), [settings.language]);
+    const strings = en;
 
     const updateSettings = useCallback((partial) => {
         setSettings((prev) => {
@@ -246,8 +237,6 @@ export const SettingsProvider = ({ children }) => {
             closeSettings: () => setIsSettingsOpen(false),
             strings,
             t: strings,
-            language: settings.language || 'en',
-            setLanguage: (lang) => updateSettings({ language: lang }),
         }),
         [
             settings,
@@ -272,7 +261,6 @@ export const useSettings = () => {
     const context = useContext(SettingsContext);
     if (!context) {
         // Safe fallback for isolated unit tests rendered outside of SettingsProvider
-        const fallbackStrings = getStrings('en');
         return {
             settings: DEFAULT_SETTINGS,
             updateSettings: () => {},
@@ -284,24 +272,11 @@ export const useSettings = () => {
             setIsSettingsOpen: () => {},
             openSettings: () => {},
             closeSettings: () => {},
-            strings: fallbackStrings,
-            t: fallbackStrings,
-            language: 'en',
-            setLanguage: () => {},
+            strings: en,
+            t: en,
         };
     }
     return context;
-};
-
-export const useTranslation = () => {
-    const { settings, updateSettings, strings } = useSettings();
-    const currentStrings = strings || getStrings(settings?.language);
-    return {
-        t: currentStrings,
-        strings: currentStrings,
-        language: settings?.language || 'en',
-        setLanguage: (lang) => updateSettings({ language: lang }),
-    };
 };
 
 export default SettingsContext;

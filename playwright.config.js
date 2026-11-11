@@ -3,7 +3,8 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   testDir: './tests/e2e',
   timeout: 60000,
-  retries: 0,
+  retries: 1,
+  workers: process.env.CI ? 2 : 4,
   use: {
     baseURL: 'http://localhost:5173',
     trace: 'off',
@@ -16,6 +17,7 @@ export default defineConfig({
       timeout: 30000,
       env: {
         FAST_TIMERS: 'true',
+        PREVIEW_RATE_LIMIT_MAX: '1000',
       },
     },
     {

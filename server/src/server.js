@@ -26,14 +26,15 @@ app.get('/healthz', (req, res) => {
     res.status(200).json({ rooms: roomManager.rooms.size });
 });
 
-// In-memory rate limiter: 20 requests per minute per IP
+// In-memory rate limiter: 20 requests per minute per IP (configurable for test runs)
 const ipPreviewRateLimits = new Map();
+const PREVIEW_RATE_LIMIT_MAX = Number(process.env.PREVIEW_RATE_LIMIT_MAX) || 20;
 
 const previewRateLimiter = (req, res, next) => {
     const ip = req.ip || req.connection?.remoteAddress || req.headers?.['x-forwarded-for'] || '127.0.0.1';
     const now = Date.now();
     const windowMs = 60 * 1000;
-    const maxRequests = 20;
+    const maxRequests = PREVIEW_RATE_LIMIT_MAX;
 
     let record = ipPreviewRateLimits.get(ip);
     if (!record || now > record.resetTime) {

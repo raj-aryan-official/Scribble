@@ -113,7 +113,11 @@ export const ModePicker = ({
                                 </span>
                                 <Icon className="w-4 h-4 text-ink shrink-0" />
                             </div>
-                            <span className="text-[10px] font-bold text-ink-soft leading-tight line-clamp-2">
+                            <span
+                                className={`text-[10px] font-bold leading-tight line-clamp-2 ${
+                                    isSelected ? 'text-ink' : 'text-ink-soft'
+                                }`}
+                            >
                                 {def.description}
                             </span>
                         </button>

@@ -86,8 +86,8 @@ const hardMode = {
             return { allowed: false, isCorrect: false, isClose: false, reason: 'already_guessed' };
         }
 
-        const correct = isCorrect(text, room.wordToGuess, room.wordAliases);
-        const close = !correct && isClose(text, room.wordToGuess, room.wordAliases);
+        const correct = isCorrect(text, room.wordToGuess);
+        const close = !correct && isClose(text, room.wordToGuess);
 
         return {
             allowed: true,

@@ -16,6 +16,7 @@ export const ToolTray = ({
     undo,
     clearCanvas,
     twist = null,
+    orientation = 'horizontal',
     className = '',
 }) => {
     const { settings } = useSettings();
@@ -30,6 +31,114 @@ export const ToolTray = ({
         clearCanvas?.();
         setShowClearConfirm(false);
     };
+
+    if (orientation === 'vertical') {
+        return (
+            <section
+                aria-label="Drawing tools"
+                data-testid="tool-tray"
+                data-orientation="vertical"
+                data-layout={isLeftHanded ? 'left-handed' : 'right-handed'}
+                className={`flex flex-col items-center gap-1.5 h-full w-[84px] shrink-0 overflow-y-auto scrollbar-hide p-1.5 bg-card border-2 border-ink shadow-hard rounded-[12px] select-none ${className}`}
+            >
+                <div
+                    role="group"
+                    aria-label="Drawing tool toggle"
+                    className="flex flex-col items-center gap-1 bg-paper p-0.5 border-2 border-ink rounded-[6px] shrink-0"
+                >
+                    <button
+                        type="button"
+                        aria-pressed={tool === 'pencil'}
+                        aria-label="Pencil tool (P)"
+                        title="Pencil tool (P)"
+                        onClick={() => setTool?.('pencil')}
+                        className={`min-w-[44px] min-h-[44px] p-2 rounded-[4px] flex items-center justify-center cursor-pointer focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none ${
+                            tool === 'pencil'
+                                ? 'bg-card text-ink border-2 border-ink shadow-hard-sm'
+                                : 'text-ink-soft hover:text-ink hover:bg-card/50'
+                        }`}
+                    >
+                        <Pencil className="w-5 h-5" />
+                    </button>
+                    <button
+                        type="button"
+                        aria-pressed={tool === 'eraser'}
+                        disabled={isNoUndoEraser}
+                        aria-label="Eraser tool (E)"
+                        title={isNoUndoEraser ? 'Eraser disabled in this twist' : 'Eraser tool (E)'}
+                        onClick={() => !isNoUndoEraser && setTool?.('eraser')}
+                        className={`min-w-[44px] min-h-[44px] p-2 rounded-[4px] flex items-center justify-center focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none ${
+                            isNoUndoEraser
+                                ? 'opacity-40 cursor-not-allowed text-ink-soft'
+                                : tool === 'eraser'
+                                ? 'bg-card text-ink border-2 border-ink shadow-hard-sm cursor-pointer'
+                                : 'text-ink-soft hover:text-ink hover:bg-card/50 cursor-pointer'
+                        }`}
+                    >
+                        <Eraser className="w-5 h-5" />
+                    </button>
+                </div>
+
+                <BrushSize
+                    orientation="vertical"
+                    lineWidth={lineWidth}
+                    setLineWidth={setLineWidth}
+                    isLockedSize={isThinLine}
+                    className="shrink-0"
+                />
+
+                <ColorSwatches
+                    orientation="vertical"
+                    color={color}
+                    setColor={setColor}
+                    lockedColor={lockedColor}
+                    className="shrink-0"
+                />
+
+                <div className="flex flex-col items-center gap-1 mt-auto shrink-0">
+                    <button
+                        type="button"
+                        aria-label="Undo stroke (Ctrl+Z)"
+                        title={isNoUndoEraser ? 'Undo disabled in this twist' : 'Undo (Ctrl+Z)'}
+                        disabled={isNoUndoEraser}
+                        onClick={() => !isNoUndoEraser && undo?.()}
+                        className={`min-w-[44px] min-h-[44px] p-2 border-2 border-ink rounded-[6px] shadow-hard-sm flex items-center justify-center focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none transition-all ${
+                            isNoUndoEraser
+                                ? 'opacity-40 cursor-not-allowed bg-paper text-ink-soft'
+                                : 'bg-paper hover:bg-card text-ink cursor-pointer active:translate-x-[1px] active:translate-y-[1px]'
+                        }`}
+                    >
+                        <Undo2 className="w-5 h-5" />
+                    </button>
+                    <button
+                        type="button"
+                        aria-label="Clear drawing"
+                        title={isNoUndoEraser ? 'Clear disabled in this twist' : 'Clear drawing'}
+                        disabled={isNoUndoEraser}
+                        onClick={() => !isNoUndoEraser && setShowClearConfirm(true)}
+                        className={`min-w-[44px] min-h-[44px] p-2 border-2 border-ink rounded-[6px] shadow-hard-sm flex items-center justify-center focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none transition-all ${
+                            isNoUndoEraser
+                                ? 'opacity-40 cursor-not-allowed bg-paper text-ink-soft'
+                                : 'bg-paper hover:bg-tomato/15 text-tomato cursor-pointer active:translate-x-[1px] active:translate-y-[1px]'
+                        }`}
+                    >
+                        <Trash2 className="w-5 h-5" />
+                    </button>
+                </div>
+
+                <ConfirmationModal
+                    isOpen={showClearConfirm}
+                    onClose={() => setShowClearConfirm(false)}
+                    onConfirm={handleClearConfirm}
+                    title="Clear the whole drawing?"
+                    message="Are you sure? All strokes will be erased."
+                    confirmText="Clear Paper"
+                    cancelText="Cancel"
+                    isDanger={true}
+                />
+            </section>
+        );
+    }
 
     return (
         <section

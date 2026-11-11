@@ -168,7 +168,7 @@ export const SettingsModal = ({ isOpen, onClose }) => {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 40, scale: 0.98 }}
                         transition={{ type: 'spring', stiffness: 350, damping: 28 }}
-                        className="relative w-full max-w-lg bg-card border-t-2 md:border-2 border-ink shadow-hard-lg rounded-t-[16px] md:rounded-[12px] p-4 sm:p-6 text-ink max-h-[85vh] md:max-h-[85vh] flex flex-col outline-none select-none"
+                        className="relative w-full max-w-lg bg-card border-t-2 md:border-2 border-ink shadow-hard-lg rounded-t-[16px] md:rounded-[12px] px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] sm:p-6 text-ink max-h-[85dvh] md:max-h-[85dvh] flex flex-col outline-none select-none"
                     >
                         {/* Mobile Drag/Grab Pill Handle */}
                         <div className="flex md:hidden justify-center pb-2">
@@ -264,44 +264,6 @@ export const SettingsModal = ({ isOpen, onClose }) => {
                                 <span className="text-[11px] font-bold uppercase tracking-wider text-ink-soft">
                                     Accessibility & Display
                                 </span>
-
-                                {/* Language Selector */}
-                                <div className="flex items-center justify-between gap-3 py-2">
-                                    <div className="flex flex-col text-left">
-                                        <span className="text-xs sm:text-sm font-bold text-ink">Language / भाषा</span>
-                                        <span className="text-[11px] text-ink-soft">Interface language</span>
-                                    </div>
-                                    <div
-                                        role="radiogroup"
-                                        aria-label="Interface language"
-                                        data-testid="setting-language"
-                                        className="flex items-center gap-1 bg-paper p-1 border-2 border-ink rounded-[6px]"
-                                    >
-                                        {[
-                                            { id: 'en', label: 'English' },
-                                            { id: 'hi', label: 'हिन्दी' }
-                                        ].map((lang) => {
-                                            const isSelected = (settings.language || 'en') === lang.id;
-                                            return (
-                                                <button
-                                                    key={lang.id}
-                                                    type="button"
-                                                    role="radio"
-                                                    aria-checked={isSelected}
-                                                    data-testid={`setting-language-${lang.id}`}
-                                                    onClick={() => updateSettings({ language: lang.id })}
-                                                    className={`px-2.5 py-1 text-xs font-black rounded-[4px] cursor-pointer transition-colors ${
-                                                        isSelected
-                                                            ? 'bg-cobalt text-white shadow-hard-xs border border-ink'
-                                                            : 'text-ink-soft hover:text-ink hover:bg-card'
-                                                    }`}
-                                                >
-                                                    {lang.label}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
 
                                 {/* Text Size Segmented Selector */}
                                 <div className="flex items-center justify-between gap-2 py-1">

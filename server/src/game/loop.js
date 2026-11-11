@@ -2,7 +2,7 @@ const crypto = require('crypto');
 const roomManager = require('../RoomManager');
 const { toPublicRoom, clearRoomTimers } = require('../RoomManager');
 const { EVENTS, GAME_STATES } = require('../../../shared/types.cjs');
-const { getWordChoices, getAliases } = require('../wordBank');
+const { getWordChoices } = require('../wordBank');
 const { getGraphemes } = require('../guess');
 const logger = require('../logger');
 const { flushReactionBatch, getTopReaction } = require('../handlers/reactions');
@@ -588,7 +588,6 @@ const startRound = (io, room, word, autoPicked = false) => {
     clearRoomTimers(room);
     snapshotEligibleGuessers(room);
     room.wordToGuess = word;
-    room.wordAliases = getAliases(word) || [];
     if (room.usedWords && typeof room.usedWords.add === 'function') {
         room.usedWords.add(word);
     }

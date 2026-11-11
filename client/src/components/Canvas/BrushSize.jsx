@@ -7,9 +7,10 @@ const SIZE_PRESETS = [
     { name: 'Large', size: 22, dotClass: 'w-5.5 h-5.5' },
 ];
 
-export const BrushSize = ({ lineWidth = 6, setLineWidth, isLockedSize = false, className = '' }) => {
+export const BrushSize = ({ lineWidth = 6, setLineWidth, isLockedSize = false, orientation = 'horizontal', className = '' }) => {
     const [isPopoverOpen, setIsPopoverOpen] = useState(false);
     const popoverRef = useRef(null);
+    const isVertical = orientation === 'vertical';
 
     // Close popover when clicking outside or pressing Escape
     useEffect(() => {
@@ -40,14 +41,14 @@ export const BrushSize = ({ lineWidth = 6, setLineWidth, isLockedSize = false, c
         <div
             role="group"
             aria-label="Brush size options"
-            className={`flex items-center gap-1.5 relative ${className}`}
+            className={`flex ${isVertical ? 'flex-col' : 'flex-row'} items-center gap-1.5 relative ${className}`}
             data-testid="brush-size-controls"
         >
             {/* Three presets (Small, Medium, Large) with roving tabindex */}
             <div
                 role="group"
                 aria-label="Brush size presets"
-                className="flex items-center gap-1 bg-paper p-1 border-2 border-ink rounded-[6px]"
+                className={`flex ${isVertical ? 'flex-col' : 'flex-row'} items-center gap-1 bg-paper p-1 border-2 border-ink rounded-[6px]`}
             >
                 {SIZE_PRESETS.map((preset, index) => {
                     const isSelected = lineWidth === preset.size;
@@ -120,7 +121,9 @@ export const BrushSize = ({ lineWidth = 6, setLineWidth, isLockedSize = false, c
                     ref={popoverRef}
                     role="dialog"
                     aria-label="Fine brush size slider"
-                    className="absolute bottom-full mb-2 left-0 z-popover bg-card border-2 border-ink shadow-hard-lg rounded-[12px] p-4 w-60 sm:w-64 flex flex-col gap-3 animate-in fade-in zoom-in-95 duration-150 select-none"
+                    className={`absolute z-popover bg-card border-2 border-ink shadow-hard-lg rounded-[12px] p-4 w-60 sm:w-64 flex flex-col gap-3 animate-in fade-in zoom-in-95 duration-150 select-none ${
+                        isVertical ? 'left-full ml-2 top-0' : 'bottom-full mb-2 left-0'
+                    }`}
                 >
                     <div className="flex items-center justify-between border-b-2 border-ink/10 pb-2">
                         <span className="text-xs font-black uppercase tracking-wider text-ink">

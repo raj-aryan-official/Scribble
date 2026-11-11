@@ -169,7 +169,7 @@ export const DrawingModal = ({
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="modal-drawing-title"
-                className="bg-paper border-2 border-ink rounded-[12px] shadow-hard-lg max-w-2xl w-full p-4 sm:p-6 flex flex-col gap-4 select-none max-h-[95vh] overflow-y-auto"
+                className="bg-paper border-2 border-ink rounded-[12px] shadow-hard-lg max-w-2xl w-full p-4 sm:p-6 flex flex-col gap-4 select-none max-h-[95dvh] overflow-y-auto"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}

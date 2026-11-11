@@ -1,6 +1,6 @@
 /**
  * Pure functions for guessing, normalization, Levenshtein distance, and similarity checks.
- * Supports Unicode NFC normalization, grapheme clusters (Intl.Segmenter), and aliases.
+ * Supports Unicode NFC normalization and grapheme clusters (Intl.Segmenter).
  */
 
 const segmenter = typeof Intl !== 'undefined' && Intl.Segmenter
@@ -20,7 +20,7 @@ function normalize(text) {
     return text
         .trim()
         .toLowerCase()
-        // Strip Latin diacritical marks (e.g. café -> cafe) while preserving Devanagari characters
+        // Strip Latin diacritical marks (e.g. café -> cafe)
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
         // Normalize to Unicode NFC as specified
@@ -73,74 +73,31 @@ function levenshteinDistance(s1, s2) {
     return graphemeLevenshteinDistance(g1, g2);
 }
 
-function isCorrect(guess, word, aliases = [], options = {}) {
+function isCorrect(guess, word) {
     if (!guess || !word) return false;
     const normGuess = normalize(guess);
     const normWord = normalize(word);
     if (!normGuess || !normWord) return false;
 
-    // Exact match against secret word
-    if (normGuess === normWord) return true;
-
-    const candidateList = Array.isArray(aliases) ? aliases : [];
-    const normAliases = candidateList.map(a => normalize(a)).filter(Boolean);
-
-    // Exact match against any alias
-    if (normAliases.some(a => a === normGuess)) return true;
-
-    // Accept an alias or a match within one edit
-    const allowOneEdit = options.allowOneEdit ?? (normAliases.length > 0);
-    if (allowOneEdit) {
-        const guessGraphemes = getGraphemes(normGuess);
-        const allCandidates = [normWord, ...normAliases];
-        for (const cand of allCandidates) {
-            const candGraphemes = getGraphemes(cand);
-            if (candGraphemes.length >= 2 && Math.abs(guessGraphemes.length - candGraphemes.length) <= 1) {
-                const dist = graphemeLevenshteinDistance(guessGraphemes, candGraphemes);
-                if (dist <= 1) {
-                    return true;
-                }
-            }
-        }
-    }
-
-    return false;
+    return normGuess === normWord;
 }
 
-function isClose(guess, word, aliases = [], options = {}) {
+function isClose(guess, word) {
     if (!guess || !word) return false;
     const normGuess = normalize(guess);
     const normWord = normalize(word);
     if (!normGuess || !normWord) return false;
 
     // A guess cannot be close if it is already correct
-    if (isCorrect(guess, word, aliases, options)) return false;
+    if (isCorrect(guess, word)) return false;
 
-    const candidateList = Array.isArray(aliases) ? aliases : [];
-    const normAliases = candidateList.map(a => normalize(a)).filter(Boolean);
-    const allCandidates = [normWord, ...normAliases];
     const guessGraphemes = getGraphemes(normGuess);
-    const hasAliases = normAliases.length > 0;
+    const wordGraphemes = getGraphemes(normWord);
+    const dist = graphemeLevenshteinDistance(guessGraphemes, wordGraphemes);
 
-    for (const cand of allCandidates) {
-        const candGraphemes = getGraphemes(cand);
-        const dist = graphemeLevenshteinDistance(guessGraphemes, candGraphemes);
-
-        if (hasAliases) {
-            // Since 1-edit is already accepted as correct, distance 2 is close for words with length >= 4
-            if (candGraphemes.length >= 4 && dist === 2) {
-                return true;
-            }
-        } else {
-            // Standard English threshold: 1 for <= 7 letters, 2 for > 7 letters
-            const maxAllowedDistance = candGraphemes.length <= 7 ? 1 : 2;
-            if (dist <= maxAllowedDistance) {
-                return true;
-            }
-        }
-    }
-
-    return false;
+    // Standard English threshold: 1 for <= 7 letters, 2 for > 7 letters
+    const maxAllowedDistance = wordGraphemes.length <= 7 ? 1 : 2;
+    return dist <= maxAllowedDistance;
 }
 
 module.exports = {

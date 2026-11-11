@@ -4,6 +4,7 @@ import { AnimatePresence, motion, MotionConfig, useReducedMotion } from 'framer-
 import { useGame } from './context/GameContext';
 import { useSocket } from './hooks/useSocket';
 import { useSettings } from './context/SettingsContext';
+import { ProfileProvider } from './context/ProfileContext';
 import Landing from './pages/Landing';
 import Join from './pages/Join';
 import Lobby from './pages/Lobby';
@@ -30,6 +31,7 @@ import unsupportedSvg from './assets/states/unsupported.svg';
 function App() {
   const location = useLocation();
   const { settings, isSettingsOpen, closeSettings } = useSettings();
+  // Profile context removed
   const osReducedMotion = useReducedMotion();
   const shouldReduceMotion = settings.reducedMotion ? true : osReducedMotion;
   const { state, dispatch } = useGame();

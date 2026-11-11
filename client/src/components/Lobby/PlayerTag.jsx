@@ -81,7 +81,7 @@ export const PlayerTag = ({
                         )}
 
                         {isDisconnected && (
-                            <span className="bg-paper text-tomato border border-tomato/50 text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-[4px] shrink-0">
+                            <span className="bg-paper text-tomato-deep border border-tomato/50 text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-[4px] shrink-0">
                                 Away
                             </span>
                         )}

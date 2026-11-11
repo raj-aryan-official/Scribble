@@ -625,7 +625,6 @@ function registerRoomHandlers(io, socket, safeOn) {
         room.currentDrawerIndex = 0;
         room.drawerId = null;
         room.wordToGuess = null;
-        room.wordAliases = [];
         room.wordChoices = null;
         room.hint = null;
         room.wordHint = null;

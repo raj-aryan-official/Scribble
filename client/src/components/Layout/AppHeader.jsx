@@ -79,7 +79,7 @@ export const AppHeader = ({
                     type="button"
                     onClick={() => setShowLeaveConfirm(true)}
                     aria-label="Leave game"
-                    className={`${isInGame ? 'hidden sm:flex' : 'flex'} items-center gap-1.5 cursor-pointer transform -rotate-1 hover:rotate-0 transition-transform focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none rounded-[4px] p-1 -ml-1`}
+                    className={`${isInGame ? 'hidden sm:flex' : 'hidden md:flex'} items-center gap-1.5 cursor-pointer transform -rotate-1 hover:rotate-0 transition-transform focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none rounded-[4px] p-1 -ml-1`}
                 >
                     <span className="font-heading font-black text-xl md:text-2xl tracking-tighter text-tomato stroke-ink">
                         SCRIBBLE
@@ -145,17 +145,19 @@ export const AppHeader = ({
                     )}
                 </div>
 
-                {/* Settings Button */}
-                <Tooltip content="Settings">
-                    <button
-                        type="button"
-                        onClick={openSettings}
-                        aria-label="Settings"
-                        className="min-w-[44px] min-h-[44px] p-2 bg-paper hover:bg-card border-2 border-ink rounded-[6px] shadow-hard-sm flex items-center justify-center text-ink cursor-pointer active:translate-x-[1px] active:translate-y-[1px] focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none"
-                    >
-                        <Settings className="w-5 h-5" />
-                    </button>
-                </Tooltip>
+                {/* Settings Button (desktop; phones use the menu) */}
+                <div className="hidden sm:block">
+                    <Tooltip content="Settings">
+                        <button
+                            type="button"
+                            onClick={openSettings}
+                            aria-label="Settings"
+                            className="min-w-[44px] min-h-[44px] p-2 bg-paper hover:bg-card border-2 border-ink rounded-[6px] shadow-hard-sm flex items-center justify-center text-ink cursor-pointer active:translate-x-[1px] active:translate-y-[1px] focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none"
+                        >
+                            <Settings className="w-5 h-5" />
+                        </button>
+                    </Tooltip>
+                </div>
 
                 {/* Voice Button (when activeVoice provided) */}
                 {activeVoice && (

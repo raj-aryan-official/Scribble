@@ -90,7 +90,7 @@ export const Modal = ({
         <AnimatePresence>
             {isOpen && (
                 <div
-                    className="fixed inset-0 z-modal flex items-center justify-center p-4 bg-ink/60"
+                    className="fixed inset-0 z-modal flex items-center justify-center p-3 sm:p-4 bg-ink/60 overflow-y-auto"
                     onClick={(e) => {
                         if (e.target === e.currentTarget) {
                             onClose?.();
@@ -108,7 +108,7 @@ export const Modal = ({
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 10 }}
                         transition={{ type: 'spring', stiffness: 300, damping: 24 }}
-                        className={`relative w-full max-w-md bg-card border-2 border-ink shadow-hard-lg rounded-[12px] p-6 text-ink outline-none ${className}`}
+                        className={`relative w-full max-w-md my-auto max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)] overflow-y-auto bg-card border-2 border-ink shadow-hard-lg rounded-[12px] p-4 sm:p-6 text-ink outline-none ${className}`}
                     >
                         <div className="flex items-start justify-between gap-4 mb-4">
                             <div>

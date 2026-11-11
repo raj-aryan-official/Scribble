@@ -90,7 +90,7 @@ test.describe('Edge Cases & Calm Failure Messaging (GF1-GF3, E1-E22)', () => {
 
     // Tab 1 creates room
     await tab1.goto('/');
-    await tab1.fill('input#nickname-input', 'HeroTab');
+    await tab1.fill('#player-nickname', 'HeroTab');
     await tab1.click('button:has-text("Start a room")');
 
     await tab1.waitForURL(/\/lobby\//, { timeout: 10000 });
@@ -151,15 +151,15 @@ test.describe('Edge Cases & Calm Failure Messaging (GF1-GF3, E1-E22)', () => {
 
     // Host creates room
     await hostPage.goto('/');
-    await hostPage.fill('input#nickname-input', 'HostDrawer');
+    await hostPage.fill('#player-nickname', 'HostDrawer');
     await hostPage.click('button:has-text("Start a room")');
     await hostPage.waitForURL(/\/lobby\//, { timeout: 10000 });
     const roomCode = hostPage.url().split('/lobby/')[1];
 
     // Guest joins
     await guestPage.goto(`/join/${roomCode}`);
-    await guestPage.waitForSelector('input#join-nickname-input');
-    await guestPage.fill('input#join-nickname-input', 'GuestGuesser');
+    await guestPage.waitForSelector('#join-nickname');
+    await guestPage.fill('#join-nickname', 'GuestGuesser');
     await guestPage.click('button:has-text("Join")');
     await guestPage.waitForURL(new RegExp(`/lobby/${roomCode}`), { timeout: 10000 });
 
@@ -169,8 +169,8 @@ test.describe('Edge Cases & Calm Failure Messaging (GF1-GF3, E1-E22)', () => {
     await guestPage.waitForURL(new RegExp(`/game/${roomCode}`), { timeout: 10000 });
 
     // Host picks word
-    await hostPage.waitForSelector('button[data-testid="word-choice-btn-0"]', { timeout: 10000 });
-    await hostPage.click('button[data-testid="word-choice-btn-0"]');
+    await hostPage.waitForSelector('button[data-testid="word-choice-card-0"]', { timeout: 10000 });
+    await hostPage.click('button[data-testid="word-choice-card-0"]');
 
     // Wait until drawing phase starts
     await hostPage.waitForSelector('[data-testid="drawer-word-chip"]', { timeout: 10000 });
@@ -195,13 +195,15 @@ test.describe('Edge Cases & Calm Failure Messaging (GF1-GF3, E1-E22)', () => {
     test.setTimeout(45000);
     const hostContext = await browser.newContext();
     const guestContext = await browser.newContext();
+    const thirdContext = await browser.newContext();
 
     const hostPage = await hostContext.newPage();
     const guestPage = await guestContext.newPage();
+    const thirdPage = await thirdContext.newPage();
 
     // Host creates room
     await hostPage.goto('/');
-    await hostPage.fill('input#nickname-input', 'OriginalHost');
+    await hostPage.fill('#player-nickname', 'OriginalHost');
     await hostPage.click('button:has-text("Start a room")');
     await hostPage.waitForURL(/\/lobby\//, { timeout: 10000 });
     const roomCode = hostPage.url().split('/lobby/')[1];
@@ -211,14 +213,21 @@ test.describe('Edge Cases & Calm Failure Messaging (GF1-GF3, E1-E22)', () => {
 
     // Guest joins
     await guestPage.goto(`/join/${roomCode}`);
-    await guestPage.fill('input#join-nickname-input', 'ActingPlayer');
+    await guestPage.fill('#join-nickname', 'ActingPlayer');
     await guestPage.click('button:has-text("Join")');
     await guestPage.waitForURL(new RegExp(`/lobby/${roomCode}`), { timeout: 10000 });
+
+    // Third player keeps the game alive when the host leaves
+    await thirdPage.goto(`/join/${roomCode}`);
+    await thirdPage.fill('#join-nickname', 'ThirdPlayer');
+    await thirdPage.click('button:has-text("Join")');
+    await thirdPage.waitForURL(new RegExp(`/lobby/${roomCode}`), { timeout: 10000 });
 
     // Start game
     await hostPage.click('button:has-text("Start Game")');
     await hostPage.waitForURL(new RegExp(`/game/${roomCode}`), { timeout: 10000 });
     await guestPage.waitForURL(new RegExp(`/game/${roomCode}`), { timeout: 10000 });
+    await thirdPage.waitForURL(new RegExp(`/game/${roomCode}`), { timeout: 10000 });
 
     // Host disconnects
     await hostPage.close();
@@ -238,13 +247,13 @@ test.describe('Edge Cases & Calm Failure Messaging (GF1-GF3, E1-E22)', () => {
     await newHostPage.goto(`/game/${roomCode}`);
     await newHostPage.waitForURL(new RegExp(`/game/${roomCode}`), { timeout: 10000 });
 
-    // Guest sees Toast that original host is host again
-    await guestPage.waitForSelector('[role="status"]', { timeout: 10000 });
-    const toastContent = await guestPage.textContent('body');
-    expect(toastContent).toContain('OriginalHost is the host again');
+    // Acting host chip disappears and the original host regains host-only controls
+    await expect(guestPage.locator('[data-testid="acting-host-chip"]')).toHaveCount(0, { timeout: 10000 });
+    await expect(newHostPage.locator('button:has-text("End Game")')).toBeVisible({ timeout: 10000 });
 
     await hostContext.close();
     await guestContext.close();
+    await thirdContext.close();
   });
 
   // 5. Seat claim flow (E19): Host receives modal with 20s countdown, accepts claim
@@ -260,14 +269,14 @@ test.describe('Edge Cases & Calm Failure Messaging (GF1-GF3, E1-E22)', () => {
 
     // Host creates room
     await hostPage.goto('/');
-    await hostPage.fill('input#nickname-input', 'HostUser');
+    await hostPage.fill('#player-nickname', 'HostUser');
     await hostPage.click('button:has-text("Start a room")');
     await hostPage.waitForURL(/\/lobby\//, { timeout: 10000 });
     const roomCode = hostPage.url().split('/lobby/')[1];
 
     // Maya joins
     await mayaPage.goto(`/join/${roomCode}`);
-    await mayaPage.fill('input#join-nickname-input', 'Maya');
+    await mayaPage.fill('#join-nickname', 'Maya');
     await mayaPage.click('button:has-text("Join")');
     await mayaPage.waitForURL(new RegExp(`/lobby/${roomCode}`), { timeout: 10000 });
 
@@ -281,8 +290,8 @@ test.describe('Edge Cases & Calm Failure Messaging (GF1-GF3, E1-E22)', () => {
     const newJoinerContext = await browser.newContext();
     const newJoinerPage = await newJoinerContext.newPage();
     await newJoinerPage.goto(`/join/${roomCode}`);
-    await newJoinerPage.waitForSelector('input#join-nickname-input');
-    await newJoinerPage.fill('input#join-nickname-input', 'Maya');
+    await newJoinerPage.waitForSelector('#join-nickname');
+    await newJoinerPage.fill('#join-nickname', 'Maya');
     await newJoinerPage.click('button:has-text("Join")');
 
     // Joiner receives seat claim prompt: "Maya is away. Ask to take back that seat?"
@@ -326,7 +335,7 @@ test.describe('Edge Cases & Calm Failure Messaging (GF1-GF3, E1-E22)', () => {
     const page = await context.newPage();
 
     await page.goto('/');
-    await page.fill('input#nickname-input', 'MobileUser');
+    await page.fill('#player-nickname', 'MobileUser');
     await page.click('button:has-text("Start a room")');
     await page.waitForURL(/\/lobby\//, { timeout: 10000 });
 

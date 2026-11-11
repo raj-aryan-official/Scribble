@@ -41,7 +41,7 @@ export const Landing = () => {
     const { state, dispatch } = useGame();
     const socket = useSocket();
     const { isMuted, toggleMute } = useSound();
-    const { soundHintDismissed, dismissSoundHint, openSettings, language, setLanguage, strings } = useSettings();
+    const { soundHintDismissed, dismissSoundHint, openSettings, strings } = useSettings();
 
     // Form inputs
     const [username, setUsername] = useState('');
@@ -385,19 +385,6 @@ export const Landing = () => {
                         <SoundHint onDismiss={dismissSoundHint} />
                     )}
                 </div>
-
-                {/* Language Switcher */}
-                <Tooltip content={language === 'hi' ? 'Switch to English' : 'हिन्दी में बदलें'}>
-                    <button
-                        type="button"
-                        data-testid="language-switcher"
-                        onClick={() => setLanguage(language === 'hi' ? 'en' : 'hi')}
-                        aria-label={language === 'hi' ? 'Switch to English' : 'हिन्दी में बदलें'}
-                        className="min-h-[40px] px-3 py-1.5 bg-card hover:bg-paper border-2 border-ink rounded-[6px] shadow-hard-sm flex items-center justify-center text-xs font-bold font-mono text-ink cursor-pointer active:translate-x-[1px] active:translate-y-[1px] focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none"
-                    >
-                        {language === 'hi' ? 'English' : 'हिन्दी'}
-                    </button>
-                </Tooltip>
 
                 <Tooltip content="Settings">
                     <button

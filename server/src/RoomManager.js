@@ -1,6 +1,6 @@
 const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
-const { GAME_STATES, TWIST_IDS, ALLOWED_MODES, ALLOWED_WORD_LANGUAGES, REGIONAL_PACKS } = require('../../shared/types.cjs');
+const { GAME_STATES, TWIST_IDS, ALLOWED_MODES } = require('../../shared/types.cjs');
 const { getMode } = require('./modes');
 const blocklist = require('./blocklist');
 const { sanitiseText } = require('./sanitise');
@@ -20,7 +20,6 @@ const ALLOWED_ROUNDS = [1, 2, 3, 5, 7, 8, 10, 12];
 const ALLOWED_DRAW_TIMES = [10, 15, 30, 45, 60, 80, 100, 120];
 const ALLOWED_DIFFICULTIES = ['Easy', 'Medium', 'Hard', 'Mixed'];
 const ALLOWED_PACKS = ['animals', 'food', 'places', 'objects', 'actions'];
-const ALL_ALLOWED_PACKS = Array.from(new Set([...ALLOWED_PACKS, ...REGIONAL_PACKS]));
 const ALLOWED_WORD_CHOICES = ['pick', 'random'];
 const ALLOWED_TWISTS = ['off', 'sometimes', 'every'];
 const MAX_ROOMS = 500;
@@ -150,7 +149,7 @@ function sanitizeSettings(rawSettings = {}) {
         for (const p of rawSettings.packs) {
             if (typeof p === 'string') {
                 const normP = p.trim().toLowerCase();
-                if (ALL_ALLOWED_PACKS.includes(normP) && !seenPacks.has(normP)) {
+                if (ALLOWED_PACKS.includes(normP) && !seenPacks.has(normP)) {
                     seenPacks.add(normP);
                     packs.push(normP);
                 }
@@ -207,8 +206,6 @@ function sanitizeSettings(rawSettings = {}) {
         teamCount = Math.max(2, Math.min(4, Math.floor(rawSettings.teamCount)));
     }
 
-    const wordLanguage = ALLOWED_WORD_LANGUAGES.includes(rawSettings?.wordLanguage) ? rawSettings.wordLanguage : 'english';
-
     return {
         mode,
         rounds,
@@ -222,8 +219,7 @@ function sanitizeSettings(rawSettings = {}) {
         enabledTwists,
         hints,
         scoreMultiplier,
-        teamCount,
-        wordLanguage
+        teamCount
     };
 }
 

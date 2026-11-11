@@ -69,6 +69,15 @@ export const PlayerList = ({
     // Track score increases to render floating "+XYZ" gain animations
     const prevScoresRef = useRef(scores);
     const [floatingGains, setFloatingGains] = useState({});
+    const gainTimersRef = useRef([]);
+
+    useEffect(() => {
+        const timers = gainTimersRef.current;
+        return () => {
+            timers.forEach(clearTimeout);
+            timers.length = 0;
+        };
+    }, []);
 
     useEffect(() => {
         const prev = prevScoresRef.current;
@@ -86,6 +95,16 @@ export const PlayerList = ({
 
         if (hasChange) {
             setFloatingGains((prevGains) => ({ ...prevGains, ...newGains }));
+            const timer = setTimeout(() => {
+                setFloatingGains((prevGains) => {
+                    const next = { ...prevGains };
+                    Object.entries(newGains).forEach(([playerId, gain]) => {
+                        if (next[playerId]?.id === gain.id) delete next[playerId];
+                    });
+                    return next;
+                });
+            }, 1200);
+            gainTimersRef.current.push(timer);
         }
         prevScoresRef.current = scores;
     }, [scores]);
@@ -239,10 +258,10 @@ export const PlayerList = ({
                                     {gain && (
                                         <motion.span
                                             key={gain.id}
-                                            initial={{ opacity: 1, y: 0, scale: 0.9 }}
-                                            animate={{ opacity: 0, y: -16, scale: 1.1 }}
-                                            exit={{ opacity: 0 }}
-                                            transition={{ duration: 1.2, ease: 'easeOut' }}
+                                            aria-hidden="true"
+                                            initial={{ y: 0, scale: 0.9 }}
+                                            animate={{ y: -16, scale: 1.1 }}
+                                            transition={{ duration: 1, ease: 'easeOut' }}
                                             className="absolute -top-3.5 -right-1 font-mono font-black text-[10px] text-leaf-deep pointer-events-none select-none z-10"
                                             data-testid="floating-score-gain"
                                         >
@@ -345,7 +364,7 @@ export const PlayerList = ({
                 </div>
             )}
 
-            <div className="flex flex-col gap-2 overflow-y-auto max-h-[calc(100vh-220px)] pr-1">
+            <div className="flex flex-col gap-2 overflow-y-auto max-h-[calc(100dvh-220px)] pr-1">
                 {rankedPlayers.map((player, index) => {
                     const isDrawer = player.id === drawerId || player.playerId === drawerId;
                     const hasGuessed = guessedPlayerIds.includes(player.id) || (player.playerId && guessedPlayerIds.includes(player.playerId));
@@ -493,10 +512,9 @@ export const PlayerList = ({
                                             <motion.span
                                                 key={gain.id}
                                                 aria-hidden="true"
-                                                initial={{ opacity: 1, y: 0, scale: 0.9 }}
-                                                animate={{ opacity: [1, 1, 0], y: -20, scale: 1.1 }}
-                                                exit={{ opacity: 0 }}
-                                                transition={{ duration: 1.2, times: [0, 0.8, 1], ease: 'easeOut' }}
+                                                initial={{ y: 0, scale: 0.9 }}
+                                                animate={{ y: -20, scale: 1.1 }}
+                                                transition={{ duration: 1, ease: 'easeOut' }}
                                                 className="absolute -top-4 -right-1 font-mono font-black text-xs text-ink pointer-events-none select-none z-10"
                                                 data-testid="floating-score-gain"
                                             >

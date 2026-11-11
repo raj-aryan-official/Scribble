@@ -386,7 +386,7 @@ export const RoundEndOverlay = ({
                                     {/* Visible animated numbers */}
                                     <div aria-hidden="true" className="flex items-center gap-2 shrink-0">
                                         {item.gained > 0 ? (
-                                            <span className="font-mono font-bold text-xs bg-leaf text-white px-2 py-0.5 rounded-[4px] border border-ink tabular-nums">
+                                            <span className="font-mono font-bold text-xs bg-leaf-deep text-white px-2 py-0.5 rounded-[4px] border border-ink tabular-nums">
                                                 +{displayedGained}
                                             </span>
                                         ) : (

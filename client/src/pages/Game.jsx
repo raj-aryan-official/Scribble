@@ -13,6 +13,7 @@ import PlayerList from '../components/Game/PlayerList';
 import GameBar from '../components/Game/GameBar';
 import TimerBar from '../components/Game/TimerBar';
 import ToolTray from '../components/Canvas/ToolTray';
+import PaperStage from '../components/Canvas/PaperStage';
 import GuessPanel from '../components/Game/GuessPanel';
 import WordChoice from '../components/Game/WordChoice';
 import RoundEndOverlay from '../components/Game/RoundEndOverlay';
@@ -304,7 +305,7 @@ export const Game = () => {
     const myTurnNumber = myPlayerIndex >= 0 ? myPlayerIndex + 1 : state.players.length;
 
     return (
-        <div className="game-viewport-container flex-1 w-full max-w-[1280px] mx-auto bg-paper flex flex-col select-none overflow-x-hidden overflow-y-hidden h-[100dvh]">
+        <div className="game-viewport-container w-full bg-paper grid grid-rows-[auto_minmax(0,1fr)] select-none overflow-x-hidden overflow-y-hidden min-h-0">
             <h1 tabIndex={-1} className="sr-only">
                 Round {state.currentRound || 1} of {state.totalRounds || state.settings?.rounds || 3}
             </h1>
@@ -334,10 +335,10 @@ export const Game = () => {
             <div
                 data-testid="game-main-area"
                 data-layout={settings.leftHandedLayout ? 'left-handed' : 'right-handed'}
-                className="flex-1 w-full min-h-0 flex flex-col md:flex-row landscape:flex-row gap-1.5 sm:gap-3 p-1 sm:p-2 md:p-3 overflow-hidden"
+                className="flex-1 w-full min-h-0 flex flex-col md:flex-row landscape:flex-row gap-1 sm:gap-2 lg:gap-2 p-0 sm:p-2 lg:p-2 overflow-hidden"
             >
                 {/* Desktop Left Column: Ranked Player Scoreboard */}
-                <div className="hidden md:flex landscape:hidden md:landscape:flex w-56 lg:w-64 h-full shrink-0">
+                <div className="hidden 2xl:flex w-52 2xl:w-56 h-full shrink-0">
                     <PlayerList
                         players={state.players}
                         scores={state.scores}
@@ -349,8 +350,26 @@ export const Game = () => {
                     />
                 </div>
 
+                {/* Vertical tool rail: desktop and short-landscape phones (saves height for the paper) */}
+                {isDrawer && (
+                    <div className="hidden lg:flex landscape:flex h-full shrink-0">
+                        <ToolTray
+                            orientation="vertical"
+                            tool={tool}
+                            setTool={setTool}
+                            lineWidth={lineWidth}
+                            setLineWidth={setLineWidth}
+                            color={color}
+                            setColor={setColor}
+                            undo={undo}
+                            clearCanvas={clearCanvas}
+                            twist={state.currentTwist}
+                        />
+                    </div>
+                )}
+
                 {/* Center Main Area: Paper Canvas, Hint Tiles, Tool Tray */}
-                <main className="flex-1 min-h-0 flex flex-col items-center justify-between gap-1 sm:gap-2 overflow-hidden landscape:h-full">
+                <main className="flex-1 w-full min-w-0 min-h-0 flex flex-col items-center justify-between gap-1 sm:gap-2 overflow-hidden landscape:h-full">
                     {/* Joined mid-round quiet banner */}
                     {state.joinedMidRound && (
                         <div className="w-full shrink-0">
@@ -366,44 +385,41 @@ export const Game = () => {
                         <ScoringCoachmark />
                     </div>
 
-                    {/* 3. The Paper at full width minus a 16 px gutter, 4:3 (Landscape: largest size that fits height) */}
-                    <div className="w-full flex-1 min-h-0 flex items-center justify-center p-0.5 overflow-hidden">
-                        <div
-                            data-testid="drawing-paper"
-                            className="relative bg-card rounded-[12px] border-2 border-ink shadow-hard overflow-hidden flex flex-col items-center justify-center max-w-[calc(100vw-16px)] max-h-full landscape:max-h-[220px] aspect-[4/3] w-auto h-full"
-                        >
-                            {/* Draining Ink Timer Bar Across Top of Paper */}
-                            <TimerBar
-                                roundEndsAt={state.roundEndsAt}
-                                totalTime={totalDrawTime}
-                                timeLeft={state.timer}
-                            />
+                    {/* 3. Measured 4:3 paper: the largest rectangle that fits the stage */}
+                    <PaperStage className="flex-1 min-h-0" paperClassName="rounded-[12px]">
+                        {/* Draining Ink Timer Bar Across Top of Paper */}
+                        <TimerBar
+                            className="absolute inset-x-0 top-0 z-elevated"
+                            roundEndsAt={state.roundEndsAt}
+                            totalTime={totalDrawTime}
+                            timeLeft={state.timer}
+                        />
 
-                            {/* Limited Ink Bar for Drawer */}
-                            {isDrawer && state.currentTwist?.id === 'limited-ink' && (
-                                <div
-                                    data-testid="ink-bar"
-                                    className="w-full flex items-center gap-2 px-3 py-1 bg-paper border-b-2 border-ink shadow-hard-xs shrink-0 select-none z-10"
-                                >
-                                    <span className="text-[11px] font-black uppercase tracking-wider text-ink shrink-0 flex items-center gap-1">
-                                        <Zap className="w-3.5 h-3.5 text-cobalt" />
-                                        Ink: {Math.max(0, Math.round(((inkRemaining ?? 1200) / 1200) * 100))}%
-                                    </span>
-                                    <div className="flex-1 h-2 bg-card border border-ink/40 rounded-full overflow-hidden p-0.5">
-                                        <div
-                                            className={`h-full rounded-full transition-all duration-150 ${
-                                                (inkRemaining ?? 1200) <= 300 ? 'bg-tomato' : 'bg-cobalt'
-                                            }`}
-                                            style={{
-                                                width: `${Math.max(0, Math.min(100, ((inkRemaining ?? 1200) / 1200) * 100))}%`
-                                            }}
-                                        />
-                                    </div>
+                        {/* Limited Ink Bar for Drawer */}
+                        {isDrawer && state.currentTwist?.id === 'limited-ink' && (
+                            <div
+                                data-testid="ink-bar"
+                                className="absolute inset-x-0 top-2 z-elevated w-full flex items-center gap-2 px-3 py-1 bg-paper border-b-2 border-ink shadow-hard-xs select-none"
+                            >
+                                <span className="text-[11px] font-black uppercase tracking-wider text-ink shrink-0 flex items-center gap-1">
+                                    <Zap className="w-3.5 h-3.5 text-cobalt" />
+                                    Ink: {Math.max(0, Math.round(((inkRemaining ?? 1200) / 1200) * 100))}%
+                                </span>
+                                <div className="flex-1 h-2 bg-card border border-ink/40 rounded-full overflow-hidden p-0.5">
+                                    <div
+                                        className={`h-full rounded-full transition-all duration-150 ${
+                                            (inkRemaining ?? 1200) <= 300 ? 'bg-tomato' : 'bg-cobalt'
+                                        }`}
+                                        style={{
+                                            width: `${Math.max(0, Math.min(100, ((inkRemaining ?? 1200) / 1200) * 100))}%`
+                                        }}
+                                    />
                                 </div>
-                            )}
+                            </div>
+                        )}
 
-                            {/* Canvas Element with touch-action: none */}
-                            <div className="relative flex-1 w-full min-h-0 flex items-center justify-center">
+                        {/* Canvas and overlays fill the paper exactly */}
+                        <div className="absolute inset-0 z-0 overflow-hidden">
                                 <canvas
                                     ref={canvasRef}
                                     data-testid="canvas-element"
@@ -592,12 +608,11 @@ export const Game = () => {
                                         }}
                                     />
                                 )}
-                            </div>
                         </div>
-                    </div>
+                    </PaperStage>
 
-                    {/* 4. Player Strip, 56 px (Portrait only, below paper!) */}
-                    <div className="flex md:hidden landscape:hidden w-full h-[56px] min-h-[56px] max-h-[56px] shrink-0">
+                    {/* 4. Player Strip, 56 px (Portrait phones and tablets only) */}
+                    <div className="flex lg:hidden landscape:hidden w-full h-[56px] min-h-[56px] max-h-[56px] shrink-0">
                         <PlayerList
                             players={state.players}
                             scores={state.scores}
@@ -609,8 +624,8 @@ export const Game = () => {
                         />
                     </div>
 
-                    {/* 5. Bottom Area (Portrait only: Drawer ToolTray or Guesser ReactionBar + GuessPanel) */}
-                    <div className="flex md:hidden landscape:hidden w-full shrink-0 flex-col gap-1.5">
+                    {/* 5. Bottom Area (Portrait phones and tablets: Drawer ToolTray or Guesser ReactionBar + GuessPanel) */}
+                    <div className="flex lg:hidden landscape:hidden w-full shrink-0 flex-col gap-1.5">
                         {isDrawer ? (
                             <ToolTray
                                 tool={tool}
@@ -638,39 +653,12 @@ export const Game = () => {
                         )}
                     </div>
 
-                    {/* Docked under paper on Desktop / Landscape: Drawer ToolTray or Guesser ReactionBar */}
-                    {isDrawer ? (
-                        <div className="hidden md:block landscape:block w-full shrink-0">
-                            <ToolTray
-                                tool={tool}
-                                setTool={setTool}
-                                lineWidth={lineWidth}
-                                setLineWidth={setLineWidth}
-                                color={color}
-                                setColor={setColor}
-                                undo={undo}
-                                clearCanvas={clearCanvas}
-                                twist={state.currentTwist}
-                            />
-                        </div>
-                    ) : (
-                        state.gameState === 'DRAWING' && (
-                            <div className="hidden md:block landscape:block w-full shrink-0">
-                                <ReactionBar
-                                    onReact={handleReact}
-                                    onLike={handleLike}
-                                    hasLiked={state.hasLiked}
-                                    disabled={state.gameState !== 'DRAWING'}
-                                />
-                            </div>
-                        )
-                    )}
                 </main>
 
-                {/* Right Column: (Desktop or Landscape phone: PlayerList + GuessPanel / Chat) */}
-                <div className="hidden md:flex landscape:flex w-72 lg:w-80 h-full shrink-0 flex-col gap-2">
-                    {/* On mobile landscape, show PlayerList in right column */}
-                    <div className="flex md:hidden w-full h-[56px] shrink-0">
+                {/* Right Column: Chat (and controller bar for guessers) */}
+                <div className="hidden lg:flex landscape:flex w-[260px] xl:w-80 h-full shrink-0 min-w-0 flex-col gap-2">
+                    {/* On phones and tablets, show a compact player strip above chat */}
+                    <div className="flex 2xl:hidden w-full h-[56px] shrink-0">
                         <PlayerList
                             players={state.players}
                             scores={state.scores}
@@ -680,6 +668,16 @@ export const Game = () => {
                             variant="mobile"
                         />
                     </div>
+                    {!isDrawer && state.gameState === 'DRAWING' && (
+                        <div className="shrink-0">
+                            <ReactionBar
+                                onReact={handleReact}
+                                onLike={handleLike}
+                                hasLiked={state.hasLiked}
+                                disabled={state.gameState !== 'DRAWING'}
+                            />
+                        </div>
+                    )}
                     <div className="flex-1 min-h-0">
                         <GuessPanel roomCode={code} isMobile={false} />
                     </div>

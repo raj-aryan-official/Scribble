@@ -238,40 +238,6 @@ const MODE_DEFINITIONS = {
     }
 };
 
-const WORD_LANGUAGES = {
-    ENGLISH: 'english',
-    HINDI: 'hindi',
-    HINGLISH: 'hinglish'
-};
-
-const ALLOWED_WORD_LANGUAGES = [
-    'english',
-    'hindi',
-    'hinglish'
-];
-
-const REGIONAL_PACKS = [
-    'objects',
-    'food',
-    'festivals',
-    'cricket',
-    'subjects',
-    'places',
-    'animals',
-    'cinema'
-];
-
-const REGIONAL_PACK_DEFINITIONS = {
-    'objects': { id: 'objects', label: 'Everyday Objects' },
-    'food': { id: 'food', label: 'Desi Food' },
-    'festivals': { id: 'festivals', label: 'Festivals' },
-    'cricket': { id: 'cricket', label: 'Cricket' },
-    'subjects': { id: 'subjects', label: 'School & Subjects' },
-    'places': { id: 'places', label: 'Cities & Monuments' },
-    'animals': { id: 'animals', label: 'Animals' },
-    'cinema': { id: 'cinema', label: 'Cinema & Bollywood' }
-};
-
 module.exports = {
     EVENTS,
     GAME_STATES,
@@ -280,9 +246,5 @@ module.exports = {
     TWIST_DEFINITIONS,
     GAME_MODES,
     ALLOWED_MODES,
-    MODE_DEFINITIONS,
-    WORD_LANGUAGES,
-    ALLOWED_WORD_LANGUAGES,
-    REGIONAL_PACKS,
-    REGIONAL_PACK_DEFINITIONS
+    MODE_DEFINITIONS
 };

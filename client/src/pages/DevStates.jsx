@@ -536,7 +536,7 @@ export const DevStates = () => {
             : states.filter((s) => s.id === activeTab);
 
     return (
-        <div className="min-h-screen bg-paper text-ink p-3 sm:p-6 md:p-8 select-none">
+        <div className="min-h-[100dvh] bg-paper text-ink p-3 sm:p-6 md:p-8 select-none">
             {/* Header */}
             <div className="max-w-4xl mx-auto mb-6 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-4 border-b-2 border-ink pb-4">
                 <div>

@@ -294,14 +294,14 @@ export const GameBar = ({
                 2. Centre: Status line above Word chip / Hint tiles
                 3. Right: 40px timer, Voice group, divider, Exit, End Game (host only)
             */}
-            <div className="grid grid-cols-[1fr_auto_1fr] grid-rows-[48px_auto] md:flex md:h-[72px] md:items-center md:justify-between px-3 md:px-6 w-full max-w-[1280px] mx-auto">
+            <div className="game-bar-inner grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] grid-rows-[48px_auto] md:flex md:h-[72px] md:items-center md:justify-between px-3 md:px-6 w-full mx-auto">
                 {/*
                   Cluster 1: Left
                   DOM Order: 1
                   Desktop: label ROOM (small, ink-soft), code at 20px (display face), Round 1 of 3 · Turn 2 of 5
                   Phone: col 1 row 1, code over Round 1/3 · Turn 2/5
                 */}
-                <div className="col-start-1 row-start-1 self-center justify-self-start flex flex-col justify-center min-w-0">
+                <div className="game-bar-room col-start-1 row-start-1 self-center justify-self-start flex flex-col justify-center min-w-0">
                     <Tooltip content={copied ? 'Copied to clipboard!' : 'Click to copy room code'}>
                         <button
                             type="button"
@@ -314,13 +314,13 @@ export const GameBar = ({
                                 ROOM
                             </span>
                             {/* Room Code in display face: 20px on desktop */}
-                            <span className="font-heading font-black text-base md:text-[20px] text-ink tracking-wider leading-tight">
+                            <span className="font-heading font-black text-base md:text-[20px] text-ink tracking-wider leading-tight truncate max-w-[40vw] md:max-w-none">
                                 {copied ? 'Copied' : roomCode}
                             </span>
                         </button>
                     </Tooltip>
                     {/* Round & Turn Info */}
-                    <div className="text-ink-soft whitespace-nowrap leading-tight mt-0.5">
+                    <div className="game-bar-round text-ink-soft whitespace-nowrap leading-tight mt-0.5">
                         {/* Desktop: Round 1 of 3 · Turn 2 of 5 */}
                         <span className="hidden md:inline-block text-xs font-semibold">
                             Round {currentRound} of {totalRounds} · Turn {turnInRound} of {turnsInRound}
@@ -333,7 +333,7 @@ export const GameBar = ({
 
                     {/* Twist Badge on phone left cluster */}
                     {twist && (
-                        <div className="md:hidden mt-0.5">
+                        <div className="game-bar-twist md:hidden mt-0.5">
                             <span
                                 data-testid="twist-badge-mobile"
                                 className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wide bg-marigold text-ink border border-ink shadow-hard-xs"
@@ -364,7 +364,7 @@ export const GameBar = ({
                   Phone: Row 2 (40px) spanning all 3 columns
                 */}
                 <div
-                    className={`${
+                    className={`game-bar-word ${
                         showRow2 ? 'flex' : 'hidden md:flex'
                     } col-span-3 row-start-2 self-center w-full md:w-auto md:flex-1 md:flex-col md:items-center md:justify-center border-t border-ink/10 md:border-t-0 py-1 md:py-0 min-h-[40px] md:min-h-0 overflow-hidden ${
                         isDrawer
@@ -374,7 +374,7 @@ export const GameBar = ({
                 >
                     {/* Status line: on desktop always visible above; on phone visible for drawer on left, hidden on phone for guesser (hint tiles take whole row) */}
                     <div
-                        className={`${
+                        className={`game-bar-status ${
                             isDrawer ? 'flex' : 'hidden md:flex'
                         } h-5 min-h-[20px] items-center justify-center font-bold text-xs sm:text-sm text-ink-soft select-none overflow-hidden gap-1.5`}
                     >
@@ -450,13 +450,13 @@ export const GameBar = ({
                   Desktop: Flex container on the right
                   Phone: Unpacked via CSS Grid (Timer in col 2, Voice+Menu in col 3)
                 */}
-                <div className="contents md:flex md:items-center md:justify-end md:gap-3 lg:gap-4 shrink-0">
+                <div className="game-bar-controls contents md:flex md:items-center md:justify-end md:gap-3 lg:gap-4 shrink-0">
                     {/*
                       1. Timer Ring
                       Desktop: 40px ring (md:w-10 md:h-10)
                       Phone: 36px ring in col 2 row 1 (w-9 h-9)
                     */}
-                    <div className="col-start-2 row-start-1 self-center justify-self-center flex items-center justify-center">
+                    <div className="game-bar-timer col-start-2 row-start-1 self-center justify-self-center flex items-center justify-center">
                         <TimerRing timeLeft={timer} totalTime={totalDrawTime} />
                     </div>
 
@@ -524,27 +524,29 @@ export const GameBar = ({
                                 )}
                             </div>
 
-                            {/* Settings Gear Button */}
-                            <Tooltip content="Settings">
-                                <button
-                                    type="button"
-                                    onClick={openSettings}
-                                    aria-label="Settings"
-                                    className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-[6px] border-2 border-ink shadow-hard-xs bg-paper hover:bg-card text-ink flex items-center justify-center transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none active:translate-x-[1px] active:translate-y-[1px]"
-                                >
-                                    <Settings size={20} strokeWidth={2} />
-                                </button>
-                            </Tooltip>
+                            {/* Settings Gear Button (desktop; phones use the menu) */}
+                            <div className="game-bar-desktop-only hidden md:inline-flex">
+                                <Tooltip content="Settings">
+                                    <button
+                                        type="button"
+                                        onClick={openSettings}
+                                        aria-label="Settings"
+                                        className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-[6px] border-2 border-ink shadow-hard-xs bg-paper hover:bg-card text-ink flex items-center justify-center transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none active:translate-x-[1px] active:translate-y-[1px]"
+                                    >
+                                        <Settings size={20} strokeWidth={2} />
+                                    </button>
+                                </Tooltip>
+                            </div>
                         </div>
 
                         {/* 3. 1 px Divider (Desktop only, keeping at least 16px between voice and danger buttons) */}
                         <div
-                            className="hidden md:block w-[1px] h-8 bg-ink/20 shrink-0"
+                            className="game-bar-desktop-only hidden md:block w-[1px] h-8 bg-ink/20 shrink-0"
                             aria-hidden="true"
                         />
 
                         {/* 4. Exit Button (Desktop only: icon + Tooltip 'Leave game', 'Exit' from 1024px) */}
-                        <div className="hidden md:inline-flex items-center">
+                        <div className="game-bar-desktop-only hidden md:inline-flex items-center">
                             <Tooltip content="Leave game">
                                 <button
                                     type="button"
@@ -562,7 +564,7 @@ export const GameBar = ({
 
                         {/* 5. End Game Button (Host only, desktop: outlined tomato-deep button, not filled) */}
                         {isHost && (
-                            <div className="hidden md:inline-flex items-center">
+                            <div className="game-bar-desktop-only hidden md:inline-flex items-center">
                                 <button
                                     type="button"
                                     onClick={() => setShowEndGameModal(true)}
@@ -575,7 +577,7 @@ export const GameBar = ({
                         )}
 
                         {/* Phone Kebab Menu Button & Popover (hidden on desktop) */}
-                        <div className="relative inline-flex md:hidden">
+                        <div className="game-bar-menu relative inline-flex md:hidden">
                             <button
                                 type="button"
                                 onClick={() => setShowMenu((prev) => !prev)}

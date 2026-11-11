@@ -32,27 +32,17 @@ const filterProfanity = (text, secretWord) => {
     return result;
 };
 
-const maskWord = (text, secretWord, aliases = []) => {
+const maskWord = (text, secretWord) => {
     if (!text || !secretWord) return text;
-    const wordsToMask = [secretWord, ...(Array.isArray(aliases) ? aliases : [])]
-        .map(w => (typeof w === 'string' ? w.trim() : ''))
-        .filter(w => w.length > 0);
+    const target = typeof secretWord === 'string' ? secretWord.trim() : '';
+    if (!target) return text;
 
-    if (wordsToMask.length === 0) return text;
-
-    // Longer words first so full aliases get replaced before substrings
-    wordsToMask.sort((a, b) => b.length - a.length);
-
-    let result = text;
-    for (const target of wordsToMask) {
-        const escaped = escapeRegExp(target);
-        const regex = new RegExp(escaped, 'gi');
-        result = result.replace(regex, (match) => {
-            const count = getGraphemes(match).length;
-            return '*'.repeat(Math.max(1, count));
-        });
-    }
-    return result;
+    const escaped = escapeRegExp(target);
+    const regex = new RegExp(escaped, 'gi');
+    return text.replace(regex, (match) => {
+        const count = getGraphemes(match).length;
+        return '*'.repeat(Math.max(1, count));
+    });
 };
 
 function registerChatHandlers(io, socket, safeOn) {
@@ -117,7 +107,7 @@ function registerChatHandlers(io, socket, safeOn) {
         // The drawer and players who already guessed this round chat in a 'guessed' channel that only they receive
         if (room.gameState === GAME_STATES.DRAWING && (isCurrentDrawer || hasAlreadyGuessed)) {
             let filtered = filterProfanity(text, room.wordToGuess);
-            filtered = maskWord(filtered, room.wordToGuess, room.wordAliases);
+            filtered = maskWord(filtered, room.wordToGuess);
 
             const chatMsg = {
                 id: uuidv4(),
@@ -279,7 +269,7 @@ function registerChatHandlers(io, socket, safeOn) {
 
         // Standard chat message: filter profanity and mask secret word
         let filtered = filterProfanity(text, room.wordToGuess);
-        filtered = maskWord(filtered, room.wordToGuess, room.wordAliases);
+        filtered = maskWord(filtered, room.wordToGuess);
 
         const chatMsg = {
             id: uuidv4(),

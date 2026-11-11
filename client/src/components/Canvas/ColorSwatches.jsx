@@ -31,9 +31,73 @@ export const COLORBLIND_PALETTE = [
     { name: 'Reddish Purple', hex: '#CC79A7' },
 ];
 
-export const ColorSwatches = ({ color = '#1C1B18', setColor, lockedColor = null, className = '' }) => {
+export const ColorSwatches = ({ color = '#1C1B18', setColor, lockedColor = null, orientation = 'horizontal', className = '' }) => {
     const { settings } = useSettings();
     const activePalette = settings?.colorBlindPalette ? COLORBLIND_PALETTE : PRESET_COLORS;
+
+    if (orientation === 'vertical') {
+        return (
+            <div
+                role="group"
+                aria-label="Color palette"
+                data-palette={settings?.colorBlindPalette ? 'colorblind' : 'standard'}
+                className={`grid grid-cols-2 gap-1 ${className}`}
+                data-testid="color-swatches"
+            >
+                {activePalette.map(({ name, hex }) => {
+                    const isSelected = color.toLowerCase() === hex.toLowerCase();
+                    const isLockedOut = Boolean(lockedColor && hex.toLowerCase() !== lockedColor.toLowerCase());
+                    return (
+                        <button
+                            key={hex}
+                            type="button"
+                            aria-pressed={isSelected}
+                            disabled={isLockedOut}
+                            aria-label={`Select ${name} color`}
+                            title={isLockedOut ? `${name} (Locked)` : name}
+                            onClick={() => {
+                                if (!isLockedOut) setColor?.(hex);
+                            }}
+                            className={`w-8 h-8 flex items-center justify-center rounded-full focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none shrink-0 ${
+                                isLockedOut ? 'opacity-25 cursor-not-allowed' : 'cursor-pointer'
+                            }`}
+                        >
+                            <span
+                                className={`w-6 h-6 rounded-full border-2 border-ink transition-transform ${
+                                    isSelected
+                                        ? 'scale-110 ring-2 ring-ink ring-offset-1 ring-offset-paper'
+                                        : 'hover:scale-105 opacity-90'
+                                }`}
+                                style={{ backgroundColor: hex }}
+                            />
+                        </button>
+                    );
+                })}
+
+                <div className="w-8 h-8 flex items-center justify-center relative cursor-pointer">
+                    <label
+                        htmlFor="custom-color-picker-vertical"
+                        title="Custom Color"
+                        aria-label="Custom color picker"
+                        className="w-6 h-6 rounded-full border-2 border-ink flex items-center justify-center overflow-hidden cursor-pointer hover:scale-105 transition-transform"
+                        style={{
+                            background:
+                                'conic-gradient(from 180deg at 50% 50%, #E4472B 0deg, #F6B72C 72deg, #2E9E6B 144deg, #2F4FD8 216deg, #8D4BE5 288deg, #E4472B 360deg)',
+                        }}
+                    >
+                        <input
+                            id="custom-color-picker-vertical"
+                            type="color"
+                            value={color}
+                            onChange={(e) => setColor?.(e.target.value)}
+                            aria-label="Custom color picker input"
+                            className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+                        />
+                    </label>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div
