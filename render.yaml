@@ -2,7 +2,7 @@ services:
   - type: web
     name: scribble
     env: node
-    buildCommand: npm ci --prefix client && npm run build --prefix client && npm ci --prefix server
+    buildCommand: npm ci && npm run build:client
     startCommand: node server/src/server.js
     healthCheckPath: /healthz
     envVars:
@@ -11,7 +11,4 @@ services:
       - key: PORT
         value: 10000
       - key: CLIENT_URL
-        fromService:
-          type: web
-          name: scribble
-          property: host
+        sync: false

@@ -1,5 +1,6 @@
 const express = require('express');
 const http = require('http');
+const fs = require('fs');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const path = require('path');
@@ -112,13 +113,16 @@ io.on('connection', (socket) => {
     });
 });
 
-// Serve static files from the React client
-app.use(express.static(path.join(__dirname, '../../client/dist')));
+// Serve the React build when present (single-service deploys); API-only
+// deploys (client hosted separately) have no client/dist to serve
+const clientDistDir = path.join(__dirname, '../../client/dist');
+if (fs.existsSync(path.join(clientDistDir, 'index.html'))) {
+    app.use(express.static(clientDistDir));
 
-// Handle React routing, return all requests to React app
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../../client/dist', 'index.html'));
-});
+    app.get('*', (req, res) => {
+        res.sendFile(path.join(clientDistDir, 'index.html'));
+    });
+}
 
 if (require.main === module) {
     server.listen(PORT, () => {
