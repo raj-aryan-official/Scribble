@@ -122,7 +122,8 @@ export const GuessPanel = ({
         }
     };
 
-    const headerTitle = isGuessedOrDrawer
+    const headerTitle = isGuessedOrDrawer ? 'Guesser chat' : 'Guesses';
+    const headerFullTitle = isGuessedOrDrawer
         ? "Chatting with players who've guessed"
         : 'Guesses';
 
@@ -286,13 +287,16 @@ export const GuessPanel = ({
             <div className="flex items-center justify-between border-b-2 border-ink/10 pb-2 px-1 shrink-0">
                 <div className="flex items-center gap-2 min-w-0">
                     <MessageSquare className="w-4 h-4 text-ink shrink-0" />
-                    <h3 className="font-heading font-black text-xs sm:text-sm uppercase tracking-wider text-ink truncate">
+                    <h3
+                        className="font-heading font-black text-xs sm:text-sm uppercase tracking-wider text-ink truncate"
+                        title={headerFullTitle}
+                    >
                         {headerTitle}
                     </h3>
                 </div>
                 {isDrawer ? (
                     <span className="text-[10px] font-bold bg-marigold px-2 py-0.5 rounded-[4px] border border-ink text-ink shrink-0">
-                        Drawer Chat
+                        Drawer
                     </span>
                 ) : hasGuessed ? (
                     <span className="text-[10px] font-bold bg-leaf text-white px-2 py-0.5 rounded-[4px] border border-ink shrink-0">

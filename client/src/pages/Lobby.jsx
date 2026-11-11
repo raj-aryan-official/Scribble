@@ -5,6 +5,7 @@ import { Users, ChevronDown, ChevronUp, Settings as SettingsIcon } from 'lucide-
 import { useGame } from '../context/GameContext';
 import { useSocket } from '../hooks/useSocket';
 import { useSound } from '../hooks/useSound';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 import { EVENTS, TWIST_IDS, MODE_DEFINITIONS } from '../../../shared/types';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
@@ -41,6 +42,7 @@ export const Lobby = () => {
     const navigate = useNavigate();
     const socket = useSocket();
     const { play } = useSound();
+    const isDesktopLayout = useMediaQuery('(min-width: 1024px)');
 
     const [toastMessage, setToastMessage] = useState('');
     const [toastVariant, setToastVariant] = useState('info');
@@ -298,7 +300,7 @@ export const Lobby = () => {
     const isAloneInRoom = state.players.length === 1;
 
     return (
-        <div className="flex-1 w-full max-w-[1000px] mx-auto flex flex-col p-4 sm:p-6 md:p-8 pb-32 md:pb-8">
+        <div className="flex-1 w-full max-w-[1000px] mx-auto flex flex-col p-4 sm:p-6 md:p-8 pb-32 lg:pb-8">
             {/* Live announcements */}
             <div aria-live="polite" aria-atomic="true" className="sr-only">
                 {playerAnnouncement}
@@ -360,8 +362,8 @@ export const Lobby = () => {
                 onSave={handleSaveAvatar}
             />
 
-            {/* Mobile Top Room Tag & Share Row (<md) */}
-            <div className="block md:hidden mb-4">
+            {/* Mobile Top Room Tag & Share Row (<lg) */}
+            <div className="block lg:hidden mb-4">
                 <RoomCard
                     code={code}
                     copiedCode={copiedCode}
@@ -391,11 +393,11 @@ export const Lobby = () => {
             </div>
 
             {/* Main Desktop Two-Thirds / One-Third Layout */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 {/* Left Two-Thirds: Paper Desk / Players */}
                 <section
                     aria-labelledby="players-heading"
-                    className="md:col-span-7 lg:col-span-7 flex flex-col gap-4 bg-card/60 border-2 border-ink shadow-hard rounded-[16px] p-4 sm:p-6"
+                    className="lg:col-span-7 flex flex-col gap-4 bg-card/60 border-2 border-ink shadow-hard rounded-[16px] p-4 sm:p-6"
                 >
                     {/* Players Header */}
                     <div className="flex items-center justify-between border-b-2 border-ink/10 pb-3">
@@ -439,8 +441,8 @@ export const Lobby = () => {
                     {/* Alone In Room State */}
                     {isAloneInRoom && <EmptyPlayerSlots />}
 
-                    {/* Mobile Settings Accordion (<md) */}
-                    <div className="block md:hidden mt-2 pt-3 border-t-2 border-ink/10">
+                    {/* Mobile Settings Accordion (<lg) */}
+                    <div className="block lg:hidden mt-2 pt-3 border-t-2 border-ink/10">
                         <button
                             type="button"
                             onClick={() => setIsMobileSettingsOpen(!isMobileSettingsOpen)}
@@ -487,7 +489,7 @@ export const Lobby = () => {
                 </section>
 
                 {/* Right One-Third (Desktop): Room Card & Settings Card */}
-                <aside className="hidden md:flex md:col-span-5 lg:col-span-5 flex-col gap-6">
+                <aside className="hidden lg:flex lg:col-span-5 flex-col gap-6">
                     {/* Room Card on Desktop */}
                     <RoomCard
                         code={code}
@@ -540,27 +542,31 @@ export const Lobby = () => {
                     />
 
                     {/* Desktop Start Game Bar */}
-                    <StartGameBar
-                        isHost={isHost}
-                        hostName={hostPlayer.username}
-                        canStart={canStart}
-                        countdown={countdown}
-                        onStartOrCancel={handleStartOrCancel}
-                    />
+                    {isDesktopLayout && (
+                        <StartGameBar
+                            isHost={isHost}
+                            hostName={hostPlayer.username}
+                            canStart={canStart}
+                            countdown={countdown}
+                            onStartOrCancel={handleStartOrCancel}
+                        />
+                    )}
                 </aside>
             </div>
 
-            {/* Mobile Sticky Bottom Bar (<md) */}
-            <div className="block md:hidden fixed bottom-0 left-0 right-0 z-30 bg-card border-t-2 border-ink p-3 shadow-hard pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            {/* Mobile Sticky Bottom Bar (<lg) */}
+            <div className="block lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-card border-t-2 border-ink p-3 shadow-hard pb-[max(0.75rem,env(safe-area-inset-bottom))]">
                 <div className="max-w-md mx-auto">
-                    <StartGameBar
-                        isHost={isHost}
-                        hostName={hostPlayer.username}
-                        canStart={canStart}
-                        countdown={countdown}
-                        onStartOrCancel={handleStartOrCancel}
-                        className="border-0 shadow-none p-0 bg-transparent"
-                    />
+                    {!isDesktopLayout && (
+                        <StartGameBar
+                            isHost={isHost}
+                            hostName={hostPlayer.username}
+                            canStart={canStart}
+                            countdown={countdown}
+                            onStartOrCancel={handleStartOrCancel}
+                            className="border-0 shadow-none p-0 bg-transparent"
+                        />
+                    )}
                 </div>
             </div>
         </div>

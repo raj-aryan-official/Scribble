@@ -47,9 +47,12 @@ export const PlayerTag = ({
                 )}
 
                 {/* Nickname and Badges */}
-                <div className="flex flex-col min-w-0">
+                <div className="flex flex-col min-w-0 flex-1">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="font-black text-ink truncate text-sm sm:text-base">
+                        <span
+                            className="font-black text-ink truncate text-sm sm:text-base"
+                            title={player.username}
+                        >
                             {player.username}
                         </span>
 

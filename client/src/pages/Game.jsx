@@ -338,7 +338,7 @@ export const Game = () => {
                 className="flex-1 w-full min-h-0 flex flex-col md:flex-row landscape:flex-row gap-1 sm:gap-2 lg:gap-2 p-0 sm:p-2 lg:p-2 overflow-hidden"
             >
                 {/* Desktop Left Column: Ranked Player Scoreboard */}
-                <div className="hidden 2xl:flex w-52 2xl:w-56 h-full shrink-0">
+                <div className="hidden 2xl:flex w-60 min-[1800px]:w-64 h-full shrink-0">
                     <PlayerList
                         players={state.players}
                         scores={state.scores}
@@ -553,7 +553,7 @@ export const Game = () => {
                                 {isDrawer && state.gameState === 'DRAWING' && (
                                     <div
                                         data-testid="drawer-likes-counter"
-                                        className="absolute top-2.5 right-2.5 z-30 pointer-events-none flex items-center gap-1.5 bg-paper/95 border-2 border-ink shadow-hard-xs rounded-full px-2.5 py-1 font-heading font-black text-xs text-ink select-none"
+                                        className="absolute bottom-2.5 left-2.5 z-30 pointer-events-none flex items-center gap-1.5 bg-paper/95 border-2 border-ink shadow-hard-xs rounded-full px-2.5 py-1 font-heading font-black text-xs text-ink select-none"
                                     >
                                         <Heart className="w-3.5 h-3.5 fill-tomato text-tomato animate-pulse" />
                                         <span>Likes {state.likesCount || 0}</span>

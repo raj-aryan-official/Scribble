@@ -104,14 +104,14 @@ export const ColorSwatches = ({ color = '#1C1B18', setColor, lockedColor = null,
             role="group"
             aria-label="Color palette"
             data-palette={settings?.colorBlindPalette ? 'colorblind' : 'standard'}
-            className={`flex items-center gap-1.5 ${className}`}
+            className={`flex items-center gap-1.5 w-full ${className}`}
             data-testid="color-swatches"
         >
-            {/* Desktop: 2 rows of 6. Phone: 1 row with horizontal scroll-snap */}
+            {/* Phone: one swipeable row; tablet and up: wrap + centre when space runs out */}
             <div
                 role="group"
                 aria-label="Color swatches"
-                className="flex md:grid md:grid-cols-6 md:grid-rows-2 items-center gap-1.5 overflow-x-auto snap-x snap-mandatory scrollbar-hide py-1 max-w-full"
+                className="flex items-center gap-1.5 overflow-x-auto snap-x snap-mandatory scrollbar-hide py-1 w-full sm:w-auto sm:flex-wrap sm:justify-center sm:overflow-visible"
             >
                 {activePalette.map(({ name, hex }, index) => {
                     const isSelected = color.toLowerCase() === hex.toLowerCase();

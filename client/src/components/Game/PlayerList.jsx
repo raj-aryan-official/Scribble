@@ -194,9 +194,7 @@ export const PlayerList = ({
                                 )}
                             </motion.div>
 
-                            <span className="text-xs font-bold truncate max-w-[70px]">
-                                {player.username}
-                            </span>
+                            <span className="text-xs font-bold truncate max-w-[96px]">{player.username}</span>
 
                             {player.teamName && (
                                 <span
@@ -394,7 +392,7 @@ export const PlayerList = ({
                             data-player-score={score}
                             data-player-state={isDrawer ? 'drawing' : hasGuessed ? 'guessed' : 'guessing'}
                             data-draw-order={drawOrderLabel || undefined}
-                            className={`flex items-center gap-2.5 p-2 rounded-[8px] border-2 border-ink shadow-hard-sm transition-all ${
+                            className={`flex items-center gap-2 p-2 rounded-[8px] border-2 border-ink shadow-hard-sm transition-all ${
                                 isAway
                                     ? 'bg-paper border-dashed text-ink'
                                     : hasGuessed
@@ -404,7 +402,7 @@ export const PlayerList = ({
                                     : 'bg-paper text-ink'
                             }`}
                         >
-                            <span className="font-mono font-black text-xs w-5 text-center shrink-0">
+                            <span className="font-mono font-black text-[11px] w-4 text-center shrink-0">
                                 #{index + 1}
                             </span>
 
@@ -441,7 +439,10 @@ export const PlayerList = ({
 
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-1">
-                                    <span className="font-bold text-xs sm:text-sm truncate">
+                                    <span
+                                        className="font-bold text-xs sm:text-sm truncate"
+                                        title={player.username}
+                                    >
                                         {player.username}
                                     </span>
                                     {player.isHost && (

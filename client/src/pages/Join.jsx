@@ -274,14 +274,14 @@ export const Join = () => {
             >
                 <Card className="flex flex-col gap-5 p-5 sm:p-6 bg-card border-2 border-ink shadow-hard-lg rounded-[12px]">
                     {/* Header: Card Title, Room Code Badge & Sound Toggle */}
-                    <div className="flex items-center justify-between border-b-2 border-ink/10 pb-3">
-                        <div className="flex items-center gap-2">
-                            <span className="w-2.5 h-2.5 rounded-full bg-tomato animate-pulse" />
-                            <h1 tabIndex={-1} className="font-heading font-black text-2xl sm:text-3xl text-ink tracking-tight">
+                    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b-2 border-ink/10 pb-3">
+                        <div className="flex items-center gap-2 min-w-0">
+                            <span className="w-2.5 h-2.5 rounded-full bg-tomato animate-pulse shrink-0" />
+                            <h1 tabIndex={-1} className="font-heading font-black text-xl sm:text-3xl text-ink tracking-tight whitespace-nowrap outline-none">
                                 You're invited
                             </h1>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 shrink-0">
                             <span className="font-mono font-black text-xs sm:text-sm text-ink-soft bg-paper px-2.5 py-1 rounded-[6px] border-2 border-ink shadow-hard-sm">
                                 {cleanCode}
                             </span>

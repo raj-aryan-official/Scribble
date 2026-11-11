@@ -15,10 +15,10 @@ export const ReactionBar = ({
             data-testid="reaction-bar"
             role="toolbar"
             aria-label="Drawing reactions"
-            className={`flex items-center justify-between bg-paper border-2 border-ink rounded-xl shadow-hard-xs px-2 py-1.5 gap-1 sm:gap-2 max-w-full overflow-x-auto select-none ${className}`}
+            className={`flex flex-wrap items-center justify-center bg-paper border-2 border-ink rounded-xl shadow-hard-xs px-2 py-1.5 gap-1 max-w-full select-none ${className}`}
         >
             {/* 8 Reaction Buttons */}
-            <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto py-0.5">
+            <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-1.5 py-0.5">
                 {REACTION_DEFINITIONS.map((reaction) => (
                     <Tooltip key={reaction.kind} content={reaction.label} position="top">
                         <button

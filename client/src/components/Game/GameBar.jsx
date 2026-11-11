@@ -22,7 +22,6 @@ import ConfirmationModal from '../ui/ConfirmationModal';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import HintTiles from './HintTiles';
-import SoundHint from '../Settings/SoundHint';
 
 /**
  * TimerRing: Circular draining timer SVG with tabular numbers
@@ -118,7 +117,7 @@ export const GameBar = ({
     const state = gameContext?.state || {};
     const socket = useSocket();
     const { isMuted, toggleMute } = useSound();
-    const { soundHintDismissed, dismissSoundHint, openSettings } = useSettings();
+    const { openSettings } = useSettings();
     const contextVoice = useVoice?.() || null;
     const activeVoice = propVoiceState !== undefined ? propVoiceState : contextVoice;
 
@@ -231,7 +230,6 @@ export const GameBar = ({
     const isSpeakerOn = !isDeafened && !isMuted;
 
     const handleToggleSpeaker = () => {
-        dismissSoundHint?.();
         if (activeVoice?.toggleDeafen) {
             activeVoice.toggleDeafen();
         }
@@ -498,7 +496,7 @@ export const GameBar = ({
                                 </button>
                             </Tooltip>
 
-                            {/* Speaker Toggle Button with One-Time Hint */}
+                            {/* Speaker Toggle Button */}
                             <div className="relative inline-flex">
                                 <Tooltip content={isSpeakerOn ? 'Mute audio (M)' : 'Unmute audio (M)'}>
                                     <button
@@ -519,9 +517,6 @@ export const GameBar = ({
                                         )}
                                     </button>
                                 </Tooltip>
-                                {!soundHintDismissed && isSpeakerOn && (
-                                    <SoundHint onDismiss={dismissSoundHint} />
-                                )}
                             </div>
 
                             {/* Settings Gear Button (desktop; phones use the menu) */}

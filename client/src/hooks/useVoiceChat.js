@@ -23,7 +23,7 @@ export const useVoiceChat = (roomCode, username, playerCount = 1) => {
     const [voiceError, setVoiceError] = useState(null);
     const [isAutoplayBlocked, setIsAutoplayBlocked] = useState(false);
 
-    const isVoiceAllowed = (playerCount || 1) <= MAX_VOICE_PLAYERS;
+    const isVoiceAllowed = Boolean(roomCode) && (playerCount || 1) <= MAX_VOICE_PLAYERS;
 
     // Refs for stable callback access without re-binding effects
     const localStreamRef = useRef(null);
@@ -364,7 +364,7 @@ export const useVoiceChat = (roomCode, username, playerCount = 1) => {
 
     // Socket Event Listeners for Voice Signaling (Mesh)
     useEffect(() => {
-        if (!socket || !isVoiceAllowed) return;
+        if (!socket || !roomCode || !isVoiceAllowed) return;
 
         const myId = socket.id;
 

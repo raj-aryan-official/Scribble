@@ -101,7 +101,7 @@ export const RoomCodeInput = ({
     return (
         <fieldset
             aria-label="Room code, 6 characters"
-            className={`flex flex-col gap-1 w-full ${className}`}
+            className={`flex flex-col gap-1 w-full min-w-0 ${className}`}
         >
             <legend className="text-xs font-bold uppercase tracking-wider text-ink select-none mb-1">
                 Room Code

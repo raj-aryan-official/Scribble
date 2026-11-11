@@ -349,8 +349,8 @@ export const Landing = () => {
         <div className="flex-1 w-full max-w-[1100px] mx-auto flex flex-col justify-center px-4 py-3 sm:py-6 md:py-8 lg:py-10 relative">
             <h1 tabIndex={-1} className="sr-only">Scribble</h1>
 
-            {/* Sound Toggle & Settings accessible from Landing */}
-            <div className="absolute top-2 right-4 z-elevated flex items-center gap-1.5">
+            {/* Sound Toggle & Settings: in-flow on phones so they never cover the wordmark */}
+            <div className="flex justify-end items-center gap-1.5 w-full mb-1 md:mb-0 md:absolute md:top-2 md:right-4 md:w-auto md:z-elevated">
                 <div className="relative inline-flex">
                     <Tooltip content={isMuted ? 'Unmute sounds (M)' : 'Mute sounds (M)'}>
                         <button
@@ -371,7 +371,9 @@ export const Landing = () => {
                         </button>
                     </Tooltip>
                     {!soundHintDismissed && !isMuted && (
-                        <SoundHint onDismiss={dismissSoundHint} />
+                        <div className="hidden md:block">
+                            <SoundHint onDismiss={dismissSoundHint} />
+                        </div>
                     )}
                 </div>
 
@@ -387,7 +389,12 @@ export const Landing = () => {
                 </Tooltip>
             </div>
 
-            {/* Server Unreachable Toast with Retry */}
+            {/* Inline sound hint on phones: sits in the flow so it never covers the wordmark */}
+            {!soundHintDismissed && !isMuted && (
+                <div className="w-full mb-2 md:hidden">
+                    <SoundHint inline onDismiss={dismissSoundHint} />
+                </div>
+            )}
             <Toast
                 isOpen={serverUnreachable}
                 onClose={() => setServerUnreachable(false)}

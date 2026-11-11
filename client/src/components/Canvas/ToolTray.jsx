@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Pencil, Eraser, PaintBucket, Undo2, Trash2 } from 'lucide-react';
 import ColorSwatches from './ColorSwatches';
 import BrushSize from './BrushSize';
@@ -22,6 +22,34 @@ export const ToolTray = ({
     const { settings } = useSettings();
     const isLeftHanded = Boolean(settings?.leftHandedLayout);
     const [showClearConfirm, setShowClearConfirm] = useState(false);
+    const railScrollRef = useRef(null);
+    const [railScroll, setRailScroll] = useState({ top: false, bottom: false });
+
+    const updateRailScroll = useCallback(() => {
+        const el = railScrollRef.current;
+        if (!el) return;
+        const next = {
+            top: el.scrollTop > 2,
+            bottom: el.scrollTop + el.clientHeight < el.scrollHeight - 2,
+        };
+        setRailScroll((prev) => (prev.top === next.top && prev.bottom === next.bottom ? prev : next));
+    }, []);
+
+    useEffect(() => {
+        if (orientation !== 'vertical') return undefined;
+        const el = railScrollRef.current;
+        if (!el) return undefined;
+        updateRailScroll();
+        const observer = new ResizeObserver(updateRailScroll);
+        observer.observe(el);
+        el.addEventListener('scroll', updateRailScroll, { passive: true });
+        window.addEventListener('resize', updateRailScroll);
+        return () => {
+            observer.disconnect();
+            el.removeEventListener('scroll', updateRailScroll);
+            window.removeEventListener('resize', updateRailScroll);
+        };
+    }, [orientation, updateRailScroll]);
 
     const isNoUndoEraser = twist?.id === 'no-undo-eraser';
     const isThinLine = twist?.id === 'thin-line';
@@ -53,7 +81,7 @@ export const ToolTray = ({
                 data-testid="tool-tray"
                 data-orientation="vertical"
                 data-layout={isLeftHanded ? 'left-handed' : 'right-handed'}
-                className={`flex flex-col items-center gap-1.5 h-full w-[84px] shrink-0 overflow-y-auto scrollbar-hide p-1.5 bg-card border-2 border-ink shadow-hard rounded-[12px] select-none ${className}`}
+                className={`flex flex-col items-center gap-1.5 h-full w-[84px] shrink-0 p-1.5 bg-card border-2 border-ink shadow-hard rounded-[12px] select-none ${className}`}
             >
                 <div
                     role="group"
@@ -108,23 +136,43 @@ export const ToolTray = ({
                     </button>
                 </div>
 
-                <BrushSize
-                    orientation="vertical"
-                    lineWidth={lineWidth}
-                    setLineWidth={setLineWidth}
-                    isLockedSize={isThinLine}
-                    className="shrink-0"
-                />
+                {/* Scrollable middle: brush size + palette stay reachable on short screens (landscape phones, small laptops) */}
+                <div className="relative w-full flex-1 min-h-0">
+                    <div
+                        ref={railScrollRef}
+                        className="absolute inset-0 flex flex-col items-center gap-1.5 overflow-y-auto overscroll-contain py-0.5"
+                    >
+                        <BrushSize
+                            orientation="vertical"
+                            lineWidth={lineWidth}
+                            setLineWidth={setLineWidth}
+                            isLockedSize={isThinLine}
+                            className="shrink-0"
+                        />
 
-                <ColorSwatches
-                    orientation="vertical"
-                    color={color}
-                    setColor={setColor}
-                    lockedColor={lockedColor}
-                    className="shrink-0"
-                />
+                        <ColorSwatches
+                            orientation="vertical"
+                            color={color}
+                            setColor={setColor}
+                            lockedColor={lockedColor}
+                            className="shrink-0"
+                        />
+                    </div>
+                    {railScroll.top && (
+                        <div
+                            aria-hidden="true"
+                            className="pointer-events-none absolute inset-x-0 top-0 h-5 bg-gradient-to-b from-card to-transparent"
+                        />
+                    )}
+                    {railScroll.bottom && (
+                        <div
+                            aria-hidden="true"
+                            className="pointer-events-none absolute inset-x-0 bottom-0 h-5 bg-gradient-to-t from-card to-transparent"
+                        />
+                    )}
+                </div>
 
-                <div className="flex flex-col items-center gap-1 mt-auto shrink-0">
+                <div className="flex flex-col items-center gap-1 shrink-0">
                     <button
                         type="button"
                         aria-label="Undo stroke (Ctrl+Z)"
@@ -174,13 +222,11 @@ export const ToolTray = ({
             aria-label="Drawing tools"
             data-testid="tool-tray"
             data-layout={isLeftHanded ? 'left-handed' : 'right-handed'}
-            className={`w-full flex flex-col ${
-                isLeftHanded ? 'sm:flex-row-reverse' : 'sm:flex-row'
-            } items-center justify-between gap-1.5 sm:gap-3 p-1.5 sm:p-2.5 bg-card border-2 border-ink shadow-hard rounded-[12px] select-none ${className}`}
+            className={`w-full flex flex-col items-stretch gap-1.5 sm:gap-2 p-1.5 sm:p-2.5 bg-card border-2 border-ink shadow-hard rounded-[12px] select-none ${className}`}
         >
-            {/* Row 1 on mobile (Tools & Size + Actions) / Left group on desktop */}
-            <div className={`w-full sm:w-auto flex items-center justify-between sm:justify-start gap-2 ${
-                isLeftHanded ? 'flex-row-reverse sm:flex-row' : ''
+            {/* Row 1: Tools, brush size and actions */}
+            <div className={`w-full flex items-center justify-between gap-2 ${
+                isLeftHanded ? 'flex-row-reverse' : ''
             }`}>
                 <div className="flex items-center gap-1.5">
                     {/* Tools: Pencil, Eraser & Fill with roving tabindex */}
@@ -254,8 +300,8 @@ export const ToolTray = ({
                     />
                 </div>
 
-                {/* Mobile actions in Row 1: Undo, Clear, Shortcut Help */}
-                <div className="flex sm:hidden items-center gap-1">
+                {/* Actions: Undo, Clear, Shortcut Help */}
+                <div className="flex items-center gap-1 shrink-0">
                     <button
                         type="button"
                         aria-label="Undo stroke (Ctrl+Z)"
@@ -290,48 +336,14 @@ export const ToolTray = ({
                 </div>
             </div>
 
-            {/* Row 2 on mobile: Horizontally scrollable colour strip / Middle on desktop */}
-            <div className="w-full sm:w-auto flex justify-center sm:justify-start overflow-hidden">
+            {/* Row 2: colour strip (scrolls horizontally when it cannot fit) */}
+            <div className="w-full min-w-0 flex justify-center">
                 <ColorSwatches
                     color={color}
                     setColor={setColor}
                     lockedColor={lockedColor}
+                    className="w-full"
                 />
-            </div>
-
-            {/* Desktop right group: Undo, Clear, and Shortcut Help */}
-            <div className="hidden sm:flex items-center gap-1.5 shrink-0">
-                <button
-                    type="button"
-                    aria-label="Undo stroke (Ctrl+Z)"
-                    title={isNoUndoEraser ? 'Undo disabled in this twist' : 'Undo (Ctrl+Z)'}
-                    disabled={isNoUndoEraser}
-                    onClick={() => !isNoUndoEraser && undo?.()}
-                    className={`min-w-[44px] min-h-[44px] p-2 border-2 border-ink rounded-[6px] shadow-hard-sm flex items-center justify-center focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none transition-all ${
-                        isNoUndoEraser
-                            ? 'opacity-40 cursor-not-allowed bg-paper text-ink-soft'
-                            : 'bg-paper hover:bg-card text-ink cursor-pointer active:translate-x-[1px] active:translate-y-[1px]'
-                    }`}
-                >
-                    <Undo2 className="w-5 h-5" />
-                </button>
-
-                <button
-                    type="button"
-                    aria-label="Clear drawing"
-                    title={isNoUndoEraser ? 'Clear disabled in this twist' : 'Clear drawing'}
-                    disabled={isNoUndoEraser}
-                    onClick={() => !isNoUndoEraser && setShowClearConfirm(true)}
-                    className={`min-w-[44px] min-h-[44px] p-2 border-2 border-ink rounded-[6px] shadow-hard-sm flex items-center justify-center focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none transition-all ${
-                        isNoUndoEraser
-                            ? 'opacity-40 cursor-not-allowed bg-paper text-ink-soft'
-                            : 'bg-paper hover:bg-tomato/15 text-tomato cursor-pointer active:translate-x-[1px] active:translate-y-[1px]'
-                    }`}
-                >
-                    <Trash2 className="w-5 h-5" />
-                </button>
-
-                <ShortcutHelp />
             </div>
 
             {/* Clear Canvas Confirmation Modal */}

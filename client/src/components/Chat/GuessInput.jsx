@@ -126,7 +126,7 @@ export const GuessInput = ({
                         placeholder="Chat with players who've guessed..."
                         maxLength={100}
                         autoComplete="off"
-                        className="flex-1 min-h-[44px] px-3 py-2 text-sm font-body bg-paper text-ink placeholder:text-ink-soft/60 border-2 border-ink rounded-[6px] focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none"
+                        className="flex-1 min-w-0 min-h-[44px] px-3 py-2 text-sm font-body bg-paper text-ink placeholder:text-ink-soft/60 border-2 border-ink rounded-[6px] focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none"
                     />
                     <button
                         type="button"
@@ -143,7 +143,7 @@ export const GuessInput = ({
                         size="md"
                         disabled={!message.trim() || isSending}
                         aria-label="Send message"
-                        className="min-h-[44px] px-3.5"
+                        className="min-h-[44px] px-3.5 shrink-0"
                     >
                         <Send className="w-4 h-4" />
                     </Button>
@@ -174,7 +174,7 @@ export const GuessInput = ({
                     placeholder="Chat with players who've guessed..."
                     maxLength={100}
                     autoComplete="off"
-                    className="flex-1 min-h-[44px] px-3 py-2 text-sm font-body bg-paper text-ink placeholder:text-ink-soft/60 border-2 border-ink rounded-[6px] focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none"
+                    className="flex-1 min-w-0 min-h-[44px] px-3 py-2 text-sm font-body bg-paper text-ink placeholder:text-ink-soft/60 border-2 border-ink rounded-[6px] focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none"
                 />
                 <button
                     type="button"
@@ -191,7 +191,7 @@ export const GuessInput = ({
                     size="md"
                     disabled={!message.trim() || isSending}
                     aria-label="Send message"
-                    className="min-h-[44px] px-3.5"
+                    className="min-h-[44px] px-3.5 shrink-0"
                 >
                     <Send className="w-4 h-4" />
                 </Button>
@@ -214,7 +214,7 @@ export const GuessInput = ({
                 <label htmlFor={`${idPrefix}-guess-input`} className="sr-only">
                     Type your guess
                 </label>
-                <div className="relative flex-1 flex items-center">
+                <div className="relative flex-1 min-w-0 flex items-center">
                     <input
                         ref={inputRef}
                         id={`${idPrefix}-guess-input`}
@@ -226,7 +226,9 @@ export const GuessInput = ({
                         maxLength={100}
                         autoFocus={!isMobile}
                         autoComplete="off"
-                        className="w-full min-h-[44px] pl-3 pr-16 py-2 text-base sm:text-sm font-body bg-paper text-ink placeholder:text-ink-soft/60 border-2 border-ink rounded-[6px] focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none"
+                        className={`w-full min-w-0 min-h-[44px] pl-3 py-2 text-base sm:text-sm font-body bg-paper text-ink placeholder:text-ink-soft/60 border-2 border-ink rounded-[6px] focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none ${
+                            message.length >= 80 ? 'pr-16' : 'pr-3'
+                        }`}
                     />
 
                     {/* Character counter appears from 80 of 100 */}
@@ -256,7 +258,7 @@ export const GuessInput = ({
                     size="md"
                     disabled={!message.trim() || isSending}
                     aria-label="Submit guess"
-                    className="min-h-[44px] px-3.5 sm:px-4"
+                    className="min-h-[44px] px-3.5 sm:px-4 shrink-0"
                 >
                     <Send className="w-4 h-4" />
                 </Button>

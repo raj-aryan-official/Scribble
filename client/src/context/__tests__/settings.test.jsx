@@ -326,7 +326,7 @@ describe('Prompt 10: Sound Toggle, Settings Panel & Accessibility', () => {
             guessedPlayers: [],
         };
 
-        it('GameBar renders sound toggle with aria-pressed, tooltip label, one-time hint, and gear button', () => {
+        it('GameBar renders sound toggle with aria-pressed, tooltip label, and gear button', () => {
             const mockSettings = {
                 ...DEFAULT_SETTINGS,
                 isMuted: false,
@@ -354,9 +354,8 @@ describe('Prompt 10: Sound Toggle, Settings Panel & Accessibility', () => {
             // Sound Toggle
             expect(html).toContain('aria-label="Mute audio"');
             expect(html).toContain('aria-pressed="false"');
-            // One-time hint
-            expect(html).toContain('Sound is on. Tap to mute.');
-            expect(html).toContain('data-testid="sound-hint-bubble"');
+            // In-game bar keeps the paper clear: the one-time hint only lives on the landing/lobby chrome
+            expect(html).not.toContain('Sound is on. Tap to mute.');
             // Settings Gear Button
             expect(html).toContain('aria-label="Settings"');
         });
@@ -422,7 +421,7 @@ describe('Prompt 10: Sound Toggle, Settings Panel & Accessibility', () => {
                 </SettingsContext.Provider>
             );
             expect(standardHtml).toContain('data-layout="right-handed"');
-            expect(standardHtml).not.toContain('sm:flex-row-reverse');
+            expect(standardHtml).not.toContain('flex-row-reverse');
 
             // Left-handed layout
             const leftHandedHtml = renderToStaticMarkup(
@@ -431,7 +430,7 @@ describe('Prompt 10: Sound Toggle, Settings Panel & Accessibility', () => {
                 </SettingsContext.Provider>
             );
             expect(leftHandedHtml).toContain('data-layout="left-handed"');
-            expect(leftHandedHtml).toContain('sm:flex-row-reverse');
+            expect(leftHandedHtml).toContain('flex-row-reverse');
         });
 
         it('ColorSwatches switches to COLORBLIND_PALETTE when colorBlindPalette is true', () => {
