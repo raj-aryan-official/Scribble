@@ -99,12 +99,26 @@ const normalizeOrigin = (value) => {
     return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
 };
 
-const CLIENT_URL = normalizeOrigin(process.env.CLIENT_URL);
+// CLIENT_URL accepts a comma-separated list of frontend origins
+const CLIENT_ORIGINS = (process.env.CLIENT_URL || '')
+    .split(',')
+    .map(normalizeOrigin)
+    .filter(Boolean);
+
+const isVercelOrigin = (origin) =>
+    /^https:\/\/[a-z0-9-]+(\.[a-z0-9-]+)*\.vercel\.app$/i.test(origin);
+
+const isAllowedOrigin = (origin) => {
+    if (!origin) return true;
+    if (!CLIENT_ORIGINS.length) return true;
+    if (CLIENT_ORIGINS.includes(origin)) return true;
+    // Vercel serves a new hostname for every production and preview deploy
+    return isVercelOrigin(origin);
+};
 
 const io = new Server(server, {
     cors: {
-        // Reflect any origin unless CLIENT_URL pins the frontend host
-        origin: CLIENT_URL || true,
+        origin: (origin, callback) => callback(null, isAllowedOrigin(origin)),
         methods: ["GET", "POST"]
     }
 });
