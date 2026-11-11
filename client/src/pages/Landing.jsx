@@ -22,18 +22,7 @@ import DoodleCat from '../components/Landing/DoodleCat';
 import RoomCodeInput, { extractRoomCode } from '../components/Landing/RoomCodeInput';
 import HowToPlayModal from '../components/Landing/HowToPlayModal';
 import SoundHint from '../components/Settings/SoundHint';
-
-const getApiBaseUrl = () => {
-    if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
-    if (typeof window === 'undefined') return 'http://localhost:3000';
-    if (window.location.hostname === 'localhost') return 'http://localhost:3000';
-    if (window.location.port === '5173') {
-        const protocol = window.location.protocol;
-        const hostname = window.location.hostname;
-        return `${protocol}//${hostname}:3000`;
-    }
-    return window.location.origin;
-};
+import { getApiBaseUrl } from '../lib/apiBase';
 
 export const Landing = () => {
     const navigate = useNavigate();

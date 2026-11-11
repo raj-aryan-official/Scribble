@@ -15,18 +15,7 @@ import Button from '../components/ui/Button';
 import AvatarPicker from '../components/ui/AvatarPicker';
 import Spinner from '../components/ui/Spinner';
 import Toast from '../components/ui/Toast';
-
-const getApiBaseUrl = () => {
-    if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
-    if (typeof window === 'undefined') return 'http://localhost:3000';
-    if (window.location.hostname === 'localhost') return 'http://localhost:3000';
-    if (window.location.port === '5173') {
-        const protocol = window.location.protocol;
-        const hostname = window.location.hostname;
-        return `${protocol}//${hostname}:3000`;
-    }
-    return window.location.origin;
-};
+import { getApiBaseUrl } from '../lib/apiBase';
 
 export const Join = () => {
     const { code } = useParams();

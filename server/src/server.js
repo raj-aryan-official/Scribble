@@ -93,9 +93,18 @@ app.get('/api/rooms/:code/preview', previewRateLimiter, (req, res) => {
 });
 
 const server = http.createServer(app);
+const normalizeOrigin = (value) => {
+    if (!value) return null;
+    const trimmed = value.trim().replace(/\/$/, '');
+    return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+};
+
+const CLIENT_URL = normalizeOrigin(process.env.CLIENT_URL);
+
 const io = new Server(server, {
     cors: {
-        origin: (process.env.CLIENT_URL || "http://localhost:5173").replace(/\/$/, ""),
+        // Reflect any origin unless CLIENT_URL pins the frontend host
+        origin: CLIENT_URL || true,
         methods: ["GET", "POST"]
     }
 });
@@ -121,6 +130,10 @@ if (fs.existsSync(path.join(clientDistDir, 'index.html'))) {
 
     app.get('*', (req, res) => {
         res.sendFile(path.join(clientDistDir, 'index.html'));
+    });
+} else {
+    app.get('/', (req, res) => {
+        res.json({ service: 'Scribble API', status: 'ok', health: '/healthz' });
     });
 }
 

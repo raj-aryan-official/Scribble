@@ -3,22 +3,11 @@ import io from 'socket.io-client';
 import { useGame } from './GameContext';
 import { EVENTS, GAME_STATES } from '../../../shared/types';
 import { useSound } from '../hooks/useSound';
+import { getApiBaseUrl } from '../lib/apiBase';
 
 export const SocketContext = createContext();
 
-const getSocketUrl = () => {
-    if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
-    if (typeof window === 'undefined') return 'http://localhost:3000';
-    if (window.location.hostname === 'localhost') return 'http://localhost:3000';
-    if (window.location.port === '5173') {
-        const protocol = window.location.protocol;
-        const hostname = window.location.hostname;
-        return `${protocol}//${hostname}:3000`;
-    }
-    return window.location.origin;
-};
-
-const SOCKET_URL = getSocketUrl();
+const SOCKET_URL = getApiBaseUrl();
 const REJOIN_STORAGE_KEY = 'scribble_rejoin';
 
 export function saveRejoinData(data) {
