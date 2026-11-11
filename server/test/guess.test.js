@@ -111,7 +111,7 @@ describe('Rate Limiter, Word Masking & Channel Routing over TCP Wire', () => {
     });
 
     it('rate limits to 5 messages per 3 seconds and rejects the 6th with Slow down', async () => {
-        const ioClient = require('../../client/node_modules/socket.io-client');
+        const ioClient = require('socket.io-client');
         const socket = ioClient(url, { transports: ['websocket'], forceNew: true });
         await new Promise(r => socket.on('connect', r));
 
@@ -142,7 +142,7 @@ describe('Rate Limiter, Word Masking & Channel Routing over TCP Wire', () => {
     });
 
     it('masks any message containing the secret word in both channels', async () => {
-        const ioClient = require('../../client/node_modules/socket.io-client');
+        const ioClient = require('socket.io-client');
         const drawer = ioClient(url, { transports: ['websocket'], forceNew: true });
         const guesser = ioClient(url, { transports: ['websocket'], forceNew: true });
 
@@ -189,7 +189,7 @@ describe('Rate Limiter, Word Masking & Channel Routing over TCP Wire', () => {
     });
 
     it('channel routing: correct guesser chats in :guessed and chat is invisible to people still guessing', async () => {
-        const ioClient = require('../../client/node_modules/socket.io-client');
+        const ioClient = require('socket.io-client');
         const drawer = ioClient(url, { transports: ['websocket'], forceNew: true });
         const guesser1 = ioClient(url, { transports: ['websocket'], forceNew: true });
         const guesser2 = ioClient(url, { transports: ['websocket'], forceNew: true });

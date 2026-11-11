@@ -166,7 +166,7 @@ describe('Live Stroke Streaming over TCP Wire', () => {
     });
 
     it('streams STROKE_START, STROKE_POINTS, STROKE_END from drawer to guesser in <100ms', async () => {
-        const ioClient = require('../../client/node_modules/socket.io-client');
+        const ioClient = require('socket.io-client');
         const drawerSocket = ioClient(url, { transports: ['websocket'], forceNew: true });
         const guesserSocket = ioClient(url, { transports: ['websocket'], forceNew: true });
 

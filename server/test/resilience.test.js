@@ -826,7 +826,7 @@ describe('Disconnect Resilience Script (3 socket.io-client sockets)', () => {
     });
 
     test('connects 3 sockets, starts game, disconnects them one by one, never throws and process stays up', async () => {
-        const ioClient = require('../../client/node_modules/socket.io-client');
+        const ioClient = require('socket.io-client');
 
         const connectClient = () => {
             return new Promise((resolve) => {

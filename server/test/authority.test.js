@@ -668,7 +668,7 @@ describe('Network Wire Inspection (Simulating real browser sockets over TCP)', (
     });
 
     test('guesser network stream never contains the word until guess or round end', async () => {
-        const ioClient = require('../../client/node_modules/socket.io-client');
+        const ioClient = require('socket.io-client');
 
         const connectClient = () => {
             return new Promise((resolve) => {
