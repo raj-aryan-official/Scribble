@@ -10,6 +10,7 @@ import {
     HIGH_POINT_THRESHOLD
 } from '../utils/canvasMath';
 import { PRESET_COLORS } from '../components/Canvas/ColorSwatches';
+import { floodFill } from '../utils/floodFill';
 
 // Backing store dimensions for fixed 4:3 aspect ratio
 const BASE_WIDTH = 1600;
@@ -222,6 +223,13 @@ export const useCanvas = (roomCode, isDrawer, twist = null) => {
 
         // Draw finished strokes
         for (const stroke of strokesRef.current) {
+            if (stroke.tool === 'fill') {
+                const origin = stroke.points?.[0];
+                if (origin) {
+                    floodFill(offCtx, origin.x * offscreen.width, origin.y * offscreen.height, stroke.color);
+                }
+                continue;
+            }
             const cmds = buildMidpointCurve(stroke.points);
             renderCommands(offCtx, cmds, offscreen.width, offscreen.height, stroke.size, stroke.tool, stroke.color);
         }
@@ -325,6 +333,37 @@ export const useCanvas = (roomCode, isDrawer, twist = null) => {
         setStrokeCount(strokesRef.current.length);
     }, [renderCommands, blitToMainCanvas]);
 
+    // Paint bucket: render a flood fill and record it as a replayable stroke
+    const applyFill = useCallback((x, y, { id = null, isMirror = false, color = null } = {}) => {
+        const offscreen = offscreenCanvasRef.current;
+        const offCtx = offscreenCtxRef.current;
+        if (!offscreen || !offCtx) return null;
+
+        const fillColor = color || colorRef.current;
+        const changed = floodFill(offCtx, x * offscreen.width, y * offscreen.height, fillColor);
+        if (!changed) return null;
+        blitToMainCanvas();
+
+        const stroke = {
+            id: id || uuidv4(),
+            tool: 'fill',
+            color: fillColor,
+            size: 0,
+            points: [{ x, y }],
+            isMirror
+        };
+
+        if (isDrawerRef.current && twistRef.current?.id === 'limited-ink') {
+            stroke.inkCost = 1;
+            inkRemainingRef.current = Math.max(0, inkRemainingRef.current - 1);
+            setInkRemaining(inkRemainingRef.current);
+        }
+
+        strokesRef.current.push(stroke);
+        setStrokeCount(strokesRef.current.length);
+        return stroke;
+    }, [blitToMainCanvas]);
+
     // Coordinate conversion: screen CSS coords to normalized 0-1 4:3 sheet coordinates
     const getNormalizedPoint = useCallback((e) => {
         const canvas = canvasRef.current;
@@ -365,6 +404,35 @@ export const useCanvas = (roomCode, isDrawer, twist = null) => {
             if (toolRef.current !== 'eraser' && inkRemainingRef.current <= 0) {
                 return;
             }
+        }
+
+        if (toolRef.current === 'fill') {
+            e.preventDefault();
+            const { x, y } = getNormalizedPoint(e);
+            const id = uuidv4();
+            const stroke = applyFill(x, y, { id });
+            if (!stroke) return;
+
+            if (twistRef.current?.id === 'mirror') {
+                applyFill(1 - x, y, { id: `${id}-m`, isMirror: true });
+            }
+
+            if (socket) {
+                socket.emit(EVENTS.STROKE_START, {
+                    roomCode: roomCodeRef.current,
+                    id,
+                    tool: 'fill',
+                    color: colorRef.current,
+                    size: stroke.size,
+                    x,
+                    y
+                });
+                socket.emit(EVENTS.STROKE_END, {
+                    roomCode: roomCodeRef.current,
+                    id
+                });
+            }
+            return;
         }
 
         e.preventDefault();
@@ -439,7 +507,7 @@ export const useCanvas = (roomCode, isDrawer, twist = null) => {
                 }
             }
         });
-    }, [getNormalizedPoint, renderCommands, blitToMainCanvas, socket]);
+    }, [getNormalizedPoint, renderCommands, blitToMainCanvas, socket, applyFill]);
 
     const onPointerMove = useCallback((e) => {
         // Palm rejection: ignore simultaneous touch when pen is active
@@ -576,7 +644,7 @@ export const useCanvas = (roomCode, isDrawer, twist = null) => {
 
             if (isCtrlOrCmd) return;
 
-            // Tool toggle: P (pencil), E (eraser)
+            // Tool toggle: P (pencil), E (eraser), F (fill)
             if (e.key.toLowerCase() === 'p') {
                 e.preventDefault();
                 setTool('pencil');
@@ -587,6 +655,11 @@ export const useCanvas = (roomCode, isDrawer, twist = null) => {
                 if (twistRef.current?.id !== 'no-undo-eraser') {
                     setTool('eraser');
                 }
+                return;
+            }
+            if (e.key.toLowerCase() === 'f') {
+                e.preventDefault();
+                setTool('fill');
                 return;
             }
 
@@ -658,6 +731,12 @@ export const useCanvas = (roomCode, isDrawer, twist = null) => {
             if (!data || !data.id) return;
             if (inProgressStrokesRef.current.has(data.id)) return;
 
+            if (data.tool === 'fill') {
+                if (strokesRef.current.some(s => s.id === data.id)) return;
+                applyFill(data.x, data.y, { id: data.id, color: data.color });
+                return;
+            }
+
             const stroke = {
                 id: data.id,
                 tool: data.tool || 'pencil',
@@ -700,8 +779,15 @@ export const useCanvas = (roomCode, isDrawer, twist = null) => {
                 const offscreen = offscreenCanvasRef.current;
                 const offCtx = offscreenCtxRef.current;
                 if (offscreen && offCtx) {
-                    const cmds = buildMidpointCurve(stroke.points);
-                    renderCommands(offCtx, cmds, offscreen.width, offscreen.height, stroke.size, stroke.tool, stroke.color);
+                    if (stroke.tool === 'fill') {
+                        const origin = stroke.points?.[0];
+                        if (origin) {
+                            floodFill(offCtx, origin.x * offscreen.width, origin.y * offscreen.height, stroke.color);
+                        }
+                    } else {
+                        const cmds = buildMidpointCurve(stroke.points);
+                        renderCommands(offCtx, cmds, offscreen.width, offscreen.height, stroke.size, stroke.tool, stroke.color);
+                    }
                     blitToMainCanvas();
                 }
             }
@@ -767,7 +853,7 @@ export const useCanvas = (roomCode, isDrawer, twist = null) => {
             socket.off(EVENTS.CANVAS_CLEARED, handleCleared);
             socket.off(EVENTS.STROKE_UNDONE, handleUndone);
         };
-    }, [socket, renderCommands, blitToMainCanvas, drawIncrementalPoint, finishStroke, redraw]);
+    }, [socket, renderCommands, blitToMainCanvas, drawIncrementalPoint, finishStroke, redraw, applyFill]);
 
     const getStrokes = useCallback(() => strokesRef.current || [], []);
 

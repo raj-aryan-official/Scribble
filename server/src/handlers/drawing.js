@@ -108,7 +108,7 @@ function registerDrawingHandlers(io, socket, safeOn) {
         }
         const x = typeof payload.x === 'number' && Number.isFinite(payload.x) ? Math.max(0, Math.min(1, payload.x)) : 0;
         const y = typeof payload.y === 'number' && Number.isFinite(payload.y) ? Math.max(0, Math.min(1, payload.y)) : 0;
-        const tool = payload.tool === 'eraser' ? 'eraser' : 'pencil';
+        const tool = payload.tool === 'eraser' || payload.tool === 'fill' ? payload.tool : 'pencil';
         const color = typeof payload.color === 'string' ? payload.color.slice(0, 32) : '#000000';
         const size = typeof payload.size === 'number' && payload.size > 0 ? Math.min(100, payload.size) : 5;
 

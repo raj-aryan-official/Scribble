@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Pencil, Eraser, Undo2, Trash2 } from 'lucide-react';
+import { Pencil, Eraser, PaintBucket, Undo2, Trash2 } from 'lucide-react';
 import ColorSwatches from './ColorSwatches';
 import BrushSize from './BrushSize';
 import ShortcutHelp from './ShortcutHelp';
@@ -30,6 +30,20 @@ export const ToolTray = ({
     const handleClearConfirm = () => {
         clearCanvas?.();
         setShowClearConfirm(false);
+    };
+
+    const TOOL_ORDER = ['pencil', 'eraser', 'fill'];
+
+    const handleToolKeyDown = (e, currentTool) => {
+        if (!['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp'].includes(e.key)) return;
+        e.preventDefault();
+        const enabled = TOOL_ORDER.filter((t) => !(t === 'eraser' && isNoUndoEraser));
+        const idx = enabled.indexOf(currentTool);
+        const dir = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : -1;
+        const next = enabled[(idx + dir + enabled.length) % enabled.length];
+        setTool?.(next);
+        const group = e.currentTarget.parentElement;
+        group?.querySelector(`[data-tool="${next}"]`)?.focus();
     };
 
     if (orientation === 'vertical') {
@@ -76,6 +90,21 @@ export const ToolTray = ({
                         }`}
                     >
                         <Eraser className="w-5 h-5" />
+                    </button>
+                    <button
+                        type="button"
+                        aria-pressed={tool === 'fill'}
+                        data-testid="fill-tool"
+                        aria-label="Fill bucket tool (F)"
+                        title="Fill bucket tool (F)"
+                        onClick={() => setTool?.('fill')}
+                        className={`min-w-[44px] min-h-[44px] p-2 rounded-[4px] flex items-center justify-center cursor-pointer focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none ${
+                            tool === 'fill'
+                                ? 'bg-card text-ink border-2 border-ink shadow-hard-sm'
+                                : 'text-ink-soft hover:text-ink hover:bg-card/50'
+                        }`}
+                    >
+                        <PaintBucket className="w-5 h-5" />
                     </button>
                 </div>
 
@@ -154,7 +183,7 @@ export const ToolTray = ({
                 isLeftHanded ? 'flex-row-reverse sm:flex-row' : ''
             }`}>
                 <div className="flex items-center gap-1.5">
-                    {/* Tools: Pencil & Eraser with roving tabindex */}
+                    {/* Tools: Pencil, Eraser & Fill with roving tabindex */}
                     <div
                         role="group"
                         aria-label="Drawing tool toggle"
@@ -162,18 +191,13 @@ export const ToolTray = ({
                     >
                         <button
                             type="button"
+                            data-tool="pencil"
                             aria-pressed={tool === 'pencil'}
                             tabIndex={tool === 'pencil' ? 0 : -1}
                             aria-label="Pencil tool (P)"
                             title="Pencil tool (P)"
                             onClick={() => setTool?.('pencil')}
-                            onKeyDown={(e) => {
-                                if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-                                    e.preventDefault();
-                                    setTool?.('eraser');
-                                    e.currentTarget.nextElementSibling?.focus();
-                                }
-                            }}
+                            onKeyDown={(e) => handleToolKeyDown(e, 'pencil')}
                             className={`min-w-[44px] min-h-[44px] p-2 rounded-[4px] font-bold flex items-center justify-center transition-transform cursor-pointer focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none ${
                                 tool === 'pencil'
                                     ? 'bg-card text-ink border-2 border-ink shadow-hard-sm'
@@ -184,20 +208,14 @@ export const ToolTray = ({
                         </button>
                         <button
                             type="button"
+                            data-tool="eraser"
                             aria-pressed={tool === 'eraser'}
                             tabIndex={tool === 'eraser' ? 0 : -1}
                             disabled={isNoUndoEraser}
                             aria-label="Eraser tool (E)"
                             title={isNoUndoEraser ? 'Eraser disabled in this twist' : 'Eraser tool (E)'}
                             onClick={() => !isNoUndoEraser && setTool?.('eraser')}
-                            onKeyDown={(e) => {
-                                if (isNoUndoEraser) return;
-                                if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-                                    e.preventDefault();
-                                    setTool?.('pencil');
-                                    e.currentTarget.previousElementSibling?.focus();
-                                }
-                            }}
+                            onKeyDown={(e) => handleToolKeyDown(e, 'eraser')}
                             className={`min-w-[44px] min-h-[44px] p-2 rounded-[4px] font-bold flex items-center justify-center transition-transform focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none ${
                                 isNoUndoEraser
                                     ? 'opacity-40 cursor-not-allowed text-ink-soft'
@@ -207,6 +225,24 @@ export const ToolTray = ({
                             }`}
                         >
                             <Eraser className="w-5 h-5" />
+                        </button>
+                        <button
+                            type="button"
+                            data-tool="fill"
+                            data-testid="fill-tool"
+                            aria-pressed={tool === 'fill'}
+                            tabIndex={tool === 'fill' ? 0 : -1}
+                            aria-label="Fill bucket tool (F)"
+                            title="Fill bucket tool (F)"
+                            onClick={() => setTool?.('fill')}
+                            onKeyDown={(e) => handleToolKeyDown(e, 'fill')}
+                            className={`min-w-[44px] min-h-[44px] p-2 rounded-[4px] font-bold flex items-center justify-center transition-transform cursor-pointer focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none ${
+                                tool === 'fill'
+                                    ? 'bg-card text-ink border-2 border-ink shadow-hard-sm'
+                                    : 'text-ink-soft hover:text-ink hover:bg-card/50'
+                            }`}
+                        >
+                            <PaintBucket className="w-5 h-5" />
                         </button>
                     </div>
 

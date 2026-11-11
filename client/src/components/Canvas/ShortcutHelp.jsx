@@ -4,6 +4,7 @@ import { HelpCircle, X } from 'lucide-react';
 const SHORTCUTS = [
     { key: 'P', desc: 'Pencil tool' },
     { key: 'E', desc: 'Eraser tool' },
+    { key: 'F', desc: 'Fill bucket tool' },
     { key: '[ / ]', desc: 'Decrease / increase brush size' },
     { key: '1 – 9', desc: 'Select color swatch 1 to 9' },
     { key: 'Ctrl/Cmd + Z', desc: 'Undo stroke' },

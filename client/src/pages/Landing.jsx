@@ -414,14 +414,14 @@ export const Landing = () => {
                 variant="error"
             />
 
-            {/* Two Column Layout on Desktop, Card First on Phone */}
+            {/* Two Column Layout on Desktop, Brand First on Phone */}
             <div className="w-full grid grid-cols-1 md:grid-cols-2 items-center gap-6 sm:gap-8 lg:gap-12">
-                {/* Desktop Left Column / Phone Bottom Doodle */}
+                {/* Brand & Doodle: top on phone, left on desktop */}
                 <motion.div
                     initial={{ opacity: 0, x: -16 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ type: 'spring', stiffness: 300, damping: 26 }}
-                    className="order-2 md:order-1 flex flex-col items-center md:items-start text-center md:text-left gap-3 sm:gap-5"
+                    className="order-1 flex flex-col items-center md:items-start text-center md:text-left gap-3 sm:gap-5"
                 >
                     <Wordmark />
                     <p className="text-base sm:text-lg md:text-xl font-bold text-ink-soft max-w-sm">
@@ -434,12 +434,12 @@ export const Landing = () => {
                     </div>
                 </motion.div>
 
-                {/* Desktop Right Column / Phone First Item: The Index Card */}
+                {/* Desktop Right Column / Phone Second Item: The Index Card */}
                 <motion.div
                     initial={{ opacity: 0, scale: 0.97, y: 12 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     transition={{ type: 'spring', stiffness: 300, damping: 26, delay: 0.05 }}
-                    className="order-1 md:order-2 w-full max-w-md mx-auto md:max-w-none"
+                    className="order-2 w-full max-w-md mx-auto md:max-w-none"
                 >
                     {savedPreview?.exists && (
                         <motion.div

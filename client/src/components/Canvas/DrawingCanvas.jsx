@@ -112,7 +112,7 @@ const DrawingCanvasComponent = ({ roomCode, isDrawer, drawerName = 'Maya', twist
                         onPointerEnter={onPointerEnter}
                         onPointerLeave={onPointerLeave}
                         className={`w-full h-full block touch-none select-none ${
-                            isDrawer ? 'cursor-none' : 'cursor-default'
+                            !isDrawer ? 'cursor-default' : tool === 'fill' ? 'cursor-crosshair' : 'cursor-none'
                         }`}
                         style={{
                             touchAction: 'none',
@@ -163,7 +163,7 @@ const DrawingCanvasComponent = ({ roomCode, isDrawer, drawerName = 'Maya', twist
                     )}
 
                     {/* Drawer Brush Size Ring Cursor */}
-                    {isDrawer && isCursorInside && !showBlindfold && (
+                    {isDrawer && isCursorInside && !showBlindfold && tool !== 'fill' && (
                         <div
                             className="pointer-events-none absolute rounded-full border-2 border-ink -translate-x-1/2 -translate-y-1/2 z-cursor transition-none"
                             style={{

@@ -110,7 +110,7 @@ function validateStrokeForTwist(room, stroke) {
             };
         }
     } else if (twist.id === 'thin-line') {
-        if (typeof stroke.size === 'number' && stroke.size !== 2) {
+        if (stroke.tool !== 'fill' && typeof stroke.size === 'number' && stroke.size !== 2) {
             return {
                 valid: false,
                 error: 'Brush size must be 2 in thin-line twist',
