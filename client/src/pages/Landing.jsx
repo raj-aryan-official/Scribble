@@ -169,13 +169,15 @@ export const Landing = () => {
         }
     }, [state.error, dispatch]);
 
-    // 5. Redirect once room is joined
+    // 5. Redirect once a join/create started here has completed.
+    // Requires the local connecting intent so returning home from a game or
+    // lobby does not bounce straight back into the previous room.
     useEffect(() => {
-        if (!state.roomCode) return;
+        if (!state.roomCode || !connectingAction) return;
         setIsConnecting(false);
         setConnectingAction(null);
         navigate(`/lobby/${state.roomCode}`);
-    }, [state.roomCode, navigate]);
+    }, [state.roomCode, connectingAction, navigate]);
 
     // Helper: Session ID
     const getSessionId = () => {

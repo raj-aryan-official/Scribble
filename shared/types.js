@@ -3,6 +3,7 @@ export const EVENTS = {
     JOIN_ROOM: 'joinRoom',
     CREATE_ROOM: 'createRoom',
     REJOIN_ROOM: 'rejoinRoom',
+    LEAVE_ROOM: 'leaveRoom',
     START_GAME: 'startGame',
     CHOOSE_WORD: 'chooseWord',
     DRAW_STROKE: 'drawStroke',

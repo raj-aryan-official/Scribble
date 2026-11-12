@@ -18,8 +18,8 @@ export const PaperStage = ({
     const [size, setSize] = useState({ width: 0, height: 0 });
 
     useEffect(() => {
-        if (size.width > 0) onSizeChange?.(size.width);
-    }, [size.width, onSizeChange]);
+        if (size.width > 0 && size.height > 0) onSizeChange?.(size.width, size.height);
+    }, [size.width, size.height, onSizeChange]);
 
     useEffect(() => {
         const container = containerRef.current;

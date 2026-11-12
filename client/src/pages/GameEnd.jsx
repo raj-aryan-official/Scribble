@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Download, Palette, Zap, Heart, Crown } from 'lucide-react';
@@ -53,6 +53,9 @@ export const GameEnd = () => {
     const [toastMessage, setToastMessage] = useState('');
     const [toastVariant, setToastVariant] = useState('success');
     const [selectedDrawing, setSelectedDrawing] = useState(null);
+    // Once the player chooses to leave, ignore in-flight room broadcasts (e.g. the
+    // leave-driven ROOM_JOINED) so they are not navigated back into the room.
+    const leavingRef = useRef(false);
 
     const isHost = Boolean(state.currentUser?.isHost);
     const myId = state.currentUser?.id;
@@ -106,6 +109,7 @@ export const GameEnd = () => {
     useEffect(() => {
         if (!socket) return;
         const handleRoomJoined = () => {
+            if (leavingRef.current) return;
             navigate(`/lobby/${code}`);
         };
         socket.on(EVENTS.ROOM_JOINED, handleRoomJoined);
@@ -119,6 +123,16 @@ export const GameEnd = () => {
     };
 
     const handleLeave = () => {
+        leavingRef.current = true;
+        try {
+            sessionStorage.removeItem('scribble_room_code');
+            localStorage.removeItem('scribble_rejoin');
+        } catch {
+            // Ignore storage access errors
+        }
+        if (socket && code) {
+            socket.emit(EVENTS.LEAVE_ROOM, { roomCode: code });
+        }
         navigate('/');
     };
 

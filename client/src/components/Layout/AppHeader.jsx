@@ -42,6 +42,9 @@ export const AppHeader = ({
         } catch {
             // Ignore session storage errors
         }
+        if (socket && activeRoomCode) {
+            socket.emit(EVENTS.LEAVE_ROOM, { roomCode: activeRoomCode });
+        }
         if (onLeave) {
             onLeave();
         } else {

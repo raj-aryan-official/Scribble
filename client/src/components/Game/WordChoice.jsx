@@ -18,7 +18,7 @@ const TIPS = [
     'Tip: artists score points when anyone guesses right',
 ];
 
-export const WordChoice = ({ roomCode, cardsReady = true }) => {
+export const WordChoice = ({ roomCode, cardsReady = true, compact = false }) => {
     const { state } = useGame();
     const socket = useSocket();
     const { settings } = useSettings();
@@ -186,32 +186,34 @@ export const WordChoice = ({ roomCode, cardsReady = true }) => {
             // Spectator view in random mode
             return (
                 <div
-                    className="absolute inset-0 z-20 flex items-center justify-center p-4 pointer-events-none select-none"
+                    className={`absolute inset-0 z-20 flex items-center justify-center ${compact ? 'p-2' : 'p-4'} pointer-events-none select-none`}
                     data-testid="word-choice-spectator"
                 >
                     <div aria-live="polite" aria-atomic="true" className="sr-only">
                         {drawer?.username || 'Maya'} is getting a word
                     </div>
-                    <Card className="flex flex-col items-center justify-center p-6 sm:p-8 max-w-sm w-full text-center shadow-hard bg-card border-2 border-ink gap-4 pointer-events-auto">
+                    <Card className={`flex flex-col items-center justify-center w-full text-center shadow-hard bg-card border-2 border-ink pointer-events-auto ${
+                        compact ? 'p-3 gap-2 max-w-[280px]' : 'p-6 sm:p-8 gap-4 max-w-sm'
+                    }`}>
                         <div className="relative inline-flex items-center justify-center">
                             <motion.div
                                 animate={{ y: [0, -6, 0] }}
                                 transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
                                 className="relative"
                             >
-                                <Avatar avatarId={drawer?.avatar || 'avatar-1'} size="xl" />
+                                <Avatar avatarId={drawer?.avatar || 'avatar-1'} size={compact ? 'md' : 'xl'} />
                             </motion.div>
                         </div>
                         <div>
-                            <h2 className="text-xl sm:text-2xl font-black font-heading text-ink">
+                            <h2 className={`font-black font-heading text-ink ${compact ? 'text-base' : 'text-xl sm:text-2xl'}`}>
                                 {drawer?.username || 'Maya'} is getting a word
                             </h2>
-                            <p className="text-xs sm:text-sm font-bold text-ink-soft mt-1">
+                            <p className={`font-bold text-ink-soft mt-1 ${compact ? 'text-[10px]' : 'text-xs sm:text-sm'}`}>
                                 Round starting soon...
                             </p>
                         </div>
                         {/* Draining 3s ink line */}
-                        <div className="w-full h-2.5 bg-paper border-2 border-ink rounded-full overflow-hidden shadow-hard-sm mt-1">
+                        <div className={`w-full ${compact ? 'h-1.5' : 'h-2.5'} bg-paper border-2 border-ink rounded-full overflow-hidden shadow-hard-sm ${compact ? '' : 'mt-1'}`}>
                             <div
                                 className="h-full bg-ink transition-all duration-75 ease-linear"
                                 style={{ width: `${progressPercent}%` }}
@@ -226,26 +228,30 @@ export const WordChoice = ({ roomCode, cardsReady = true }) => {
         const displayWord = (state.wordToGuess || '').toUpperCase();
         return (
             <div
-                className="absolute inset-0 z-20 flex items-center justify-center p-4 pointer-events-none select-none"
+                className={`absolute inset-0 z-20 flex items-center justify-center ${compact ? 'p-2' : 'p-4'} pointer-events-none select-none`}
                 data-testid="word-choice-random-drawer"
             >
                 <div aria-live="polite" aria-atomic="true" className="sr-only">
                     Your word: {displayWord}
                 </div>
-                <Card className="flex flex-col items-center justify-center p-6 sm:p-8 max-w-md w-full text-center shadow-hard bg-card border-2 border-ink gap-4 pointer-events-auto">
-                    <span className="text-xs font-black uppercase tracking-widest text-ink-soft bg-paper border border-ink/30 px-3 py-1 rounded-[6px]">
+                <Card className={`flex flex-col items-center justify-center w-full text-center shadow-hard bg-card border-2 border-ink pointer-events-auto ${
+                    compact ? 'p-3 gap-2 max-w-[300px]' : 'p-6 sm:p-8 gap-4 max-w-md'
+                }`}>
+                    <span className={`font-black uppercase tracking-widest text-ink-soft bg-paper border border-ink/30 rounded-[6px] ${
+                        compact ? 'text-[9px] px-2 py-0.5' : 'text-xs px-3 py-1'
+                    }`}>
                         Random Word Mode
                     </span>
                     <div>
-                        <h2 className="text-2xl sm:text-3xl font-black font-heading text-ink">
-                            Your word: <span className="text-tomato underline decoration-2 underline-offset-4">{displayWord}</span>
+                        <h2 className={`font-black font-heading text-ink ${compact ? 'text-base' : 'text-2xl sm:text-3xl'}`}>
+                            Your word: <span className="text-tomato underline decoration-2 underline-offset-4 break-words">{displayWord}</span>
                         </h2>
-                        <p className="text-xs sm:text-sm font-bold text-ink-soft mt-1">
+                        <p className={`font-bold text-ink-soft mt-1 ${compact ? 'text-[10px]' : 'text-xs sm:text-sm'}`}>
                             Get ready to draw! Round begins in 3s
                         </p>
                     </div>
                     {/* Draining 3s ink line */}
-                    <div className="w-full h-2.5 bg-paper border-2 border-ink rounded-full overflow-hidden shadow-hard-sm mt-1">
+                    <div className={`w-full ${compact ? 'h-1.5' : 'h-2.5'} bg-paper border-2 border-ink rounded-full overflow-hidden shadow-hard-sm ${compact ? '' : 'mt-1'}`}>
                         <div
                             className="h-full bg-tomato transition-all duration-75 ease-linear"
                             style={{ width: `${progressPercent}%` }}
@@ -260,7 +266,7 @@ export const WordChoice = ({ roomCode, cardsReady = true }) => {
     if (!isDrawer) {
         return (
             <div
-                className="absolute inset-0 z-20 flex items-center justify-center p-4 pointer-events-none select-none"
+                className={`absolute inset-0 z-20 flex items-center justify-center ${compact ? 'p-2' : 'p-4'} pointer-events-none select-none`}
                 data-testid="word-choice-spectator"
             >
                 {/* Live region for accessibility */}
@@ -268,7 +274,9 @@ export const WordChoice = ({ roomCode, cardsReady = true }) => {
                     {drawer?.username || 'Artist'} is choosing a word
                 </div>
 
-                <Card className="flex flex-col items-center justify-center p-6 sm:p-8 max-w-sm w-full text-center shadow-hard bg-card border-2 border-ink gap-4 pointer-events-auto">
+                <Card className={`flex flex-col items-center justify-center w-full text-center shadow-hard bg-card border-2 border-ink pointer-events-auto ${
+                    compact ? 'p-3 gap-2 max-w-[300px]' : 'p-6 sm:p-8 gap-4 max-w-sm'
+                }`}>
                     {/* Drawer Avatar with gentle idle bob holding an SVG pencil */}
                     <div className="relative inline-flex items-center justify-center">
                         <motion.div
@@ -276,11 +284,11 @@ export const WordChoice = ({ roomCode, cardsReady = true }) => {
                             transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
                             className="relative"
                         >
-                            <Avatar avatarId={drawer?.avatar || 'avatar-1'} size="xl" />
+                            <Avatar avatarId={drawer?.avatar || 'avatar-1'} size={compact ? 'md' : 'xl'} />
                             {/* Stylized pencil in avatar corner */}
                             <svg
                                 viewBox="0 0 32 32"
-                                className="absolute -bottom-1 -right-2 w-8 h-8 select-none"
+                                className={`absolute -bottom-1 -right-2 select-none ${compact ? 'w-6 h-6' : 'w-8 h-8'}`}
                                 aria-hidden="true"
                             >
                                 <path d="M8 24 L22 10 L26 14 L12 28 Z" fill="#F6B72C" stroke="#1C1B18" strokeWidth="1.5" />
@@ -292,16 +300,18 @@ export const WordChoice = ({ roomCode, cardsReady = true }) => {
                     </div>
 
                     <div>
-                        <h2 className="text-xl sm:text-2xl font-black font-heading text-ink">
+                        <h2 className={`font-black font-heading text-ink ${compact ? 'text-base' : 'text-xl sm:text-2xl'}`}>
                             {drawer?.username || 'Artist'} is choosing a word
                         </h2>
-                        <div className="mt-2 inline-block bg-paper border border-ink/30 px-3 py-1 rounded-[6px] text-xs font-bold text-ink-soft">
+                        <div className={`inline-block bg-paper border border-ink/30 rounded-[6px] font-bold text-ink-soft ${
+                            compact ? 'mt-1 px-2 py-0.5 text-[9px]' : 'mt-2 px-3 py-1 text-xs'
+                        }`}>
                             {currentTip}
                         </div>
                     </div>
 
                     {/* Draining 10s ink line */}
-                    <div className="w-full h-2.5 bg-paper border-2 border-ink rounded-full overflow-hidden shadow-hard-sm mt-1">
+                    <div className={`w-full ${compact ? 'h-1.5' : 'h-2.5'} bg-paper border-2 border-ink rounded-full overflow-hidden shadow-hard-sm ${compact ? '' : 'mt-1'}`}>
                         <div
                             className={`h-full transition-all duration-75 ease-linear ${
                                 isLast3Seconds ? 'bg-tomato' : 'bg-ink'
@@ -315,30 +325,40 @@ export const WordChoice = ({ roomCode, cardsReady = true }) => {
     }
 
     // PICK MODE: DRAWER VIEW (3 fanned index cards at -4, 0, 4 degrees)
-    const rotations = ['rotate-[-4deg]', 'rotate-0', 'rotate-[4deg]'];
+    const rotations = compact
+        ? ['rotate-[-2deg]', 'rotate-0', 'rotate-[2deg]']
+        : ['rotate-[-4deg]', 'rotate-0', 'rotate-[4deg]'];
 
     return (
         <div
-            className={`absolute inset-0 z-20 flex items-center justify-center p-4 transition-opacity duration-300 ${
+            className={`absolute inset-0 z-20 flex items-center justify-center ${compact ? 'p-2' : 'p-4'} transition-opacity duration-300 ${
                 cardsReady ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
             }`}
             data-testid="word-choice-drawer"
         >
-            <div className="max-w-2xl w-full flex flex-col items-center gap-4 sm:gap-6">
+            <div className={`w-full flex flex-col items-center ${compact ? 'max-w-xl gap-2' : 'max-w-2xl gap-4 sm:gap-6'}`}>
                 <div className="text-center">
-                    <span className="text-xs font-black uppercase tracking-widest text-ink-soft bg-paper border border-ink/30 px-3 py-1 rounded-[6px]">
-                        Your Turn to Draw
-                    </span>
-                    <h2 className="text-2xl sm:text-3xl font-black font-heading text-ink mt-2">
-                        Pick Your Word
-                    </h2>
-                    <p className="text-xs sm:text-sm font-bold text-ink-soft mt-0.5">
-                        Choose a card or press 1, 2, or 3
-                    </p>
+                    {compact ? (
+                        <h2 className="text-base font-black font-heading text-ink">
+                            Pick Your Word
+                        </h2>
+                    ) : (
+                        <>
+                            <span className="text-xs font-black uppercase tracking-widest text-ink-soft bg-paper border border-ink/30 px-3 py-1 rounded-[6px]">
+                                Your Turn to Draw
+                            </span>
+                            <h2 className="text-2xl sm:text-3xl font-black font-heading text-ink mt-2">
+                                Pick Your Word
+                            </h2>
+                            <p className="text-xs sm:text-sm font-bold text-ink-soft mt-0.5">
+                                Choose a card or press 1, 2, or 3
+                            </p>
+                        </>
+                    )}
                 </div>
 
                 {/* Draining Ink Line driven by server timestamp */}
-                <div className="w-full max-w-md h-2.5 bg-paper border-2 border-ink rounded-full overflow-hidden shadow-hard-sm">
+                <div className={`w-full ${compact ? 'max-w-[220px] h-1.5' : 'max-w-md h-2.5'} bg-paper border-2 border-ink rounded-full overflow-hidden shadow-hard-sm`}>
                     <div
                         className={`h-full transition-all duration-75 ease-linear ${
                             isLast3Seconds ? 'bg-tomato' : 'bg-ink'
@@ -351,7 +371,7 @@ export const WordChoice = ({ roomCode, cardsReady = true }) => {
                 <div
                     role="group"
                     aria-label="Choose a word"
-                    className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mt-2"
+                    className={`flex flex-row items-stretch justify-center w-full ${compact ? 'gap-2 mt-0' : 'gap-4 sm:gap-6 mt-2'}`}
                 >
                     <AnimatePresence>
                         {state.wordChoices &&
@@ -388,7 +408,7 @@ export const WordChoice = ({ roomCode, cardsReady = true }) => {
                                         aria-label={`${wordText}, ${difficulty} difficulty`}
                                         animate={
                                             isPicked
-                                                ? { y: -80, opacity: 0, scale: 1.05 }
+                                                ? { y: compact ? -24 : -80, opacity: 0, scale: 1.05 }
                                                 : isUnpicked
                                                 ? { opacity: 0, scale: 0.85 }
                                                 : shouldPulse
@@ -396,18 +416,24 @@ export const WordChoice = ({ roomCode, cardsReady = true }) => {
                                                 : { scale: 1, opacity: 1 }
                                         }
                                         transition={{ duration: 0.3 }}
-                                        className={`group transform ${rotationClass} hover:rotate-0 hover:-translate-y-2 hover:shadow-hard-lg focus-visible:rotate-0 focus-visible:-translate-y-2 focus-visible:shadow-hard-lg focus-visible:outline-none transition-all duration-150 cursor-pointer text-center bg-card border-2 border-ink shadow-hard rounded-[12px] p-5 w-48 sm:w-52 min-h-[140px] flex flex-col justify-between items-center select-none ${
+                                        className={`group transform ${rotationClass} hover:rotate-0 hover:-translate-y-2 hover:shadow-hard-lg focus-visible:rotate-0 focus-visible:-translate-y-2 focus-visible:shadow-hard-lg focus-visible:outline-none transition-all duration-150 cursor-pointer text-center bg-card border-2 border-ink shadow-hard flex flex-col justify-between items-center select-none ${
+                                            compact
+                                                ? 'flex-1 min-w-0 max-w-[180px] rounded-[10px] p-2 min-h-[92px]'
+                                                : 'w-48 sm:w-52 rounded-[12px] p-5 min-h-[140px]'
+                                        } ${
                                             isDefault ? 'ring-2 ring-cobalt' : ''
                                         } ${
                                             isFocused ? 'ring-2 ring-cobalt ring-offset-2' : ''
                                         }`}
                                     >
-                                        <div className="flex items-center justify-between w-full">
-                                            <div className="flex items-center gap-1.5">
-                                                <span className="text-[10px] font-black uppercase text-ink-soft bg-paper border border-ink/20 px-1.5 py-0.5 rounded-[4px]">
-                                                    Key {idx + 1}
+                                        <div className="flex items-center justify-between w-full gap-1">
+                                            <div className="flex items-center gap-1">
+                                                <span className={`font-black uppercase text-ink-soft bg-paper border border-ink/20 rounded-[4px] ${
+                                                    compact ? 'text-[9px] px-1 py-0' : 'text-[10px] px-1.5 py-0.5'
+                                                }`}>
+                                                    {compact ? idx + 1 : `Key ${idx + 1}`}
                                                 </span>
-                                                {isDefault && (
+                                                {isDefault && !compact && (
                                                     <span
                                                         data-testid="default-choice-tag"
                                                         className="text-[10px] font-black uppercase text-cobalt bg-cobalt/10 border border-cobalt/30 px-1.5 py-0.5 rounded-[4px]"
@@ -423,7 +449,7 @@ export const WordChoice = ({ roomCode, cardsReady = true }) => {
                                                 {[1, 2, 3].map((dot) => (
                                                     <span
                                                         key={dot}
-                                                        className={`w-2 h-2 rounded-full border border-ink ${
+                                                        className={`rounded-full border border-ink ${compact ? 'w-1.5 h-1.5' : 'w-2 h-2'} ${
                                                             dot <= level
                                                                 ? dotColors[level] || 'bg-marigold'
                                                                 : 'bg-paper'
@@ -435,14 +461,18 @@ export const WordChoice = ({ roomCode, cardsReady = true }) => {
 
                                         <span
                                             data-testid="card-word"
-                                            className="text-xl sm:text-2xl font-heading font-black text-ink capitalize tracking-wide group-hover:text-tomato transition-colors my-2"
+                                            className={`font-heading font-black text-ink capitalize tracking-wide group-hover:text-tomato transition-colors break-words ${
+                                                compact ? 'text-sm leading-tight my-1' : 'text-xl sm:text-2xl my-2'
+                                            }`}
                                         >
                                             {wordText}
                                         </span>
 
-                                        <span className="text-[11px] font-black uppercase tracking-wider text-ink-soft">
-                                            {difficulty}
-                                        </span>
+                                        {!compact && (
+                                            <span className="text-[11px] font-black uppercase tracking-wider text-ink-soft">
+                                                {difficulty}
+                                            </span>
+                                        )}
                                     </motion.button>
                                 );
                             })}
@@ -456,9 +486,11 @@ export const WordChoice = ({ roomCode, cardsReady = true }) => {
                     size="sm"
                     data-testid="surprise-me-button"
                     onClick={handleSurpriseMe}
-                    className="flex items-center gap-2 mt-2 text-xs font-bold shadow-hard-sm"
+                    className={`flex items-center gap-2 font-bold shadow-hard-sm ${
+                        compact ? 'mt-0 text-[11px] px-3 py-1' : 'mt-2 text-xs'
+                    }`}
                 >
-                    <Dices className="w-4 h-4 text-ink" />
+                    <Dices className={compact ? 'w-3.5 h-3.5 text-ink' : 'w-4 h-4 text-ink'} />
                     <span>Surprise me</span>
                 </Button>
             </div>

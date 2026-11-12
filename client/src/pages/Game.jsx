@@ -41,8 +41,14 @@ export const Game = () => {
 
     const [canvasWidth, setCanvasWidth] = useState(800);
     const [paperWidth, setPaperWidth] = useState(0);
+    const [paperHeight, setPaperHeight] = useState(0);
     const lastTickSecondRef = useRef(null);
-    const handlePaperSize = useCallback((width) => setPaperWidth(width), []);
+    const handlePaperSize = useCallback((width, height) => {
+        setPaperWidth(width);
+        setPaperHeight(height);
+    }, []);
+    // Overlay cards (word choice, turn intro) scale down when the paper is small
+    const compactPaper = paperHeight > 0 && (paperHeight < 420 || paperWidth < 620);
 
     const [showCountdown, setShowCountdown] = useState(() => {
         return Boolean(state.startsAt && Date.now() < state.startsAt);
@@ -271,7 +277,10 @@ export const Game = () => {
     }, [state.timer, state.gameState, play]);
 
     const handleExit = () => {
-        window.location.href = '/';
+        if (socket && code) {
+            socket.emit(EVENTS.LEAVE_ROOM, { roomCode: code });
+        }
+        navigate('/');
     };
 
     // Edge state check (kicked, room not found, closed, host ended, not enough players)
@@ -517,6 +526,7 @@ export const Game = () => {
                                         totalRounds={state.totalRounds || state.settings?.rounds || 3}
                                         drawer={drawer}
                                         twist={state.currentTwist}
+                                        compact={compactPaper}
                                         onOverlap={() => setCardsReady(true)}
                                         onComplete={() => setShowTurnIntro(false)}
                                     />
@@ -526,6 +536,7 @@ export const Game = () => {
                                 {state.gameState === 'WORD_SELECTION' && !showCountdown && (
                                     <WordChoice
                                         roomCode={code}
+                                        compact={compactPaper}
                                         cardsReady={cardsReady || !showTurnIntro}
                                     />
                                 )}

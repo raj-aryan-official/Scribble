@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion, MotionConfig, useReducedMotion } from 'framer-motion';
 import { useGame } from './context/GameContext';
 import { useSocket } from './hooks/useSocket';
@@ -30,6 +30,7 @@ import unsupportedSvg from './assets/states/unsupported.svg';
 
 function App() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { settings, isSettingsOpen, closeSettings } = useSettings();
   // Profile context removed
   const osReducedMotion = useReducedMotion();
@@ -242,7 +243,7 @@ function App() {
 
         {/* Shell Top Bar: Lobby, Game and GameEnd only (56px desktop / 48px phones) */}
         {showTopBar && (
-          <AppHeader roomCode={currentRoomCode} />
+          <AppHeader roomCode={currentRoomCode} onLeave={() => navigate('/')} />
         )}
 
         {/* Main Content Area */}

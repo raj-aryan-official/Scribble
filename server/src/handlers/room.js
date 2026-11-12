@@ -723,6 +723,27 @@ function registerRoomHandlers(io, socket, safeOn) {
         safeOn('updateSettings', handleUpdateSettings);
     }
 
+    // Voluntary leave frees the seat immediately (no away/grace window).
+    const handleLeaveRoom = (payload) => {
+        if (!payload || typeof payload !== 'object') {
+            return rejectWithError(socket, 'Invalid payload');
+        }
+        const room = getMemberRoom(socket, payload.roomCode);
+        if (!room) return;
+
+        io.to(`${room.code}_voice`).emit(EVENTS.VOICE_LEAVE, { socketId: socket.id });
+        socket.leave(`${room.code}:guessed`);
+        // Detach before the leave broadcast so the departing socket does not
+        // receive its own removal ROOM_JOINED and get pulled back in.
+        socket.leave(room.code);
+        handlePlayerLeave(io, room, socket.id, 'left');
+    };
+
+    safeOn(EVENTS.LEAVE_ROOM, handleLeaveRoom);
+    if (EVENTS.LEAVE_ROOM !== 'leaveRoom') {
+        safeOn('leaveRoom', handleLeaveRoom);
+    }
+
     safeOn('disconnect', () => {
         const room = roomManager.getRoomByPlayerId(socket.id);
         if (!room) return;
