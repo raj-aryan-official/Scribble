@@ -52,13 +52,15 @@ describe('Shell Layout & Navigation - Tokens and UI Components', () => {
             expect(html).toContain('aria-label="Leave game"');
         });
 
-        it('renders room code chip in center with copy label', () => {
+        it('renders SCRIBBLE wordmark at every breakpoint and no room code chip', () => {
             const html = renderToStaticMarkup(
                 <AppHeader roomCode="ABCDEF" />
             );
-            expect(html).toContain('ABCDEF');
-            expect(html).toContain('Room');
-            expect(html).toContain('aria-label="Room code ABCDEF, click to copy"');
+            expect(html).toContain('SCRIBBLE');
+            expect(html).not.toContain('ABCDEF');
+            expect(html).not.toContain('hidden sm:flex');
+            expect(html).not.toContain('hidden md:flex');
+            expect(html).not.toContain('click to copy');
         });
 
         it('renders sound toggle and menu buttons with accessible labels and tooltips', () => {

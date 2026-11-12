@@ -415,7 +415,7 @@ export const Lobby = () => {
                                 canStart ? 'bg-card text-leaf-deep' : 'bg-card text-tomato-deep'
                             }`}
                         >
-                            {canStart ? 'Ready to play' : 'Need 2+ players'}
+                            {canStart ? 'Ready to play' : 'Need at least 2'}
                         </span>
                     </div>
 

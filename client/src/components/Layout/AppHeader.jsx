@@ -25,7 +25,6 @@ export const AppHeader = ({
     const socket = useSocket();
     const contextVoice = useVoice?.() || null;
     const activeVoice = voiceState !== undefined ? voiceState : contextVoice;
-    const [copied, setCopied] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
     const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
     const [showHowToPlay, setShowHowToPlay] = useState(false);
@@ -34,17 +33,6 @@ export const AppHeader = ({
     const activeRoomCode = roomCode || state?.roomCode || '';
     const isHost = Boolean(state?.currentUser?.isHost);
     const isInGame = state?.gameState === 'DRAWING' || state?.gameState === 'WORD_SELECTION' || state?.gameState === 'ROUND_END';
-
-    const handleCopyCode = async () => {
-        if (!activeRoomCode) return;
-        try {
-            await navigator.clipboard.writeText(activeRoomCode);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 1500);
-        } catch {
-            // Ignore clipboard errors
-        }
-    };
 
     const handleConfirmLeave = () => {
         setShowLeaveConfirm(false);
@@ -73,13 +61,13 @@ export const AppHeader = ({
             aria-label="Application header"
             className={`h-[48px] md:h-[56px] w-full px-3 md:px-6 bg-card border-b-2 border-ink shadow-hard-sm z-bar flex items-center justify-between select-none shrink-0 ${className}`}
         >
-            {/* Left: Small Wordmark (hidden on mobile when in game to make room for room code, 'Round 2 of 3', sound, menu) */}
+            {/* Left: Wordmark (always visible; tapping it offers leaving the game) */}
             <Tooltip content="Leave this game">
                 <button
                     type="button"
                     onClick={() => setShowLeaveConfirm(true)}
                     aria-label="Leave game"
-                    className={`${isInGame ? 'hidden sm:flex' : 'hidden md:flex'} items-center gap-1.5 cursor-pointer transform -rotate-1 hover:rotate-0 transition-transform focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none rounded-[4px] p-1 -ml-1`}
+                    className="flex items-center gap-1.5 cursor-pointer transform -rotate-1 hover:rotate-0 transition-transform focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none rounded-[4px] p-1 -ml-1"
                 >
                     <span className="font-heading font-black text-xl md:text-2xl tracking-tighter text-tomato stroke-ink">
                         SCRIBBLE
@@ -87,24 +75,8 @@ export const AppHeader = ({
                 </button>
             </Tooltip>
 
-            {/* Centre: Room Code Chip & Optional Round Counter */}
+            {/* Centre: Optional Round Counter */}
             <div className="flex items-center gap-2">
-                {activeRoomCode && (
-                    <Tooltip content={copied ? 'Copied to clipboard!' : 'Click to copy room code'}>
-                        <button
-                            type="button"
-                            onClick={handleCopyCode}
-                            aria-label={`Room code ${activeRoomCode}, click to copy`}
-                            className="inline-flex items-center gap-1.5 bg-paper hover:bg-card border-2 border-ink px-2.5 sm:px-3 py-1 rounded-[6px] shadow-hard-sm cursor-pointer transition-transform active:translate-x-[1px] active:translate-y-[1px] focus-visible:ring-2 focus-visible:ring-cobalt focus-visible:outline-none"
-                        >
-                            <span className="text-[10px] font-bold uppercase text-ink-soft">Room</span>
-                            <span className="font-mono font-black text-xs sm:text-base text-ink tracking-wider">
-                                {copied ? 'Copied' : activeRoomCode}
-                            </span>
-                        </button>
-                    </Tooltip>
-                )}
-
                 {isInGame && state?.currentRound > 0 && (
                     <div
                         className="inline-flex items-center gap-1 bg-paper border-2 border-ink shadow-hard-sm px-2 sm:px-2.5 py-1 rounded-[6px]"
