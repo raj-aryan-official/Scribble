@@ -383,12 +383,13 @@ export const WordChoice = ({ roomCode, cardsReady = true, compact = false }) => 
                                         : getWordDifficulty(wordText);
                                 const level = meta?.level || 2;
                                 const difficulty =
-                                    meta?.difficulty || (level === 1 ? 'Easy' : level === 3 ? 'Hard' : 'Medium');
+                                    meta?.difficulty || (level === 1 ? 'Easy' : level === 3 ? 'Hard' : level === 4 ? 'Expert' : 'Medium');
 
                                 const dotColors = {
                                     1: 'bg-leaf',
                                     2: 'bg-marigold',
                                     3: 'bg-tomato',
+                                    4: 'bg-cobalt',
                                 };
 
                                 const rotationClass = rotations[idx] || 'rotate-0';
@@ -446,7 +447,7 @@ export const WordChoice = ({ roomCode, cardsReady = true, compact = false }) => 
                                                 className="flex items-center gap-1"
                                                 title={`Difficulty: ${difficulty}`}
                                             >
-                                                {[1, 2, 3].map((dot) => (
+                                                {[1, 2, 3, 4].map((dot) => (
                                                     <span
                                                         key={dot}
                                                         className={`rounded-full border border-ink ${compact ? 'w-1.5 h-1.5' : 'w-2 h-2'} ${

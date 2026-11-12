@@ -1,148 +1,225 @@
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('fs');
+const path = require('path');
 
 const easyWords = require('../src/words/easy.json');
 const mediumWords = require('../src/words/medium.json');
 const hardWords = require('../src/words/hard.json');
+const expertWords = require('../src/words/expert.json');
 
-const packs = {
-    animals: require('../src/words/packs/animals.json'),
-    food: require('../src/words/packs/food.json'),
-    places: require('../src/words/packs/places.json'),
-    objects: require('../src/words/packs/objects.json'),
-    actions: require('../src/words/packs/actions.json')
-};
+const categoriesDir = path.join(__dirname, '..', 'src', 'words', 'categories');
+const categories = {};
+for (const file of fs.readdirSync(categoriesDir).sort()) {
+    if (file.endsWith('.json')) {
+        categories[path.basename(file, '.json')] = require(path.join(categoriesDir, file));
+    }
+}
 
+const packDefinitions = require('../../shared/wordPacks.json');
 const blocklist = require('../src/blocklist.js');
-const { getWordChoices, getWordDifficulty, ALLOWED_PACKS } = require('../src/wordBank.js');
+const {
+    packs,
+    ALLOWED_PACKS,
+    ALLOWED_DIFFICULTIES,
+    getWordChoices,
+    getWordDifficulty,
+    getRandomWords
+} = require('../src/wordBank.js');
 const roomManager = require('../src/RoomManager.js');
+const { buildDatabase, LEVELS, WORD_PATTERN } = require('../../scripts/build-word-db.js');
 
-describe('Word Bank & Pack Data Validation', () => {
-    test('easy, medium, hard lists have reasonable sizes (~300, ~300, ~200)', () => {
-        assert.ok(easyWords.length >= 250 && easyWords.length <= 450, `Easy count is ${easyWords.length}`);
-        assert.ok(mediumWords.length >= 250 && mediumWords.length <= 450, `Medium count is ${mediumWords.length}`);
-        assert.ok(hardWords.length >= 150 && hardWords.length <= 300, `Hard count is ${hardWords.length}`);
+const masterLists = {
+    easy: easyWords,
+    medium: mediumWords,
+    hard: hardWords,
+    expert: expertWords
+};
+const masterSet = new Set([...easyWords, ...mediumWords, ...hardWords, ...expertWords]);
+
+describe('Word Bank & Category Data Validation', () => {
+    test('database contains thousands of words across four tiers', () => {
+        assert.ok(masterSet.size >= 3000, `Expected at least 3000 unique words, got ${masterSet.size}`);
+        assert.ok(easyWords.length >= 500, `Easy count is ${easyWords.length}`);
+        assert.ok(mediumWords.length >= 900, `Medium count is ${mediumWords.length}`);
+        assert.ok(hardWords.length >= 700, `Hard count is ${hardWords.length}`);
+        assert.ok(expertWords.length >= 400, `Expert count is ${expertWords.length}`);
     });
 
-    test('all words are lowercase, length 3 to 14 characters, and contain no blocklist words', () => {
-        const checkWordList = (list, name) => {
-            for (const word of list) {
-                assert.equal(typeof word, 'string', `${name}: "${word}" must be a string`);
-                assert.equal(word, word.toLowerCase(), `${name}: "${word}" must be lowercase`);
-                assert.ok(word.length >= 3 && word.length <= 14, `${name}: "${word}" length must be 3-14 (got ${word.length})`);
-                assert.ok(!blocklist.includes(word), `${name}: "${word}" must not be on blocklist`);
-                assert.match(word, /^[a-z]+$/, `${name}: "${word}" must contain only lowercase letters`);
+    test('generated tier files exactly match the category source files', () => {
+        const built = buildDatabase();
+        for (const level of LEVELS) {
+            assert.deepEqual(masterLists[level], built[level], `${level}.json is stale; run npm run sync:words`);
+        }
+    });
+
+    test('all category words are lowercase, 3-14 letters, and not blocked', () => {
+        for (const [categoryId, data] of Object.entries(categories)) {
+            for (const level of LEVELS) {
+                assert.ok(Array.isArray(data[level]), `${categoryId}/${level} must be an array`);
+                for (const word of data[level]) {
+                    assert.equal(typeof word, 'string', `${categoryId}/${level}: non-string entry`);
+                    assert.ok(WORD_PATTERN.test(word), `${categoryId}/${level}: "${word}" must be 3-14 lowercase letters`);
+                    assert.ok(!blocklist.includes(word), `${categoryId}/${level}: "${word}" is blocked`);
+                }
             }
-        };
-
-        checkWordList(easyWords, 'easy');
-        checkWordList(mediumWords, 'medium');
-        checkWordList(hardWords, 'hard');
-
-        for (const [packName, packList] of Object.entries(packs)) {
-            checkWordList(packList, `pack:${packName}`);
         }
     });
 
-    test('no duplicates within easy, medium, or hard lists', () => {
-        const checkUnique = (list, name) => {
-            const seen = new Set();
-            for (const w of list) {
-                assert.ok(!seen.has(w), `${name} has duplicate word: "${w}"`);
-                seen.add(w);
+    test('no duplicate words within any category or across all categories', () => {
+        const seen = new Map();
+        for (const [categoryId, data] of Object.entries(categories)) {
+            const seenInCategory = new Set();
+            for (const level of LEVELS) {
+                for (const word of data[level]) {
+                    assert.ok(!seenInCategory.has(word), `category "${categoryId}" repeats "${word}"`);
+                    seenInCategory.add(word);
+                    assert.equal(seen.get(word), undefined, `"${word}" also appears in "${seen.get(word)}"`);
+                    seen.set(word, `${categoryId}/${level}`);
+                }
             }
-            assert.equal(seen.size, list.length);
-        };
+        }
+        assert.equal(seen.size, masterSet.size);
+    });
 
-        checkUnique(easyWords, 'easy');
-        checkUnique(mediumWords, 'medium');
-        checkUnique(hardWords, 'hard');
-
-        for (const [packName, packList] of Object.entries(packs)) {
-            checkUnique(packList, `pack:${packName}`);
+    test('every word in the master tiers comes from a category', () => {
+        const categorySet = new Set();
+        for (const data of Object.values(categories)) {
+            for (const level of LEVELS) {
+                for (const word of data[level]) categorySet.add(word);
+            }
+        }
+        for (const word of masterSet) {
+            assert.ok(categorySet.has(word), `Master word "${word}" is not present in any category`);
         }
     });
 
-    test('no duplicates across easy, medium, and hard lists (disjoint sets)', () => {
-        const easySet = new Set(easyWords);
-        const medSet = new Set(mediumWords);
-
-        for (const w of mediumWords) {
-            assert.ok(!easySet.has(w), `Word "${w}" is in both easy and medium`);
+    test('shared pack definitions reference real categories and cover every category', () => {
+        const usedCategories = new Set();
+        for (const def of packDefinitions) {
+            assert.equal(typeof def.id, 'string');
+            assert.equal(typeof def.label, 'string');
+            assert.ok(Array.isArray(def.categories) && def.categories.length > 0);
+            for (const categoryId of def.categories) {
+                assert.ok(categories[categoryId], `Pack "${def.id}" references missing category "${categoryId}"`);
+                usedCategories.add(categoryId);
+            }
         }
-        for (const w of hardWords) {
-            assert.ok(!easySet.has(w), `Word "${w}" is in both easy and hard`);
-            assert.ok(!medSet.has(w), `Word "${w}" is in both medium and hard`);
+        for (const categoryId of Object.keys(categories)) {
+            assert.ok(usedCategories.has(categoryId), `Category "${categoryId}" is not part of any pack`);
         }
+        assert.deepEqual(ALLOWED_PACKS, packDefinitions.map(p => p.id));
+        assert.ok(ALLOWED_PACKS.includes('animals'));
+        assert.ok(ALLOWED_PACKS.includes('food'));
+        assert.ok(ALLOWED_PACKS.includes('objects'));
+        assert.ok(ALLOWED_PACKS.includes('places'));
+        assert.ok(ALLOWED_PACKS.includes('actions'));
     });
 
-    test('every word in packs exists in one of the master difficulty lists', () => {
-        const masterSet = new Set([...easyWords, ...mediumWords, ...hardWords]);
-        for (const [packName, packList] of Object.entries(packs)) {
-            for (const word of packList) {
-                assert.ok(masterSet.has(word), `Pack "${packName}" word "${word}" not found in master dictionary`);
+    test('every pack word exists in the master dictionary and matches its category membership', () => {
+        for (const def of packDefinitions) {
+            const expected = new Set();
+            for (const categoryId of def.categories) {
+                for (const level of LEVELS) {
+                    for (const word of categories[categoryId][level]) expected.add(word);
+                }
+            }
+            const packSet = new Set(packs[def.id]);
+            assert.equal(packSet.size, expected.size, `Pack "${def.id}" size mismatch`);
+            for (const word of expected) {
+                assert.ok(packSet.has(word), `Pack "${def.id}" is missing "${word}"`);
+                assert.ok(masterSet.has(word), `Pack "${def.id}" word "${word}" not in master dictionary`);
             }
         }
     });
 });
 
+describe('getWordDifficulty', () => {
+    test('returns the correct tier and level for words in every tier', () => {
+        assert.deepEqual(getWordDifficulty('apple'), { difficulty: 'Easy', level: 1 });
+        assert.deepEqual(getWordDifficulty(mediumWords[0]), { difficulty: 'Medium', level: 2 });
+        assert.deepEqual(getWordDifficulty(hardWords[0]), { difficulty: 'Hard', level: 3 });
+        assert.deepEqual(getWordDifficulty(expertWords[0]), { difficulty: 'Expert', level: 4 });
+        assert.deepEqual(getWordDifficulty('notawordatall'), { difficulty: 'Medium', level: 2 });
+        assert.deepEqual(getWordDifficulty(null), { difficulty: 'Medium', level: 2 });
+    });
+});
+
 describe('getWordChoices & Game Settings Validation', () => {
-    test('Mixed difficulty gives 1 word from each level (Easy, Medium, Hard)', () => {
+    test('Mixed difficulty offers three distinct tiers with an approachable and a challenging word', () => {
         const room = {
             settings: { difficulty: 'Mixed', packs: [] },
             usedWords: new Set()
         };
 
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < 40; i++) {
             const choices = getWordChoices(room, 3);
             assert.equal(choices.length, 3, 'Must return 3 choices');
-
-            const difficulties = choices.map(w => getWordDifficulty(w).difficulty).sort();
-            assert.deepEqual(difficulties, ['Easy', 'Hard', 'Medium'], 'Mixed must offer 1 Easy, 1 Medium, and 1 Hard');
+            assert.equal(new Set(choices).size, 3, 'Choices must be distinct');
 
             const levels = choices.map(w => getWordDifficulty(w).level).sort();
-            assert.deepEqual(levels, [1, 2, 3], 'Mixed must offer level 1, 2, and 3');
-
-            // Verify against actual dictionary files
-            const hasEasy = choices.some(w => easyWords.includes(w));
-            const hasMed = choices.some(w => mediumWords.includes(w));
-            const hasHard = choices.some(w => hardWords.includes(w));
-            assert.ok(hasEasy, 'Must have 1 easy word');
-            assert.ok(hasMed, 'Must have 1 medium word');
-            assert.ok(hasHard, 'Must have 1 hard word');
+            assert.equal(new Set(levels).size, 3, `Expected 3 distinct tiers, got ${levels.join(',')}`);
+            assert.ok(levels.includes(1) || levels.includes(2), 'Mixed must include an Easy or Medium word');
+            assert.ok(levels.includes(3) || levels.includes(4), 'Mixed must include a Hard or Expert word');
+            assert.ok(levels.includes(1) && levels.includes(2), `Expected Easy and Medium in ${levels.join(',')}`);
         }
     });
 
-    test('getWordChoices returns no repeats across a 12-round x 12-player game (144 turns)', () => {
+    test('Mixed eventually offers Expert words', () => {
+        const room = { settings: { difficulty: 'Mixed', packs: [] }, usedWords: new Set() };
+        let sawExpert = false;
+        for (let i = 0; i < 80 && !sawExpert; i++) {
+            sawExpert = getWordChoices(room, 3).some(w => getWordDifficulty(w).level === 4);
+        }
+        assert.ok(sawExpert, 'Mixed mode should sometimes surface Expert words');
+    });
+
+    test('fixed difficulty modes only return words from that tier', () => {
+        for (const [difficulty, expectedLevel] of [['Easy', 1], ['Medium', 2], ['Hard', 3], ['Expert', 4]]) {
+            const room = { settings: { difficulty, packs: [] }, usedWords: new Set() };
+            for (let i = 0; i < 10; i++) {
+                const choices = getWordChoices(room, 3);
+                assert.equal(choices.length, 3);
+                for (const word of choices) {
+                    assert.equal(getWordDifficulty(word).level, expectedLevel, `${difficulty} returned "${word}"`);
+                }
+            }
+        }
+    });
+
+    test('returns no repeats across a 12-round x 12-player game (144 turns)', () => {
         const room = {
             settings: { difficulty: 'Mixed', packs: [] },
             usedWords: new Set()
         };
 
         const chosenWords = [];
-        const totalTurns = 12 * 12; // 144 turns
+        const totalTurns = 12 * 12;
 
         for (let turn = 0; turn < totalTurns; turn++) {
             const choices = getWordChoices(room, 3);
             assert.equal(choices.length, 3);
-
-            // Verify the 3 offered choices on this turn are distinct
             assert.equal(new Set(choices).size, 3, 'Offered choices must be distinct');
 
-            // Drawer picks one choice
             const pick = choices[0];
-            assert.ok(!room.usedWords.has(pick), `Turn ${turn}: chosen word "${pick}" was already used previously!`);
-
+            assert.ok(!room.usedWords.has(pick), `Turn ${turn}: chosen word "${pick}" was already used`);
             room.usedWords.add(pick);
             chosenWords.push(pick);
         }
 
         assert.equal(new Set(chosenWords).size, totalTurns, 'All 144 chosen words must be unique');
-        assert.equal(room.usedWords.size, totalTurns);
+    });
+
+    test('recently offered but unchosen words are avoided when alternatives exist', () => {
+        const room = { settings: { difficulty: 'Easy', packs: [] }, usedWords: new Set() };
+        const first = getWordChoices(room, 3);
+        const next = getWordChoices(room, 3);
+        for (const word of next) {
+            assert.ok(!first.includes(word), `"${word}" was offered twice in a row`);
+        }
     });
 
     test('unknown packs are ignored and do not crash or corrupt selection', () => {
-        // Only unknown packs: behaves like all packs (empty)
         const room1 = {
             settings: { difficulty: 'Easy', packs: ['unknown_pack_xyz', 'fake_pack_123'] },
             usedWords: new Set()
@@ -151,20 +228,35 @@ describe('getWordChoices & Game Settings Validation', () => {
         assert.equal(choices1.length, 3);
         assert.ok(choices1.every(w => getWordDifficulty(w).difficulty === 'Easy'));
 
-        // Mixture of valid and unknown pack: filters to only the valid pack
         const room2 = {
             settings: { difficulty: 'Medium', packs: ['animals', 'nonexistent_pack'] },
             usedWords: new Set()
         };
         const choices2 = getWordChoices(room2, 3);
         assert.equal(choices2.length, 3);
+        const animals = new Set(packs.animals);
         for (const w of choices2) {
-            assert.ok(packs.animals.includes(w), `Word "${w}" must belong to animals pack`);
+            assert.ok(animals.has(w), `Word "${w}" must belong to animals pack`);
         }
     });
 
-    test('custom words are sanitised and picked (~30% weight)', () => {
-        // Sanitize test
+    test('pack filtering works for the expanded pack set', () => {
+        for (const packId of ['sports', 'science', 'fantasy', 'music', 'vehicles', 'body']) {
+            const room = {
+                settings: { difficulty: 'Expert', packs: [packId] },
+                usedWords: new Set()
+            };
+            const choices = getWordChoices(room, 3);
+            assert.equal(choices.length, 3);
+            const packSet = new Set(packs[packId]);
+            for (const word of choices) {
+                assert.ok(packSet.has(word), `Pack "${packId}" returned foreign word "${word}"`);
+                assert.equal(getWordDifficulty(word).level, 4);
+            }
+        }
+    });
+
+    test('custom words are sanitised and always represented in pick mode', () => {
         const rawSettings = {
             rounds: 5,
             drawTime: 80,
@@ -177,51 +269,48 @@ describe('getWordChoices & Game Settings Validation', () => {
         assert.deepEqual(sanitized.packs, ['animals']);
         assert.deepEqual(sanitized.customWords, ['spaceship', 'laser gun', 'dog']);
 
-        // Selection test: custom words mixed in
-        const room = {
-            settings: sanitized,
-            usedWords: new Set()
-        };
+        const room = { settings: sanitized, usedWords: new Set() };
 
         let customWordPickedCount = 0;
         const totalCalls = 100;
         for (let i = 0; i < totalCalls; i++) {
             const choices = getWordChoices(room, 3);
             assert.equal(choices.length, 3);
-            const hasCustom = choices.some(w => sanitized.customWords.includes(w));
-            if (hasCustom) customWordPickedCount++;
+            if (choices.some(w => sanitized.customWords.includes(w))) customWordPickedCount++;
         }
 
-        // With 1 in 3 choices from custom words, every call offers at least 1 custom word
-        assert.ok(customWordPickedCount >= 95, `Custom words should be picked reliably (picked ${customWordPickedCount}/${totalCalls})`);
+        assert.ok(customWordPickedCount >= 95, `Custom words should appear reliably (${customWordPickedCount}/${totalCalls})`);
     });
 
-    test('pool dry reset: resets usedWords keeping last 10 words when pool is exhausted', () => {
-        // Test custom words pool dry reset
+    test('pool dry reset keeps at most the last 10 used words', () => {
         const smallCustom = ['wordone', 'wordtwo', 'wordthree', 'wordfour', 'wordfive', 'wordsix', 'wordseven', 'wordeight', 'wordnine', 'wordten', 'wordeleven', 'wordtwelve'];
         const room = {
             settings: { difficulty: 'Easy', packs: [], customWords: smallCustom },
             usedWords: new Set()
         };
 
-        for (const w of smallCustom) {
-            room.usedWords.add(w);
-        }
+        for (const w of smallCustom) room.usedWords.add(w);
         assert.equal(room.usedWords.size, 12);
 
         const choices = getWordChoices(room, 3);
         assert.ok(choices.length >= 3);
-        assert.ok(room.usedWords.size <= 10, `usedWords must have been reset to at most 10 (got ${room.usedWords.size})`);
+        assert.ok(room.usedWords.size <= 10, `usedWords must shrink to at most 10 (got ${room.usedWords.size})`);
 
-        // Test standard dictionary pool dry reset
         const roomHard = {
             settings: { difficulty: 'Hard', packs: [] },
             usedWords: new Set(hardWords)
         };
-        assert.equal(roomHard.usedWords.size, hardWords.length);
         const choicesHard = getWordChoices(roomHard, 3);
         assert.equal(choicesHard.length, 3);
-        assert.ok(roomHard.usedWords.size <= 10, `usedWords must have been reset to at most 10 (got ${roomHard.usedWords.size})`);
+        assert.ok(roomHard.usedWords.size <= 10, `usedWords must shrink to at most 10 (got ${roomHard.usedWords.size})`);
+    });
+
+    test('getRandomWords supports every tier', () => {
+        for (const difficulty of ALLOWED_DIFFICULTIES) {
+            const words = getRandomWords(3, difficulty);
+            assert.equal(words.length, 3);
+            assert.equal(new Set(words).size, 3);
+        }
     });
 });
 
@@ -299,13 +388,11 @@ describe('UPDATE_SETTINGS Event Security & Validation', () => {
         const hostSocket = addSocket('host-sock');
         const guestSocket = addSocket('guest-sock');
 
-        // Create and join
         hostSocket.receiveFromClient(EVENTS.CREATE_ROOM, { username: 'HostUser' });
         const roomCode = hostSocket.emittedEvents.find(e => e.event === EVENTS.ROOM_JOINED).args[0].code;
 
         guestSocket.receiveFromClient(EVENTS.JOIN_ROOM, { roomCode, username: 'GuestUser' });
 
-        // Host updates settings
         hostSocket.emittedEvents = [];
         guestSocket.emittedEvents = [];
 
@@ -314,13 +401,12 @@ describe('UPDATE_SETTINGS Event Security & Validation', () => {
             settings: {
                 rounds: 5,
                 drawTime: 100,
-                difficulty: 'Hard',
-                packs: ['animals', 'food'],
+                difficulty: 'Expert',
+                packs: ['animals', 'sports', 'science'],
                 customWords: 'dragon, castle, wizard'
             }
         });
 
-        // Host and guest both receive updated ROOM_JOINED
         const hostUpdate = hostSocket.emittedEvents.find(e => e.event === EVENTS.ROOM_JOINED);
         const guestUpdate = guestSocket.emittedEvents.find(e => e.event === EVENTS.ROOM_JOINED);
 
@@ -330,11 +416,10 @@ describe('UPDATE_SETTINGS Event Security & Validation', () => {
         const publicRoom = hostUpdate.args[0];
         assert.equal(publicRoom.settings.rounds, 5);
         assert.equal(publicRoom.settings.drawTime, 100);
-        assert.equal(publicRoom.settings.difficulty, 'Hard');
-        assert.deepEqual(publicRoom.settings.packs, ['animals', 'food']);
+        assert.equal(publicRoom.settings.difficulty, 'Expert');
+        assert.deepEqual(publicRoom.settings.packs, ['animals', 'sports', 'science']);
         assert.deepEqual(publicRoom.settings.customWords, ['dragon', 'castle', 'wizard']);
 
-        // Must still adhere to toPublicRoom rules (no wordToGuess, no sessionId)
         assert.equal(publicRoom.wordToGuess, undefined);
         assert.equal(publicRoom.strokes, undefined);
     });

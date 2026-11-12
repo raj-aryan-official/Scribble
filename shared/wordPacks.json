@@ -1,0 +1,17 @@
+[
+  { "id": "animals", "label": "Animals", "categories": ["animals"] },
+  { "id": "food", "label": "Food & Drink", "categories": ["fruits_vegetables", "food_drinks"] },
+  { "id": "objects", "label": "Objects", "categories": ["household", "electronics", "tools", "clothing"] },
+  { "id": "places", "label": "Places", "categories": ["buildings", "travel"] },
+  { "id": "nature", "label": "Nature", "categories": ["nature"] },
+  { "id": "actions", "label": "Actions", "categories": ["actions"] },
+  { "id": "sports", "label": "Sports", "categories": ["sports"] },
+  { "id": "jobs", "label": "Jobs", "categories": ["professions"] },
+  { "id": "science", "label": "Science & Space", "categories": ["science_space"] },
+  { "id": "fantasy", "label": "Fantasy", "categories": ["fantasy"] },
+  { "id": "music", "label": "Music", "categories": ["music"] },
+  { "id": "vehicles", "label": "Vehicles", "categories": ["vehicles"] },
+  { "id": "body", "label": "Human Body", "categories": ["body"] },
+  { "id": "school", "label": "School", "categories": ["school"] },
+  { "id": "funny", "label": "Funny", "categories": ["funny"] }
+]

@@ -18,8 +18,8 @@ const { clearRoomQueue } = require('./handlers/actionQueue');
 const ROOM_CODE_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
 const ALLOWED_ROUNDS = [1, 2, 3, 5, 7, 8, 10, 12];
 const ALLOWED_DRAW_TIMES = [10, 15, 30, 45, 60, 80, 100, 120];
-const ALLOWED_DIFFICULTIES = ['Easy', 'Medium', 'Hard', 'Mixed'];
-const ALLOWED_PACKS = ['animals', 'food', 'places', 'objects', 'actions'];
+const ALLOWED_DIFFICULTIES = ['Easy', 'Medium', 'Hard', 'Expert', 'Mixed'];
+const ALLOWED_PACKS = require('../../shared/wordPacks.json').map(p => p.id);
 const ALLOWED_WORD_CHOICES = ['pick', 'random'];
 const ALLOWED_TWISTS = ['off', 'sometimes', 'every'];
 const MAX_ROOMS = 500;
@@ -464,6 +464,7 @@ class RoomManager {
             wordChoices: data.wordChoices || null,
             defaultChoice: typeof data.defaultChoice === 'number' ? data.defaultChoice : null,
             usedWords: new Set(data.usedWords || []),
+            recentChoices: Array.isArray(data.recentChoices) ? data.recentChoices : [],
             hint: data.hint || null,
             wordHint: data.wordHint || null,
             roundEndsAt: data.roundEndsAt || null,
@@ -564,6 +565,7 @@ class RoomManager {
             wordChoices: null,
             defaultChoice: null,
             usedWords: new Set(),
+            recentChoices: [],
             hint: null,
             wordHint: null,
             roundEndsAt: null,

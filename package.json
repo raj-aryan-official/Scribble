@@ -1,34 +1,36 @@
 {
-  "name": "scribble-monorepo",
-  "version": "1.0.0",
-  "private": true,
-  "workspaces": [
-    "client",
-    "server"
-  ],
-  "scripts": {
-    "sync:shared": "node scripts/sync-shared.js",
-    "lint:client": "npm run lint --prefix client",
-    "lint:server": "npm run lint --prefix server",
-    "lint": "npm run lint:client && npm run lint:server",
-    "test:client": "npm run test --prefix client",
-    "test:server": "npm run test --prefix server",
-    "test": "npm run test:client && npm run test:server",
-    "test:e2e": "playwright test",
-    "build:client": "npm run build --prefix client",
-    "build": "npm run build:client",
-    "lhci": "lhci autorun",
-    "test:lhci": "lhci autorun",
-    "check": "npm run sync:shared && npm run lint && npm run test && npm run test:e2e && npm run build"
-  },
-  "devDependencies": {
-    "@axe-core/playwright": "^4.14.0",
-    "@lhci/cli": "^0.16.0",
-    "@playwright/test": "^1.65.0"
-  },
-  "overrides": {
-    "framer-motion": "12.34.1",
-    "motion-dom": "12.34.1",
-    "motion-utils": "12.29.2"
-  }
+    "name": "scribble-monorepo",
+    "version": "1.0.0",
+    "private": true,
+    "workspaces": [
+        "client",
+        "server"
+    ],
+    "scripts": {
+        "sync:shared": "node scripts/sync-shared.js",
+        "lint:client": "npm run lint --prefix client",
+        "lint:server": "npm run lint --prefix server",
+        "lint": "npm run lint:client && npm run lint:server",
+        "test:client": "npm run test --prefix client",
+        "test:server": "npm run test --prefix server",
+        "test": "npm run test:client && npm run test:server",
+        "test:e2e": "playwright test",
+        "build:client": "npm run build --prefix client",
+        "build": "npm run build:client",
+        "lhci": "lhci autorun",
+        "test:lhci": "lhci autorun",
+        "check": "npm run sync:shared && npm run check:words && npm run lint && npm run test && npm run test:e2e && npm run build",
+        "sync:words": "node scripts/build-word-db.js",
+        "check:words": "node scripts/build-word-db.js --check"
+    },
+    "devDependencies": {
+        "@axe-core/playwright": "^4.14.0",
+        "@lhci/cli": "^0.16.0",
+        "@playwright/test": "^1.65.0"
+    },
+    "overrides": {
+        "framer-motion": "12.34.1",
+        "motion-dom": "12.34.1",
+        "motion-utils": "12.29.2"
+    }
 }

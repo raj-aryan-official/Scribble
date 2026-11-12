@@ -4,10 +4,11 @@ import Card from '../ui/Card';
 import Chip from '../ui/Chip';
 import ModePicker from './ModePicker';
 import { TWIST_IDS, TWIST_DEFINITIONS } from '../../../../shared/types';
+import WORD_PACKS from '../../../../shared/wordPacks.json';
 
 const ROUND_OPTIONS = [1, 2, 3, 5, 7, 10, 12];
 const DRAW_TIME_OPTIONS = [60, 80, 100, 120];
-const DIFFICULTY_OPTIONS = ['Easy', 'Medium', 'Hard', 'Mixed'];
+const DIFFICULTY_OPTIONS = ['Easy', 'Medium', 'Hard', 'Expert', 'Mixed'];
 const WORD_CHOICE_OPTIONS = [
     { id: 'pick', label: 'Pick from 3' },
     { id: 'random', label: 'Random word' }
@@ -17,13 +18,7 @@ const TWISTS_OPTIONS = [
     { id: 'sometimes', label: 'Sometimes' },
     { id: 'every', label: 'Every turn' }
 ];
-const AVAILABLE_PACKS = [
-    { id: 'animals', label: 'Animals' },
-    { id: 'food', label: 'Food' },
-    { id: 'places', label: 'Places' },
-    { id: 'objects', label: 'Objects' },
-    { id: 'actions', label: 'Actions' },
-];
+const AVAILABLE_PACKS = WORD_PACKS.map(({ id, label }) => ({ id, label }));
 export const SettingsCard = ({
     isHost = false,
     hostName = 'the host',
@@ -143,7 +138,7 @@ export const SettingsCard = ({
                         <label className="block text-xs font-black uppercase tracking-wider text-ink mb-1.5">
                             Difficulty
                         </label>
-                        <div className="grid grid-cols-4 gap-1 bg-paper p-1 border-2 border-ink rounded-[6px]">
+                        <div className="grid grid-cols-5 gap-1 bg-paper p-1 border-2 border-ink rounded-[6px]">
                             {DIFFICULTY_OPTIONS.map((diff) => {
                                 const isSelected = settings.difficulty === diff;
                                 return (
@@ -151,7 +146,7 @@ export const SettingsCard = ({
                                         key={diff}
                                         type="button"
                                         onClick={() => onDifficultyChange?.(diff)}
-                                        className={`py-1.5 text-xs sm:text-sm font-bold rounded-[4px] transition-all cursor-pointer select-none ${
+                                        className={`py-1.5 text-[10px] sm:text-sm font-bold rounded-[4px] transition-all cursor-pointer select-none ${
                                             isSelected
                                                 ? 'bg-tomato text-white border-2 border-ink shadow-hard-sm'
                                                 : 'text-ink hover:bg-card border-2 border-transparent'
